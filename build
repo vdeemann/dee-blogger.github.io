@@ -7,52 +7,99 @@ mkdir -p public/p
 
 echo "Building ultra-minimal blog..."
 
+# Function to process markdown content
+process_content() {
+    local file="$1"
+    
+    # Skip title and blank line, then process
+    tail -n +3 "$file" | awk '
+    BEGIN { in_code = 0 }
+    
+    # Handle code fences
+    /^```/ {
+        if (in_code) {
+            print "</code></pre>"
+            in_code = 0
+        } else {
+            lang = substr($0, 4)
+            if (lang == "") lang = "text"
+            print "<pre><code class=\"" lang "\">"
+            in_code = 1
+        }
+        next
+    }
+    
+    # Skip processing if inside code block
+    in_code { print; next }
+    
+    # Handle inline code
+    { gsub(/`([^`]+)`/, "<code>\\1</code>") }
+    
+    # Handle bold text
+    { gsub(/\*\*([^*]+)\*\*/, "<strong>\\1</strong>") }
+    
+    # Handle headers
+    /^## / { gsub(/^## /, "<h2>"); print $0 "</h2>"; next }
+    
+    # Handle empty lines and paragraphs
+    /^$/ { print "<p>"; next }
+    /^[^<#]/ { print "<p>" $0; next }
+    
+    # Default: print as-is
+    { print }
+    '
+}
+
 # Generate individual post pages
 i=1
 for f in content/*.md; do
     [ -f "$f" ] || continue
     
-    # Extract metadata from filename
+    # Extract metadata
     filename=$(basename "$f")
     date_part=$(echo "$filename" | cut -d- -f1-3)
-    
-    # Parse date components
     year=$(echo "$date_part" | cut -d- -f1)
     month=$(echo "$date_part" | cut -d- -f2)
     day=$(echo "$date_part" | cut -d- -f3)
-    
-    # Format as M/D/YY (remove leading zeros)
     month=${month#0}
     day=${day#0}
     short_date="$month/$day/${year#20}"
-    
-    # Extract title from first line
     title=$(head -1 "$f" | sed 's/^# //')
     
-    # Process content with code block formatting
-    content=$(tail -n +3 "$f" | sed '
-        s/^$/<p>/
-        s/^[^<#`*-]/<p>&/
-        s/^```\([a-zA-Z]*\)$/<pre><code class="\1">/
-        s/^```$/<\/code><\/pre>/
-        s/`\([^`]*\)`/<code>\1<\/code>/g
-        s/^\*\*\([^*]*\)\*\*:/<strong>\1:<\/strong>/
-        s/\*\*\([^*]*\)\*\*/<strong>\1<\/strong>/g
-    ')
+    # Process content
+    content=$(process_content "$f")
     
-    # Generate individual post page with enhanced CSS
+    # Generate page with improved CSS
     cat > "public/p/$i.html" << EOF
-<!DOCTYPE html><title>$title</title><style>body{max-width:40em;margin:2em auto;padding:0 1em;font-family:serif}a{color:#06c}p{margin-bottom:1em}small{color:#666}pre{background:#f8f8f8;padding:1em;overflow-x:auto;border-radius:4px;margin:1em 0}code{background:#f0f0f0;padding:0.2em 0.4em;border-radius:3px;font-family:Consolas,Monaco,monospace;font-size:0.9em}pre code{background:none;padding:0}strong{font-weight:bold}h2{margin:1.5em 0 0.5em;font-size:1.3em}</style><a href="../">← Blog</a><h1>$title</h1><small>$short_date</small>$content<a href="../">← Back to Blog</a>
+<!DOCTYPE html><title>$title</title><style>
+body{max-width:40em;margin:2em auto;padding:0 1em;font-family:system-ui,-apple-system,BlinkMacSystemFont,sans-serif;line-height:1.6;color:#333}
+a{color:#06c;text-decoration:none}
+a:hover{text-decoration:underline}
+p{margin-bottom:1em}
+small{color:#666}
+h2{margin:2em 0 1em;font-size:1.2em;color:#222}
+pre{background:#f5f5f5;padding:1em;margin:1.5em 0;border-radius:4px;overflow-x:auto;border-left:3px solid #ddd}
+code{font-family:Consolas,Monaco,monospace;font-size:0.9em}
+pre code{background:none;padding:0;display:block}
+p code{background:#f0f0f0;padding:0.2em 0.4em;border-radius:3px}
+strong{font-weight:600}
+.nav{margin:1.5em 0;padding:0.5em 0;border-bottom:1px solid #eee}
+</style>
+<div class=nav><a href="../">← Blog</a></div>
+<h1>$title</h1>
+<small>$short_date</small>
+$content
+<div class=nav><a href="../">← Back to Blog</a></div>
 EOF
     
     echo "Generated post $i: $title"
     ((i++))
 done
 
-# Generate main index page
+# Generate main index page (unchanged)
 {
     cat << 'EOF'
-<!DOCTYPE html><title>My Blog</title><style>body{max-width:40em;margin:2em auto;padding:0 1em;font-family:serif}input{width:100%;margin-bottom:1em}small{color:#666;display:block;margin:0}h2{margin:0}a{color:#06c}.post{margin-bottom:2em}</style><h1>My Blog</h1><input id=s placeholder="Search posts..." onkeyup="f()"><div id=p>
+<!DOCTYPE html><title>My Blog</title><style>body{max-width:40em;margin:2em auto;padding:0 1em;font-family:system-ui,-apple-system,BlinkMacSystemFont,sans-serif;line-height:1.6;color:#333}input{width:100%;margin-bottom:1em}small{color:#666;display:block;margin:0}h2{margin:0}a{color:#06c}.post{margin-bottom:2em}</style><h1>My Blog</h1><input id=s placeholder="Search posts..." onkeyup="f()"><div id=p>
 EOF
     
     i=1
@@ -61,15 +108,12 @@ EOF
         
         filename=$(basename "$f")
         date_part=$(echo "$filename" | cut -d- -f1-3)
-        
         year=$(echo "$date_part" | cut -d- -f1)
         month=$(echo "$date_part" | cut -d- -f2)
         day=$(echo "$date_part" | cut -d- -f3)
-        
         month=${month#0}
         day=${day#0}
         short_date="$month/$day/${year#20}"
-        
         title=$(head -1 "$f" | sed 's/^# //')
         excerpt=$(sed -n '3p' "$f")
         
