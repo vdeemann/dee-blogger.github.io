@@ -29,12 +29,20 @@ for f in content/*.md; do
     # Extract title from first line
     title=$(head -1 "$f" | sed 's/^# //')
     
-    # Get content (skip title line and blank line)
-    content=$(tail -n +3 "$f" | sed 's/^$/<p>/; s/^[^<]/<p>&/')
+    # Process content with code block formatting
+    content=$(tail -n +3 "$f" | sed '
+        s/^$/<p>/
+        s/^[^<#`*-]/<p>&/
+        s/^```\([a-zA-Z]*\)$/<pre><code class="\1">/
+        s/^```$/<\/code><\/pre>/
+        s/`\([^`]*\)`/<code>\1<\/code>/g
+        s/^\*\*\([^*]*\)\*\*:/<strong>\1:<\/strong>/
+        s/\*\*\([^*]*\)\*\*/<strong>\1<\/strong>/g
+    ')
     
-    # Generate individual post page
+    # Generate individual post page with enhanced CSS
     cat > "public/p/$i.html" << EOF
-<!DOCTYPE html><title>$title</title><style>body{max-width:40em;margin:2em auto;padding:0 1em;font-family:serif}a{color:#06c}p{margin-bottom:1em}small{color:#666}</style><a href="../">← Blog</a><h1>$title</h1><small>$short_date</small>$content<a href="../">← Back to Blog</a>
+<!DOCTYPE html><title>$title</title><style>body{max-width:40em;margin:2em auto;padding:0 1em;font-family:serif}a{color:#06c}p{margin-bottom:1em}small{color:#666}pre{background:#f8f8f8;padding:1em;overflow-x:auto;border-radius:4px;margin:1em 0}code{background:#f0f0f0;padding:0.2em 0.4em;border-radius:3px;font-family:Consolas,Monaco,monospace;font-size:0.9em}pre code{background:none;padding:0}strong{font-weight:bold}h2{margin:1.5em 0 0.5em;font-size:1.3em}</style><a href="../">← Blog</a><h1>$title</h1><small>$short_date</small>$content<a href="../">← Back to Blog</a>
 EOF
     
     echo "Generated post $i: $title"
