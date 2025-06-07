@@ -11,8 +11,8 @@ Modern web development has become an exercise in managing complexity. A typical 
 Consider this simple counter component across different frameworks:
 
 **React (with hooks and state management):**
-```javascript
-import React, { useState, useEffect } from 'react';
+
+<pre><code>import React, { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 
 const Counter = () => {
@@ -23,58 +23,36 @@ const Counter = () => {
   const decrement = () => dispatch({ type: 'counter/decrement' });
   
   return (
-    <div>
-      <span>{count}</span>
-      <button onClick={increment}>+</button>
-      <button onClick={decrement}>-</button>
-    </div>
+    &lt;div&gt;
+      &lt;span&gt;{count}&lt;/span&gt;
+      &lt;button onClick={increment}&gt;+&lt;/button&gt;
+      &lt;button onClick={decrement}&gt;-&lt;/button&gt;
+    &lt;/div&gt;
   );
 };
-```
+</code></pre>
 
 **Vue.js (with Composition API):**
-```javascript
-<template>
-  <div>
-    <span>{{ count }}</span>
-    <button @click="increment">+</button>
-    <button @click="decrement">-</button>
-  </div>
-</template>
 
-<script setup>
+<pre><code>&lt;template&gt;
+  &lt;div&gt;
+    &lt;span&gt;{{ count }}&lt;/span&gt;
+    &lt;button @click="increment"&gt;+&lt;/button&gt;
+    &lt;button @click="decrement"&gt;-&lt;/button&gt;
+  &lt;/div&gt;
+&lt;/template&gt;
+
+&lt;script setup&gt;
 import { ref } from 'vue'
 const count = ref(0)
 const increment = () => count.value++
 const decrement = () => count.value--
-</script>
-```
+&lt;/script&gt;
+</code></pre>
 
-**Angular (with signals):**
-```typescript
-@Component({
-  selector: 'app-counter',
-  template: `
-    <div>
-      <span>{{ count() }}</span>
-      <button (click)="increment()">+</button>
-      <button (click)="decrement()">-</button>
-    </div>
-  `
-})
-export class CounterComponent {
-  count = signal(0);
-  increment() { this.count.update(n => n + 1); }
-  decrement() { this.count.update(n => n - 1); }
-}
-```
+**Phoenix LiveView:**
 
-## Enter Phoenix LiveView
-
-The same functionality in Phoenix LiveView requires remarkably less code:
-
-```elixir
-defmodule MyAppWeb.CounterLive do
+<pre><code>defmodule MyAppWeb.CounterLive do
   use MyAppWeb, :live_view
 
   def mount(_params, _session, socket) do
@@ -91,15 +69,15 @@ defmodule MyAppWeb.CounterLive do
 
   def render(assigns) do
     ~H"""
-    <div>
-      <span><%= @count %></span>
-      <button phx-click="increment">+</button>
-      <button phx-click="decrement">-</button>
-    </div>
+    &lt;div&gt;
+      &lt;span&gt;&lt;%= @count %&gt;&lt;/span&gt;
+      &lt;button phx-click="increment"&gt;+&lt;/button&gt;
+      &lt;button phx-click="decrement"&gt;-&lt;/button&gt;
+    &lt;/div&gt;
     """
   end
 end
-```
+</code></pre>
 
 No build tools. No dependency hell. No complex state management. Just functional, concurrent code that scales effortlessly.
 
@@ -125,11 +103,6 @@ I benchmarked identical applications across frameworks using realistic workloads
 - Angular SPA: 1.5 GB
 - Phoenix LiveView: 180 MB (server handles state)
 
-**Developer Experience Metrics:**
-- Lines of code (medium app): LiveView uses 60% fewer lines
-- Build time: LiveView has no client build step
-- Dependencies: LiveView apps average 12 deps vs 200+ for SPAs
-
 ## Why LiveView Wins
 
 **Simplicity:** State lives on the server. No hydration. No prop drilling. No useEffect dependencies to track.
@@ -140,28 +113,26 @@ I benchmarked identical applications across frameworks using realistic workloads
 
 **Scalability:** The BEAM virtual machine handles millions of lightweight processes. Each LiveView session is just another process.
 
-**Developer Productivity:** Hot code reloading, pattern matching, and functional programming paradigms make development faster and less error-prone.
-
 ## The Elixir Advantage
 
 Elixir runs on the Erlang Virtual Machine, battle-tested by telecom systems requiring 99.9999% uptime. While JavaScript developers debate the latest framework, Elixir developers build systems that just work.
 
 Pattern matching eliminates entire classes of bugs:
-```elixir
-case user_input do
+
+<pre><code>case user_input do
   {:ok, result} -> handle_success(result)
   {:error, reason} -> handle_error(reason)
   _ -> handle_unexpected()
 end
-```
+</code></pre>
 
 The actor model makes concurrent programming intuitive:
-```elixir
-# Spawn a million processes? No problem.
+
+<pre><code># Spawn a million processes? No problem.
 Enum.each(1..1_000_000, fn i ->
   spawn(fn -> do_work(i) end)
 end)
-```
+</code></pre>
 
 ## Real-World Impact
 
