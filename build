@@ -1,61 +1,16 @@
 #!/bin/bash
 set -e
 
-# Clean and create directories
 rm -rf public
 mkdir -p public/p
 
 echo "Building ultra-minimal blog..."
-
-# Function to process markdown content
-process_content() {
-    local file="$1"
-    
-    # Skip title and blank line, then process
-    tail -n +3 "$file" | awk '
-    BEGIN { in_code = 0 }
-    
-    # Handle code fences
-    /^```/ {
-        if (in_code) {
-            print "</code></pre>"
-            in_code = 0
-        } else {
-            lang = substr($0, 4)
-            if (lang == "") lang = "text"
-            print "<pre><code class=\"" lang "\">"
-            in_code = 1
-        }
-        next
-    }
-    
-    # Skip processing if inside code block
-    in_code { print; next }
-    
-    # Handle inline code
-    { gsub(/`([^`]+)`/, "<code>\\1</code>") }
-    
-    # Handle bold text
-    { gsub(/\*\*([^*]+)\*\*/, "<strong>\\1</strong>") }
-    
-    # Handle headers
-    /^## / { gsub(/^## /, "<h2>"); print $0 "</h2>"; next }
-    
-    # Handle empty lines and paragraphs
-    /^$/ { print "<p>"; next }
-    /^[^<#]/ { print "<p>" $0; next }
-    
-    # Default: print as-is
-    { print }
-    '
-}
 
 # Generate individual post pages
 i=1
 for f in content/*.md; do
     [ -f "$f" ] || continue
     
-    # Extract metadata
     filename=$(basename "$f")
     date_part=$(echo "$filename" | cut -d- -f1-3)
     year=$(echo "$date_part" | cut -d- -f1)
@@ -66,22 +21,36 @@ for f in content/*.md; do
     short_date="$month/$day/${year#20}"
     title=$(head -1 "$f" | sed 's/^# //')
     
-    # Process content
-    content=$(process_content "$f")
+    # Simple content processing - just convert basic markdown
+    content=$(tail -n +3 "$f" | sed '
+        s/^$/<p>/
+        s/^## \(.*\)/<h2>\1<\/h2>/
+        s/^\*\*\([^*]*\)\*\*:/<strong>\1:<\/strong>/
+        s/\*\*\([^*]*\)\*\*/<strong>\1<\/strong>/g
+        s/`\([^`]*\)`/<code>\1<\/code>/g
+        s/^- /<p>• /
+        /^```/,/^```/ {
+            s/^```.*/<pre><code>/
+            s/^```$/<\/code><\/pre>/
+            /^```/d
+        }
+        s/^[^<#*`-]/<p>&/
+    ')
     
-    # Generate page with improved CSS
     cat > "public/p/$i.html" << EOF
-<!DOCTYPE html><title>$title</title><style>
+<!DOCTYPE html><title>$title</title>
+<style>
 body{max-width:40em;margin:2em auto;padding:0 1em;font-family:system-ui,-apple-system,BlinkMacSystemFont,sans-serif;line-height:1.6;color:#333}
 a{color:#06c;text-decoration:none}
 a:hover{text-decoration:underline}
+h1{font-size:1.8em;margin-bottom:0.5em}
+h2{font-size:1.3em;margin:2em 0 1em;color:#222}
 p{margin-bottom:1em}
-small{color:#666}
-h2{margin:2em 0 1em;font-size:1.2em;color:#222}
-pre{background:#f5f5f5;padding:1em;margin:1.5em 0;border-radius:4px;overflow-x:auto;border-left:3px solid #ddd}
-code{font-family:Consolas,Monaco,monospace;font-size:0.9em}
-pre code{background:none;padding:0;display:block}
-p code{background:#f0f0f0;padding:0.2em 0.4em;border-radius:3px}
+small{color:#666;display:block;margin-bottom:1em}
+pre{background:#f8f8f8;padding:1em;margin:1.5em 0;border-radius:4px;overflow-x:auto;font-size:0.9em}
+code{font-family:Consolas,Monaco,monospace}
+pre code{display:block;white-space:pre}
+p code{background:#f0f0f0;padding:0.2em 0.4em;border-radius:3px;font-size:0.9em}
 strong{font-weight:600}
 .nav{margin:1.5em 0;padding:0.5em 0;border-bottom:1px solid #eee}
 </style>
@@ -96,16 +65,13 @@ EOF
     ((i++))
 done
 
-# Generate main index page (unchanged)
+# Generate main index (unchanged)
 {
-    cat << 'EOF'
-<!DOCTYPE html><title>My Blog</title><style>body{max-width:40em;margin:2em auto;padding:0 1em;font-family:system-ui,-apple-system,BlinkMacSystemFont,sans-serif;line-height:1.6;color:#333}input{width:100%;margin-bottom:1em}small{color:#666;display:block;margin:0}h2{margin:0}a{color:#06c}.post{margin-bottom:2em}</style><h1>My Blog</h1><input id=s placeholder="Search posts..." onkeyup="f()"><div id=p>
-EOF
+    echo '<!DOCTYPE html><title>My Blog</title><style>body{max-width:40em;margin:2em auto;padding:0 1em;font-family:system-ui,-apple-system,BlinkMacSystemFont,sans-serif;line-height:1.6;color:#333}input{width:100%;margin-bottom:1em}small{color:#666;display:block;margin:0}h2{margin:0}a{color:#06c}.post{margin-bottom:2em}</style><h1>My Blog</h1><input id=s placeholder="Search posts..." onkeyup="f()"><div id=p>'
     
     i=1
     for f in content/*.md; do
         [ -f "$f" ] || continue
-        
         filename=$(basename "$f")
         date_part=$(echo "$filename" | cut -d- -f1-3)
         year=$(echo "$date_part" | cut -d- -f1)
@@ -116,15 +82,11 @@ EOF
         short_date="$month/$day/${year#20}"
         title=$(head -1 "$f" | sed 's/^# //')
         excerpt=$(sed -n '3p' "$f")
-        
         echo "<div class=post><small>$short_date</small><h2><a href=\"p/$i.html\">$title</a></h2>$excerpt</div>"
         ((i++))
     done
     
-    cat << 'EOF'
-</div><script>let o,posts;function f(){let q=s.value.toLowerCase(),d=p;if(!o){o=d.innerHTML;posts=Array.from(d.children);}if(!q){d.innerHTML=o;return}let filtered=posts.filter(post=>post.textContent.toLowerCase().includes(q));d.innerHTML="";filtered.forEach(post=>d.appendChild(post.cloneNode(true)));if(!filtered.length)d.innerHTML="<p>No posts found"}</script>
-EOF
-    
+    echo '</div><script>let o,posts;function f(){let q=s.value.toLowerCase(),d=p;if(!o){o=d.innerHTML;posts=Array.from(d.children);}if(!q){d.innerHTML=o;return}let filtered=posts.filter(post=>post.textContent.toLowerCase().includes(q));d.innerHTML="";filtered.forEach(post=>d.appendChild(post.cloneNode(true)));if(!filtered.length)d.innerHTML="<p>No posts found"}</script>'
 } > public/index.html
 
 post_count=$(ls content/*.md 2>/dev/null | wc -l)
