@@ -1,0 +1,79 @@
+#!/bin/bash
+set -e
+
+# Clean and create directories
+rm -rf public
+mkdir -p public/p
+
+echo "Building ultra-minimal blog..."
+
+# Generate individual post pages
+i=1
+for f in content/*.md; do
+    [ -f "$f" ] || continue
+    
+    # Extract metadata from filename
+    filename=$(basename "$f")
+    date_part=$(echo "$filename" | cut -d- -f1-3)
+    
+    # Parse date components
+    year=$(echo "$date_part" | cut -d- -f1)
+    month=$(echo "$date_part" | cut -d- -f2)
+    day=$(echo "$date_part" | cut -d- -f3)
+    
+    # Format as M/D/YY (remove leading zeros)
+    month=${month#0}
+    day=${day#0}
+    short_date="$month/$day/${year#20}"
+    
+    # Extract title from first line
+    title=$(head -1 "$f" | sed 's/^# //')
+    
+    # Get content (skip title line and blank line)
+    content=$(tail -n +3 "$f" | sed 's/^$/<p>/; s/^[^<]/<p>&/')
+    
+    # Generate individual post page
+    cat > "public/p/$i.html" << EOF
+<!DOCTYPE html><title>$title</title><style>body{max-width:40em;margin:2em auto;padding:0 1em;font-family:serif}a{color:#06c}p{margin-bottom:1em}small{color:#666}</style><a href="../">← Blog</a><h1>$title</h1><small>$short_date</small>$content<a href="../">← Back to Blog</a>
+EOF
+    
+    echo "Generated post $i: $title"
+    ((i++))
+done
+
+# Generate main index page
+{
+    cat << 'EOF'
+<!DOCTYPE html><title>My Blog</title><style>body{max-width:40em;margin:2em auto;padding:0 1em;font-family:serif}input{width:100%;margin-bottom:1em}small{color:#666;display:block;margin:0}h2{margin:0}a{color:#06c}.post{margin-bottom:2em}</style><h1>My Blog</h1><input id=s placeholder="Search posts..." onkeyup="f()"><div id=p>
+EOF
+    
+    i=1
+    for f in content/*.md; do
+        [ -f "$f" ] || continue
+        
+        filename=$(basename "$f")
+        date_part=$(echo "$filename" | cut -d- -f1-3)
+        
+        year=$(echo "$date_part" | cut -d- -f1)
+        month=$(echo "$date_part" | cut -d- -f2)
+        day=$(echo "$date_part" | cut -d- -f3)
+        
+        month=${month#0}
+        day=${day#0}
+        short_date="$month/$day/${year#20}"
+        
+        title=$(head -1 "$f" | sed 's/^# //')
+        excerpt=$(sed -n '3p' "$f")
+        
+        echo "<div class=post><small>$short_date</small><h2><a href=\"p/$i.html\">$title</a></h2>$excerpt</div>"
+        ((i++))
+    done
+    
+    cat << 'EOF'
+</div><script>let o,posts;function f(){let q=s.value.toLowerCase(),d=p;if(!o){o=d.innerHTML;posts=Array.from(d.children);}if(!q){d.innerHTML=o;return}let filtered=posts.filter(post=>post.textContent.toLowerCase().includes(q));d.innerHTML="";filtered.forEach(post=>d.appendChild(post.cloneNode(true)));if(!filtered.length)d.innerHTML="<p>No posts found"}</script>
+EOF
+    
+} > public/index.html
+
+post_count=$(ls content/*.md 2>/dev/null | wc -l)
+echo "Built $post_count posts successfully!"
