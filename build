@@ -14,27 +14,20 @@ for f in content/*.md; do
     filename=$(basename "$f")
     date_part=$(echo "$filename" | cut -d- -f1-3)
     year=$(echo "$date_part" | cut -d- -f1)
-    month=$(echo "$date_part" | cut -d- -f2)
+    month=$(echo "$date_part" | cut -d- -f2)  
     day=$(echo "$date_part" | cut -d- -f3)
     month=${month#0}
     day=${day#0}
     short_date="$month/$day/${year#20}"
     title=$(head -1 "$f" | sed 's/^# //')
     
-    # Simple content processing - just convert basic markdown
+    # Simple processing - just add <p> tags and handle headers
     content=$(tail -n +3 "$f" | sed '
         s/^$/<p>/
         s/^## \(.*\)/<h2>\1<\/h2>/
         s/^\*\*\([^*]*\)\*\*:/<strong>\1:<\/strong>/
         s/\*\*\([^*]*\)\*\*/<strong>\1<\/strong>/g
-        s/`\([^`]*\)`/<code>\1<\/code>/g
-        s/^- /<p>• /
-        /^```/,/^```/ {
-            s/^```.*/<pre><code>/
-            s/^```$/<\/code><\/pre>/
-            /^```/d
-        }
-        s/^[^<#*`-]/<p>&/
+        s/^[^<#*]/<p>&/
     ')
     
     cat > "public/p/$i.html" << EOF
@@ -47,18 +40,17 @@ h1{font-size:1.8em;margin-bottom:0.5em}
 h2{font-size:1.3em;margin:2em 0 1em;color:#222}
 p{margin-bottom:1em}
 small{color:#666;display:block;margin-bottom:1em}
-pre{background:#f8f8f8;padding:1em;margin:1.5em 0;border-radius:4px;overflow-x:auto;font-size:0.9em}
-code{font-family:Consolas,Monaco,monospace}
-pre code{display:block;white-space:pre}
-p code{background:#f0f0f0;padding:0.2em 0.4em;border-radius:3px;font-size:0.9em}
+pre{background:#f8f8f8;padding:1em;margin:1.5em 0;border-radius:4px;overflow-x:auto;border-left:3px solid #ddd}
+code{font-family:Consolas,Monaco,monospace;font-size:0.9em;line-height:1.4}
 strong{font-weight:600}
-.nav{margin:1.5em 0;padding:0.5em 0;border-bottom:1px solid #eee}
+ul{margin:1em 0;padding-left:2em}
+li{margin-bottom:0.5em}
 </style>
-<div class=nav><a href="../">← Blog</a></div>
+<div style="margin:1.5em 0;padding:0.5em 0;border-bottom:1px solid #eee"><a href="../">← Blog</a></div>
 <h1>$title</h1>
 <small>$short_date</small>
 $content
-<div class=nav><a href="../">← Back to Blog</a></div>
+<div style="margin:1.5em 0;padding:0.5em 0;border-top:1px solid #eee"><a href="../">← Back to Blog</a></div>
 EOF
     
     echo "Generated post $i: $title"
