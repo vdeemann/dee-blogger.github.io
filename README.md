@@ -26,3 +26,17 @@ A sub-3KB blog system that respects your readers' bandwidth and time.
    python -m http.server 8000
 
 3. Visit: http://localhost:8000
+
+## Adding New Posts (Future)
+
+### Method 1: Using File Explorer + Git
+
+1. **Create new file** in `content\` folder:
+   - File name: `2025-06-08-my-new-post.md`
+   - Content: See example below
+
+2. **Deploy**:
+   ```cmd
+   git add .
+   git commit -m "Add new post"
+   git push
