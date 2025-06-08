@@ -39,31 +39,22 @@ content_files=(content/*.md)
 
 log "Building minimal blog..."
 
-# Create a sorted list of files by date (filename based)
-get_sorted_files() {
-    if [ "$1" = "reverse" ]; then
-        ls content/*.md 2>/dev/null | sort -r || true
-    else
-        ls content/*.md 2>/dev/null | sort || true
-    fi
-}
-
 # Function to extract date parts and format
 parse_date() {
-    local filename="$1"
-    local basename=$(basename "$filename")
-    local date_part=$(echo "$basename" | cut -d- -f1-3)
+    filename="$1"
+    basename=$(basename "$filename")
+    date_part=$(echo "$basename" | cut -d- -f1-3)
     
     # Validate date format
     if ! echo "$date_part" | grep -E '^[0-9]{4}-[0-9]{2}-[0-9]{2}$' >/dev/null; then
         warn "Invalid date format in filename: $basename (expected YYYY-MM-DD-title.md)"
-        echo "1/1/00" # fallback date
+        echo "1/1/00"
         return
     fi
     
-    local year=$(echo "$date_part" | cut -d- -f1)
-    local month=$(echo "$date_part" | cut -d- -f2)  
-    local day=$(echo "$date_part" | cut -d- -f3)
+    year=$(echo "$date_part" | cut -d- -f1)
+    month=$(echo "$date_part" | cut -d- -f2)  
+    day=$(echo "$date_part" | cut -d- -f3)
     
     # Remove leading zeros and format
     month=${month#0}
@@ -73,24 +64,40 @@ parse_date() {
 
 # Function to safely extract title
 get_title() {
-    local file="$1"
-    local title=$(head -1 "$file" 2>/dev/null | sed 's/^# *//')
+    file="$1"
+    if [ ! -f "$file" ]; then
+        echo "Untitled Post"
+        return
+    fi
+    
+    title=$(head -1 "$file" 2>/dev/null | sed 's/^# *//' | sed 's/[<>&"'"'"']//g')
     [ -z "$title" ] && title="Untitled Post"
     echo "$title"
 }
 
 # Function to safely extract excerpt
 get_excerpt() {
-    local file="$1"
-    local excerpt=$(sed -n '3p' "$file" 2>/dev/null)
+    file="$1"
+    if [ ! -f "$file" ]; then
+        echo "..."
+        return
+    fi
+    
+    excerpt=$(sed -n '3p' "$file" 2>/dev/null | sed 's/[<>&"'"'"']//g')
     [ -z "$excerpt" ] && excerpt="..."
     echo "$excerpt"
 }
 
-# Enhanced markdown processing
+# Enhanced markdown processing with error handling
 process_content() {
-    local file="$1"
-    tail -n +3 "$file" 2>/dev/null | sed '
+    file="$1"
+    if [ ! -f "$file" ]; then
+        echo "<p>Content not found</p>"
+        return
+    fi
+    
+    # Process content with error handling
+    content=$(tail -n +3 "$file" 2>/dev/null | sed '
         # Convert empty lines to paragraph breaks
         s/^$/<\/p><p>/
         
@@ -113,7 +120,7 @@ process_content() {
         # Inline code
         s/`\([^`]*\)`/<code>\1<\/code>/g
         
-        # Links [text](url)
+        # Links [text](url) - escape quotes
         s/\[\([^]]*\)\](\([^)]*\))/<a href="\2">\1<\/a>/g
         
         # Unordered lists
@@ -128,10 +135,17 @@ process_content() {
         s/<\/p><p>/<\/p>\n<p>/g
         s/^<\/p>//
         s/<p>$//
-    '
+    ')
+    
+    # Return content or fallback
+    if [ -n "$content" ]; then
+        echo "$content"
+    else
+        echo "<p>Content could not be processed</p>"
+    fi
 }
 
-# Generate CSS with better responsive design
+# Generate CSS
 generate_css() {
     cat << 'EOF'
 body{max-width:42em;margin:2em auto;padding:0 1em;font-family:system-ui,-apple-system,sans-serif;line-height:1.6;color:#333;background:#fff}
@@ -171,43 +185,56 @@ a{color:#4da6ff}
 EOF
 }
 
-# Create a lookup table for post numbers to avoid O(n²) complexity
-declare -A post_numbers
-create_post_lookup() {
-    i=1
-    while IFS= read -r file; do
-        [ -f "$file" ] && post_numbers["$file"]=$i && ((i++))
-    done < <(get_sorted_files)
-}
+# Create simple sorted file list
+log "Creating post lookup..."
+sorted_files=()
+while IFS= read -r -d '' file; do
+    [ -f "$file" ] && sorted_files+=("$file")
+done < <(find content -name "*.md" -type f -print0 | sort -z)
 
-log "Creating post number lookup table..."
-create_post_lookup
+total_posts=${#sorted_files[@]}
+log "Found $total_posts markdown files"
 
-# Generate individual post pages
+# Generate individual post pages with better error handling
 log "Generating individual posts..."
-total_posts=0
-while IFS= read -r file; do
-    [ ! -f "$file" ] && continue
+post_count=0
+for ((i=0; i<${#sorted_files[@]}; i++)); do
+    file="${sorted_files[$i]}"
+    post_num=$((i+1))
     
+    # Add debugging
+    log "Processing file $post_num: $(basename "$file")"
+    
+    # Skip if file doesn't exist or isn't readable
+    if [ ! -f "$file" ] || [ ! -r "$file" ]; then
+        warn "Skipping unreadable file: $file"
+        continue
+    fi
+    
+    # Extract metadata with error handling
     filename=$(basename "$file")
     short_date=$(parse_date "$file")
     title=$(get_title "$file")
-    content=$(process_content "$file")
-    post_num=${post_numbers["$file"]}
     
-    # Generate navigation (prev/next)
+    # Process content with error handling
+    if ! content=$(process_content "$file"); then
+        warn "Failed to process content for: $file"
+        content="<p>Content processing failed</p>"
+    fi
+    
+    # Generate navigation
     nav_links=""
     if [ $post_num -gt 1 ]; then
         nav_links="<a href=\"$((post_num-1)).html\">← Previous</a> | "
     fi
     nav_links="${nav_links}<a href=\"../\">Home</a>"
-    # Simple next link check
-    next_num=$((post_num+1))
-    if [ -n "$(find content -name "*.md" | sed -n "${next_num}p")" ]; then
-        nav_links="${nav_links} | <a href=\"$next_num.html\">Next →</a>"
+    if [ $post_num -lt $total_posts ]; then
+        nav_links="${nav_links} | <a href=\"$((post_num+1)).html\">Next →</a>"
     fi
     
-    cat > "public/p/$post_num.html" << EOF
+    # Create post file with error handling
+    post_file="public/p/$post_num.html"
+    if ! cat > "$post_file" << EOF
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -225,12 +252,15 @@ $content
 </body>
 </html>
 EOF
+    then
+        error "Failed to create post file: $post_file"
+    fi
     
     log "Generated: $title (#$post_num)"
-    ((total_posts++))
-done < <(get_sorted_files)
+    ((post_count++))
+done
 
-# Generate main index page with improved performance
+# Generate main index page
 log "Generating main index page..."
 {
     cat << EOF
@@ -248,24 +278,24 @@ log "Generating main index page..."
 <div id="posts">
 EOF
     
-    # Add recent posts (newest first)
+    # Add recent posts (newest first, reverse the array)
     count=0
-    while IFS= read -r file && [ $count -lt $POSTS_PER_MAIN_PAGE ]; do
+    for ((i=${#sorted_files[@]}-1; i>=0 && count<$POSTS_PER_MAIN_PAGE; i--)); do
+        file="${sorted_files[$i]}"
+        post_num=$((i+1))
+        
         [ ! -f "$file" ] && continue
         
         filename=$(basename "$file")
         short_date=$(parse_date "$file")
         title=$(get_title "$file")
         excerpt=$(get_excerpt "$file")
-        post_num=${post_numbers["$file"]}
         
         echo "<div class=\"post\"><small>$short_date</small><h2><a href=\"p/$post_num.html\">$title</a></h2><p>$excerpt</p></div>"
         ((count++))
-    done < <(get_sorted_files reverse)
+    done
     
-    cat << EOF
-</div>
-EOF
+    echo "</div>"
     
     # Add archive link if we have more posts
     if [ $total_posts -gt $POSTS_PER_MAIN_PAGE ]; then
@@ -319,18 +349,20 @@ log "Generating archive page..."
 <div id="posts">
 EOF
     
-    # Add all posts to archive
-    while IFS= read -r file; do
+    # Add all posts to archive (newest first)
+    for ((i=${#sorted_files[@]}-1; i>=0; i--)); do
+        file="${sorted_files[$i]}"
+        post_num=$((i+1))
+        
         [ ! -f "$file" ] && continue
         
         filename=$(basename "$file")
         short_date=$(parse_date "$file")
         title=$(get_title "$file")
         excerpt=$(get_excerpt "$file")
-        post_num=${post_numbers["$file"]}
         
         echo "<div class=\"post\"><small>$short_date</small><h2><a href=\"../p/$post_num.html\">$title</a></h2><p>$excerpt</p></div>"
-    done < <(get_sorted_files reverse)
+    done
     
     cat << 'EOF'
 </div>
@@ -360,7 +392,7 @@ function searchPosts() {
 EOF
 } > public/archive/index.html
 
-# Generate sitemap for SEO
+# Generate sitemap
 log "Generating sitemap..."
 {
     echo '<?xml version="1.0" encoding="UTF-8"?>'
@@ -368,11 +400,10 @@ log "Generating sitemap..."
     echo "  <url><loc>$BASE_URL</loc><priority>1.0</priority></url>"
     echo "  <url><loc>$BASE_URL/archive/</loc><priority>0.8</priority></url>"
     
-    while IFS= read -r file; do
-        [ ! -f "$file" ] && continue
-        post_num=${post_numbers["$file"]}
+    for ((i=0; i<${#sorted_files[@]}; i++)); do
+        post_num=$((i+1))
         echo "  <url><loc>$BASE_URL/p/$post_num.html</loc><priority>0.6</priority></url>"
-    done < <(get_sorted_files reverse)
+    done
     
     echo '</urlset>'
 } > public/sitemap.xml
@@ -382,7 +413,7 @@ main_size=$(wc -c < public/index.html)
 archive_size=$(wc -c < public/archive/index.html)
 sitemap_size=$(wc -c < public/sitemap.xml)
 
-log "✅ Built $total_posts posts successfully!"
+log "✅ Built $post_count posts successfully!"
 log "📦 Main page: $main_size bytes (recent $POSTS_PER_MAIN_PAGE posts)"
 log "📚 Archive: $archive_size bytes (all $total_posts posts)"
 log "🗺️  Sitemap: $sitemap_size bytes"
@@ -391,6 +422,6 @@ log "🚀 Blog is ready!"
 # Validate output
 [ ! -f "public/index.html" ] && error "Failed to generate main page"
 [ ! -f "public/archive/index.html" ] && error "Failed to generate archive"
-[ $total_posts -eq 0 ] && error "No posts were generated"
+[ $post_count -eq 0 ] && error "No posts were generated"
 
 log "✅ All validation checks passed!"
