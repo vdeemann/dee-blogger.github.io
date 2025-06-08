@@ -11,8 +11,8 @@ SITE_TITLE="${SITE_TITLE:-My Blog}"
 # Compact CSS for main/archive pages
 COMPACT_CSS='body{max-width:40em;margin:2em auto;padding:0 1em;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;line-height:1.4;color:#333;-webkit-font-smoothing:antialiased}a{color:#0066cc;text-decoration:none}a:hover{text-decoration:underline}h1{font-size:1.8em;margin:0 0 .5em 0;color:#222;font-weight:600}h2{font-size:1.1em;margin:0;color:#333;font-weight:600}p{margin:.2em 0;color:#333}small{color:#666;display:block;margin:0;font-size:.85em}.post{margin-bottom:.6em;padding:.4em .6em;background:#fafafa;border-radius:3px;border:1px solid #e8e8e8}input{width:100%;margin-bottom:.5em;padding:.4em;border:1px solid #ddd;border-radius:3px;font-size:.9em}nav{margin:.8em 0;padding:.3em 0}.stats{background:#fff3cd;padding:.5em;border-radius:3px;margin:.5em 0;text-align:center;font-size:.9em}'
 
-# Elegant CSS for individual blog posts with clean minimal code formatting
-POST_CSS='body{max-width:40em;margin:2em auto;padding:0 1em;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;line-height:1.6;color:#333;-webkit-font-smoothing:antialiased}a{color:#0066cc;text-decoration:none}a:hover{text-decoration:underline}h1{font-size:1.8em;margin:0 0 .3em 0;color:#222;font-weight:600}h2{font-size:1.3em;margin:2em 0 1em;color:#333;font-weight:600}h3{font-size:1.1em;margin:1.5em 0 .5em;color:#444;font-weight:600}p{margin:1em 0;color:#333}small{color:#666;display:block;margin-bottom:1.5em;font-size:.9em}strong{font-weight:600}code{background:#f6f8fa;color:#24292e;padding:.2em .4em;border-radius:3px;font-family:"SF Mono",Monaco,monospace;font-size:.9em}pre{background:#f6f8fa;padding:1em;margin:1.5em 0;border-radius:6px;overflow-x:auto;line-height:1.4;border:1px solid #e1e4e8}pre code{background:none;padding:0;font-size:.85em;color:#24292e;font-family:"SF Mono",Monaco,monospace}ul{margin:1em 0;padding-left:1.5em}li{margin:.5em 0;color:#333}nav{margin:1.5em 0;padding:.5em 0;border-bottom:1px solid #eee}blockquote{background:#f6f8fa;border-left:4px solid #0366d6;margin:1.5em 0;padding:1em 1.5em;border-radius:0 6px 6px 0;color:#586069;font-style:italic}'
+# Elegant CSS for individual blog posts with copy-enabled code blocks
+POST_CSS='body{max-width:40em;margin:2em auto;padding:0 1em;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;line-height:1.6;color:#333;-webkit-font-smoothing:antialiased}a{color:#0066cc;text-decoration:none}a:hover{text-decoration:underline}h1{font-size:1.8em;margin:0 0 .3em 0;color:#222;font-weight:600}h2{font-size:1.3em;margin:2em 0 1em;color:#333;font-weight:600}h3{font-size:1.1em;margin:1.5em 0 .5em;color:#444;font-weight:600}p{margin:1em 0;color:#333}small{color:#666;display:block;margin-bottom:1.5em;font-size:.9em}strong{font-weight:600}code{background:#f6f8fa;color:#24292e;padding:.1em .3em;border-radius:3px;font-family:"SF Mono",Monaco,monospace;font-size:.85em}pre{background:#f6f8fa;padding:.4em .6em;margin:.8em 0;border-radius:4px;overflow-x:auto;line-height:1.2;border:1px solid #e1e4e8;position:relative}pre:hover .copy-btn{opacity:1}pre code{background:none;padding:0;font-size:.8em;color:#24292e;font-family:"SF Mono",Monaco,monospace;line-height:1.2;display:block}.copy-btn{position:absolute;top:4px;right:4px;background:#fff;border:1px solid #d1d9e0;border-radius:3px;padding:2px 6px;font-size:11px;color:#586069;cursor:pointer;opacity:0;transition:opacity 0.2s;user-select:none}.copy-btn:hover{background:#f6f8fa;color:#0366d6}.copy-btn:active{background:#e1e8ed}.copy-success{color:#28a745!important}ul{margin:1em 0;padding-left:1.5em}li{margin:.5em 0;color:#333}nav{margin:1.5em 0;padding:.5em 0;border-bottom:1px solid #eee}blockquote{background:#f6f8fa;border-left:4px solid #0366d6;margin:1.5em 0;padding:1em 1.5em;border-radius:0 6px 6px 0;color:#586069;font-style:italic}'
 
 files=($(ls content/*.md 2>/dev/null | sort))
 total=${#files[@]}
@@ -66,7 +66,7 @@ process_markdown() {
     
     /CODEBLOCK_MARKER/ {
         if (in_code) {
-            print "</code></pre>"
+            print "</code><span class=\"copy-btn\" onclick=\"copyCode(this)\">Copy</span></pre>"
             in_code = 0
         } else {
             if (in_list) { print "</ul>"; in_list = 0 }
@@ -106,7 +106,7 @@ process_markdown() {
     }
     
     END {
-        if (in_code) print "</code></pre>"
+        if (in_code) print "</code><span class=\"copy-btn\" onclick=\"copyCode(this)\">Copy</span></pre>"
         if (in_list) print "</ul>"
     }
     ' | sed '
@@ -130,7 +130,7 @@ for i in "${!files[@]}"; do
     # Extract date from filename
     date=$(basename "$file" | cut -d- -f1-3 | sed 's/-/\//g')
     
-    # Generate elegant individual post layout
+    # Generate elegant individual post layout with copy functionality
     cat > "public/p/$num.html" << EOF
 <!DOCTYPE html>
 <html lang="en">
@@ -146,6 +146,31 @@ for i in "${!files[@]}"; do
 <small>$date</small>
 $content
 <nav style="border-top:1px solid #eee;margin-top:2em;padding-top:1em"><a href="../">← Back to Blog</a></nav>
+<script>
+function copyCode(btn) {
+    const code = btn.previousElementSibling;
+    const text = code.textContent;
+    navigator.clipboard.writeText(text).then(() => {
+        const original = btn.textContent;
+        btn.textContent = 'Copied!';
+        btn.classList.add('copy-success');
+        setTimeout(() => {
+            btn.textContent = original;
+            btn.classList.remove('copy-success');
+        }, 2000);
+    }).catch(() => {
+        // Fallback for older browsers
+        const textArea = document.createElement('textarea');
+        textArea.value = text;
+        document.body.appendChild(textArea);
+        textArea.select();
+        document.execCommand('copy');
+        document.body.removeChild(textArea);
+        btn.textContent = 'Copied!';
+        setTimeout(() => btn.textContent = 'Copy', 2000);
+    });
+}
+</script>
 </body>
 </html>
 EOF
@@ -193,8 +218,8 @@ done
     echo "</div><script>let o,p=document.getElementById('p');function f(){let q=s.value.toLowerCase();if(!o)o=p.innerHTML;if(!q){p.innerHTML=o;return}let r=Array.from(p.children).filter(e=>e.textContent.toLowerCase().includes(q));p.innerHTML=r.length?r.map(e=>e.outerHTML).join(''):'<p>No posts found</p>'}</script>"
 } > public/archive/index.html
 
-echo "✅ Elegant blog built with clean minimal code formatting!"
+echo "✅ Elegant blog built with copy-enabled code blocks!"
 echo "📊 $total posts generated"
-echo "🎨 All posts have uniform styling with clean, readable code blocks"
-echo "💻 Code sections feature minimal GitHub-style design"
+echo "🎨 All posts have uniform styling with compact, copyable code blocks"
+echo "📋 Code sections include elegant copy-to-clipboard functionality"
 echo "🚀 Blog is ready!"
