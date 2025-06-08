@@ -4,42 +4,13 @@ set -e
 rm -rf public
 mkdir -p public/p public/archive
 
-echo "Building minimal blog with pagination..."
+echo "Building minimal blog..."
 
 POSTS_PER_MAIN_PAGE=20
 
-# Collect all posts with dates for sorting
-declare -a post_files
-declare -a post_dates
-
-for f in content/*.md; do
-    [ -f "$f" ] || continue
-    filename=$(basename "$f")
-    date_part=$(echo "$filename" | cut -d- -f1-3)
-    post_files+=("$f")
-    post_dates+=("$date_part")
-done
-
-# Sort posts by date (newest first) using a simple approach
-echo "Sorting posts by date..."
-temp_file=$(mktemp)
-for i in "${!post_files[@]}"; do
-    echo "${post_dates[$i]} ${post_files[$i]}" >> "$temp_file"
-done
-
-# Sort and extract filenames
-sorted_files=$(sort -r "$temp_file" | cut -d' ' -f2-)
-rm "$temp_file"
-
-# Convert back to array
-sorted_post_files=()
-while IFS= read -r line; do
-    sorted_post_files+=("$line")
-done <<< "$sorted_files"
-
-# Generate individual post pages
+# Simple approach: Generate individual posts first
 i=1
-for f in "${sorted_post_files[@]}"; do
+for f in content/*.md; do
     [ -f "$f" ] || continue
     
     filename=$(basename "$f")
@@ -81,14 +52,13 @@ $content
 <nav style="border-top:1px solid #eee;border-bottom:0"><a href="../">← Back</a></nav>
 EOF
     
-    size=$(wc -c < "public/p/$i.html")
-    echo "Generated: $title ($size bytes)"
+    echo "Generated: $title"
     ((i++))
 done
 
-total_posts=${#sorted_post_files[@]}
+total_posts=$((i-1))
 
-# Generate main index page (RECENT POSTS ONLY)
+# Generate main index page (recent posts only - simple approach)
 {
     echo '<!DOCTYPE html><title>My Blog</title>
 <style>
@@ -106,12 +76,11 @@ a:hover{text-decoration:underline}
 <input id=s placeholder="Search recent posts..." onkeyup="f()">
 <div id=p>'
     
-    # Add only recent posts to main page
+    # Add recent posts (simple reverse order - newest files first)
     count=0
-    i=1
-    for f in "${sorted_post_files[@]}"; do
+    # Use ls with reverse sort to get newest first
+    for f in $(ls -r content/*.md 2>/dev/null | head -n $POSTS_PER_MAIN_PAGE); do
         [ -f "$f" ] || continue
-        [ $count -ge $POSTS_PER_MAIN_PAGE ] && break
         
         filename=$(basename "$f")
         date_part=$(echo "$filename" | cut -d- -f1-3)
@@ -123,14 +92,23 @@ a:hover{text-decoration:underline}
         short_date="$month/$day/${year#20}"
         title=$(head -1 "$f" | sed 's/^# //')
         excerpt=$(sed -n '3p' "$f")
-        echo "<div class=post><small>$short_date</small><h2><a href=\"p/$i.html\">$title</a></h2>$excerpt</div>"
+        
+        # Find post number for linking
+        post_num=1
+        for check_f in content/*.md; do
+            if [ "$check_f" = "$f" ]; then
+                break
+            fi
+            ((post_num++))
+        done
+        
+        echo "<div class=post><small>$short_date</small><h2><a href=\"p/$post_num.html\">$title</a></h2>$excerpt</div>"
         ((count++))
-        ((i++))
     done
     
     echo '</div>'
     
-    # Add archive link if more posts exist
+    # Add archive link
     if [ $total_posts -gt $POSTS_PER_MAIN_PAGE ]; then
         echo "<div class=\"archive-link\">📚 <a href=\"archive/\">View all $total_posts posts in archive</a> 📚</div>"
     fi
@@ -147,7 +125,7 @@ function f(){
 </script>'
 } > public/index.html
 
-# Generate complete archive page (ALL POSTS)
+# Generate archive page (all posts)
 {
     echo '<!DOCTYPE html><title>Blog Archive</title>
 <style>
@@ -166,10 +144,10 @@ a:hover{text-decoration:underline}
 <input id=s placeholder="Search all posts..." onkeyup="f()">
 <div id=p>'
     
-    # Add ALL posts to archive
-    i=1
-    for f in "${sorted_post_files[@]}"; do
+    # Add all posts to archive (reverse chronological)
+    for f in $(ls -r content/*.md 2>/dev/null); do
         [ -f "$f" ] || continue
+        
         filename=$(basename "$f")
         date_part=$(echo "$filename" | cut -d- -f1-3)
         year=$(echo "$date_part" | cut -d- -f1)
@@ -180,8 +158,17 @@ a:hover{text-decoration:underline}
         short_date="$month/$day/${year#20}"
         title=$(head -1 "$f" | sed 's/^# //')
         excerpt=$(sed -n '3p' "$f")
-        echo "<div class=post><small>$short_date</small><h2><a href=\"../p/$i.html\">$title</a></h2>$excerpt</div>"
-        ((i++))
+        
+        # Find post number for linking
+        post_num=1
+        for check_f in content/*.md; do
+            if [ "$check_f" = "$f" ]; then
+                break
+            fi
+            ((post_num++))
+        done
+        
+        echo "<div class=post><small>$short_date</small><h2><a href=\"../p/$post_num.html\">$title</a></h2>$excerpt</div>"
     done
     
     echo '</div>
@@ -201,6 +188,6 @@ main_size=$(wc -c < public/index.html)
 archive_size=$(wc -c < public/archive/index.html)
 
 echo "✅ Built $total_posts posts successfully!"
-echo "📦 Main page: $main_size bytes ($POSTS_PER_MAIN_PAGE recent posts)"
+echo "📦 Main page: $main_size bytes (recent $POSTS_PER_MAIN_PAGE posts)"
 echo "📚 Archive: $archive_size bytes (all $total_posts posts)"
-echo "🚀 Blog is scalable and ready!"
+echo "🚀 Blog is ready!"
