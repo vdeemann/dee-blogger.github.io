@@ -2,11 +2,16 @@
 set -e
 
 rm -rf public
-mkdir -p public/p
+mkdir -p public/p public/archive
 
-echo "Building hyper-optimized blog..."
+echo "Building minimal blog..."
 
-# Generate individual post pages
+POSTS_PER_INDEX=20
+
+# Collect all posts with metadata
+declare -a posts
+declare -a post_data
+
 i=1
 for f in content/*.md; do
     [ -f "$f" ] || continue
@@ -14,60 +19,151 @@ for f in content/*.md; do
     filename=$(basename "$f")
     date_part=$(echo "$filename" | cut -d- -f1-3)
     year=$(echo "$date_part" | cut -d- -f1)
-    month=$(echo "$date_part" | cut -d- -f2)  
+    month=$(echo "$date_part" | cut -d- -f2)
     day=$(echo "$date_part" | cut -d- -f3)
     month=${month#0}
     day=${day#0}
     short_date="$month/$day/${year#20}"
     title=$(head -1 "$f" | sed 's/^# //')
+    excerpt=$(sed -n '3p' "$f")
     
-    # Enhanced content processing
+    # Store post data
+    posts+=("$f")
+    post_data+=("$i|$short_date|$title|$excerpt")
+    
+    ((i++))
+done
+
+# Sort posts by date (newest first)
+IFS=$'\n' sorted_data=($(sort -t'|' -k2 -r <<<"${post_data[*]}"))
+unset IFS
+
+# Generate individual post pages
+for data in "${sorted_data[@]}"; do
+    IFS='|' read -r post_num short_date title excerpt <<< "$data"
+    f="${posts[$((post_num-1))]}"
+    
     content=$(tail -n +3 "$f" | sed '
         s/^$/<p>/
         s/^## \(.*\)/<h2>\1<\/h2>/
         s/^\*\*\([^*]*\)\*\*:/<strong>\1:<\/strong>/
         s/\*\*\([^*]*\)\*\*/<strong>\1<\/strong>/g
-        s/^- /<p>• /
-        s/^[^<#*]/<p>&/
+        s/^[^<#*-]/<p>&/
     ')
     
-    # Hyper-optimized template (maintains all visuals)
-    cat > "public/p/$i.html" << EOF
-<!DOCTYPE html><title>$title</title><style>body{max-width:40em;margin:2em auto;padding:0 1em;font-family:system-ui,sans-serif;line-height:1.6;color:#333}a{color:#06c}a:hover{text-decoration:underline}h1{font-size:1.8em;margin-bottom:.5em}h2{font-size:1.3em;margin:2em 0 1em;color:#222}p{margin-bottom:1em}small{color:#666;display:block;margin-bottom:1em}pre{background:#f8f8f8;padding:1em;margin:1.5em 0;border-radius:4px;overflow-x:auto;border-left:3px solid #ddd}code{font-family:monospace;font-size:.9em}strong{font-weight:600}nav{margin:1.5em 0;padding:.5em 0;border-bottom:1px solid #eee}nav a{text-decoration:none}</style><nav><a href="../">← Blog</a></nav><h1>$title</h1><small>$short_date</small>$content<nav style="border-top:1px solid #eee;border-bottom:0"><a href="../">← Back to Blog</a></nav>
+    cat > "public/p/$post_num.html" << EOF
+<!DOCTYPE html><title>$title</title>
+<style>
+body{max-width:40em;margin:2em auto;padding:0 1em;font-family:system-ui,sans-serif;line-height:1.6;color:#333}
+a{color:#06c}a:hover{text-decoration:underline}
+h1{font-size:1.8em;margin-bottom:.5em}
+h2{font-size:1.3em;margin:2em 0 1em;color:#222}
+p{margin-bottom:1em}
+small{color:#666;display:block;margin-bottom:1em}
+pre{background:#f8f8f8;padding:1em;margin:1.5em 0;border-radius:4px;overflow-x:auto;border-left:3px solid #ddd}
+code{font-family:monospace;font-size:.9em}
+strong{font-weight:600}
+nav{margin:1.5em 0;padding:.5em 0;border-bottom:1px solid #eee}
+</style>
+<nav><a href="../">← Blog</a></nav>
+<h1>$title</h1>
+<small>$short_date</small>
+$content
+<nav style="border-top:1px solid #eee;border-bottom:0"><a href="../">← Back</a></nav>
 EOF
     
-    size=$(wc -c < "public/p/$i.html")
-    echo "Generated post $i: $title ($size bytes)"
-    ((i++))
+    size=$(wc -c < "public/p/$post_num.html")
+    echo "Generated: $title ($size bytes)"
 done
 
-# Generate hyper-optimized main index
+# Generate main index (recent posts only)
 {
-    echo '<!DOCTYPE html><title>My Blog</title><style>body{max-width:40em;margin:2em auto;padding:0 1em;font-family:system-ui,sans-serif;line-height:1.6;color:#333}input{width:100%;margin-bottom:1em;padding:.5em;border:1px solid #ddd;border-radius:4px}small{color:#666;display:block;margin:0}h2{margin:0}a{color:#06c;text-decoration:none}a:hover{text-decoration:underline}.post{margin-bottom:2em;padding:1em;background:#fafafa;border-radius:4px}</style><h1>My Blog</h1><input id=s placeholder="Search posts..." onkeyup="f()"><div id=p>'
+    echo '<!DOCTYPE html><title>My Blog</title>
+<style>
+body{max-width:40em;margin:2em auto;padding:0 1em;font-family:system-ui,sans-serif;line-height:1.6;color:#333}
+input{width:100%;margin-bottom:1em;padding:.5em;border:1px solid #ddd;border-radius:4px}
+small{color:#666;display:block;margin:0}
+h2{margin:0}
+a{color:#06c;text-decoration:none}
+a:hover{text-decoration:underline}
+.post{margin-bottom:2em;padding:1em;background:#fafafa;border-radius:4px}
+.meta{margin:1em 0;padding:.5em 0;border-top:1px solid #eee;text-align:center}
+</style>
+<h1>My Blog</h1>
+<input id=s placeholder="Search posts..." onkeyup="f()">
+<div id=p>'
     
-    i=1
-    for f in content/*.md; do
-        [ -f "$f" ] || continue
-        filename=$(basename "$f")
-        date_part=$(echo "$filename" | cut -d- -f1-3)
-        year=$(echo "$date_part" | cut -d- -f1)
-        month=$(echo "$date_part" | cut -d- -f2)
-        day=$(echo "$date_part" | cut -d- -f3)
-        month=${month#0}
-        day=${day#0}
-        short_date="$month/$day/${year#20}"
-        title=$(head -1 "$f" | sed 's/^# //')
-        excerpt=$(sed -n '3p' "$f")
-        echo "<div class=post><small>$short_date</small><h2><a href=\"p/$i.html\">$title</a></h2>$excerpt</div>"
-        ((i++))
+    # Show recent posts
+    count=0
+    for data in "${sorted_data[@]}"; do
+        [ $count -ge $POSTS_PER_INDEX ] && break
+        IFS='|' read -r post_num short_date title excerpt <<< "$data"
+        echo "<div class=post><small>$short_date</small><h2><a href=\"p/$post_num.html\">$title</a></h2>$excerpt</div>"
+        ((count++))
     done
     
-    echo '</div><script>let o,p=document.getElementById("p");function f(){let q=s.value.toLowerCase();if(!o)o=p.innerHTML;if(!q){p.innerHTML=o;return}let r=Array.from(p.children).filter(e=>e.textContent.toLowerCase().includes(q));p.innerHTML=r.length?r.map(e=>e.outerHTML).join(""):"<div class=post><p>No posts found</p></div>"}</script>'
+    echo '</div>'
+    
+    # Add archive link if more posts exist
+    total_posts=${#sorted_data[@]}
+    if [ $total_posts -gt $POSTS_PER_INDEX ]; then
+        echo "<div class=meta><a href=\"archive/\">📚 View all $total_posts posts</a></div>"
+    fi
+    
+    echo '<script>
+let o,p=document.getElementById("p");
+function f(){
+    let q=s.value.toLowerCase();
+    if(!o)o=p.innerHTML;
+    if(!q){p.innerHTML=o;return}
+    let r=Array.from(p.children).filter(e=>e.textContent.toLowerCase().includes(q));
+    p.innerHTML=r.length?r.map(e=>e.outerHTML).join(""):"<div class=post><p>No posts found</p></div>"
+}
+</script>'
 } > public/index.html
 
-post_count=$(ls content/*.md 2>/dev/null | wc -l)
-total_size=$(du -sh public/ 2>/dev/null | cut -f1 || echo "N/A")
-echo "✅ Built $post_count posts (hyper-optimized)"
-echo "📦 Total size: $total_size"
-echo "🎨 All visuals preserved"
-echo "🚀 Maximum optimization achieved!"
+# Generate complete archive
+{
+    echo '<!DOCTYPE html><title>Blog Archive</title>
+<style>
+body{max-width:40em;margin:2em auto;padding:0 1em;font-family:system-ui,sans-serif;line-height:1.6;color:#333}
+input{width:100%;margin-bottom:1em;padding:.5em;border:1px solid #ddd;border-radius:4px}
+small{color:#666;display:block;margin:0}
+h2{margin:0;font-size:1.1em}
+a{color:#06c;text-decoration:none}
+a:hover{text-decoration:underline}
+.post{margin-bottom:1.5em;padding:.8em;background:#fafafa;border-radius:4px}
+.meta{margin:1em 0;padding:.5em 0;border-top:1px solid #eee;text-align:center}
+</style>
+<nav><a href="../">← Home</a></nav>
+<h1>All Posts</h1>
+<input id=s placeholder="Search all posts..." onkeyup="f()">
+<div id=p>'
+    
+    # Show all posts in archive
+    for data in "${sorted_data[@]}"; do
+        IFS='|' read -r post_num short_date title excerpt <<< "$data"
+        echo "<div class=post><small>$short_date</small><h2><a href=\"../p/$post_num.html\">$title</a></h2>$excerpt</div>"
+    done
+    
+    echo '</div>
+<script>
+let o,p=document.getElementById("p");
+function f(){
+    let q=s.value.toLowerCase();
+    if(!o)o=p.innerHTML;
+    if(!q){p.innerHTML=o;return}
+    let r=Array.from(p.children).filter(e=>e.textContent.toLowerCase().includes(q));
+    p.innerHTML=r.length?r.map(e=>e.outerHTML).join(""):"<div class=post><p>No posts found</p></div>"
+}
+</script>'
+} > public/archive/index.html
+
+total_posts=${#sorted_data[@]}
+main_size=$(wc -c < public/index.html)
+archive_size=$(wc -c < public/archive/index.html)
+
+echo "✅ Built $total_posts posts"
+echo "📦 Main page: $main_size bytes ($POSTS_PER_INDEX recent posts)"
+echo "📚 Archive: $archive_size bytes (all posts)"
+echo "🚀 Ready for deployment!"
