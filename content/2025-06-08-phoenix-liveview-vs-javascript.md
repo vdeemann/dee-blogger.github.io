@@ -32,24 +32,6 @@ const Counter = () => {
 };
 </code></pre>
 
-**Vue.js (with Composition API):**
-
-<pre><code>&lt;template&gt;
-  &lt;div&gt;
-    &lt;span&gt;{{ count }}&lt;/span&gt;
-    &lt;button @click="increment"&gt;+&lt;/button&gt;
-    &lt;button @click="decrement"&gt;-&lt;/button&gt;
-  &lt;/div&gt;
-&lt;/template&gt;
-
-&lt;script setup&gt;
-import { ref } from 'vue'
-const count = ref(0)
-const increment = () => count.value++
-const decrement = () => count.value--
-&lt;/script&gt;
-</code></pre>
-
 **Phoenix LiveView:**
 
 <pre><code>defmodule MyAppWeb.CounterLive do
