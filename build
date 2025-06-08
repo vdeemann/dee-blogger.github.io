@@ -6,12 +6,7 @@ mkdir -p public/p public/archive
 
 echo "Building minimal blog..."
 
-POSTS_PER_INDEX=20
-
-# Collect all posts with metadata
-declare -a posts
-declare -a post_data
-
+# Generate individual post pages
 i=1
 for f in content/*.md; do
     [ -f "$f" ] || continue
@@ -19,29 +14,12 @@ for f in content/*.md; do
     filename=$(basename "$f")
     date_part=$(echo "$filename" | cut -d- -f1-3)
     year=$(echo "$date_part" | cut -d- -f1)
-    month=$(echo "$date_part" | cut -d- -f2)
+    month=$(echo "$date_part" | cut -d- -f2)  
     day=$(echo "$date_part" | cut -d- -f3)
     month=${month#0}
     day=${day#0}
     short_date="$month/$day/${year#20}"
     title=$(head -1 "$f" | sed 's/^# //')
-    excerpt=$(sed -n '3p' "$f")
-    
-    # Store post data
-    posts+=("$f")
-    post_data+=("$i|$short_date|$title|$excerpt")
-    
-    ((i++))
-done
-
-# Sort posts by date (newest first)
-IFS=$'\n' sorted_data=($(sort -t'|' -k2 -r <<<"${post_data[*]}"))
-unset IFS
-
-# Generate individual post pages
-for data in "${sorted_data[@]}"; do
-    IFS='|' read -r post_num short_date title excerpt <<< "$data"
-    f="${posts[$((post_num-1))]}"
     
     content=$(tail -n +3 "$f" | sed '
         s/^$/<p>/
@@ -51,7 +29,7 @@ for data in "${sorted_data[@]}"; do
         s/^[^<#*-]/<p>&/
     ')
     
-    cat > "public/p/$post_num.html" << EOF
+    cat > "public/p/$i.html" << EOF
 <!DOCTYPE html><title>$title</title>
 <style>
 body{max-width:40em;margin:2em auto;padding:0 1em;font-family:system-ui,sans-serif;line-height:1.6;color:#333}
@@ -72,11 +50,12 @@ $content
 <nav style="border-top:1px solid #eee;border-bottom:0"><a href="../">← Back</a></nav>
 EOF
     
-    size=$(wc -c < "public/p/$post_num.html")
+    size=$(wc -c < "public/p/$i.html")
     echo "Generated: $title ($size bytes)"
+    ((i++))
 done
 
-# Generate main index (recent posts only)
+# Generate main index page
 {
     echo '<!DOCTYPE html><title>My Blog</title>
 <style>
@@ -93,24 +72,26 @@ a:hover{text-decoration:underline}
 <input id=s placeholder="Search posts..." onkeyup="f()">
 <div id=p>'
     
-    # Show recent posts
-    count=0
-    for data in "${sorted_data[@]}"; do
-        [ $count -ge $POSTS_PER_INDEX ] && break
-        IFS='|' read -r post_num short_date title excerpt <<< "$data"
-        echo "<div class=post><small>$short_date</small><h2><a href=\"p/$post_num.html\">$title</a></h2>$excerpt</div>"
-        ((count++))
+    # Add all posts to main page (simple approach)
+    i=1
+    for f in content/*.md; do
+        [ -f "$f" ] || continue
+        filename=$(basename "$f")
+        date_part=$(echo "$filename" | cut -d- -f1-3)
+        year=$(echo "$date_part" | cut -d- -f1)
+        month=$(echo "$date_part" | cut -d- -f2)
+        day=$(echo "$date_part" | cut -d- -f3)
+        month=${month#0}
+        day=${day#0}
+        short_date="$month/$day/${year#20}"
+        title=$(head -1 "$f" | sed 's/^# //')
+        excerpt=$(sed -n '3p' "$f")
+        echo "<div class=post><small>$short_date</small><h2><a href=\"p/$i.html\">$title</a></h2>$excerpt</div>"
+        ((i++))
     done
     
-    echo '</div>'
-    
-    # Add archive link if more posts exist
-    total_posts=${#sorted_data[@]}
-    if [ $total_posts -gt $POSTS_PER_INDEX ]; then
-        echo "<div class=meta><a href=\"archive/\">📚 View all $total_posts posts</a></div>"
-    fi
-    
-    echo '<script>
+    echo '</div>
+<script>
 let o,p=document.getElementById("p");
 function f(){
     let q=s.value.toLowerCase();
@@ -122,7 +103,7 @@ function f(){
 </script>'
 } > public/index.html
 
-# Generate complete archive
+# Generate simple archive page
 {
     echo '<!DOCTYPE html><title>Blog Archive</title>
 <style>
@@ -133,17 +114,28 @@ h2{margin:0;font-size:1.1em}
 a{color:#06c;text-decoration:none}
 a:hover{text-decoration:underline}
 .post{margin-bottom:1.5em;padding:.8em;background:#fafafa;border-radius:4px}
-.meta{margin:1em 0;padding:.5em 0;border-top:1px solid #eee;text-align:center}
 </style>
 <nav><a href="../">← Home</a></nav>
 <h1>All Posts</h1>
 <input id=s placeholder="Search all posts..." onkeyup="f()">
 <div id=p>'
     
-    # Show all posts in archive
-    for data in "${sorted_data[@]}"; do
-        IFS='|' read -r post_num short_date title excerpt <<< "$data"
-        echo "<div class=post><small>$short_date</small><h2><a href=\"../p/$post_num.html\">$title</a></h2>$excerpt</div>"
+    # Add all posts to archive
+    i=1
+    for f in content/*.md; do
+        [ -f "$f" ] || continue
+        filename=$(basename "$f")
+        date_part=$(echo "$filename" | cut -d- -f1-3)
+        year=$(echo "$date_part" | cut -d- -f1)
+        month=$(echo "$date_part" | cut -d- -f2)
+        day=$(echo "$date_part" | cut -d- -f3)
+        month=${month#0}
+        day=${day#0}
+        short_date="$month/$day/${year#20}"
+        title=$(head -1 "$f" | sed 's/^# //')
+        excerpt=$(sed -n '3p' "$f")
+        echo "<div class=post><small>$short_date</small><h2><a href=\"../p/$i.html\">$title</a></h2>$excerpt</div>"
+        ((i++))
     done
     
     echo '</div>
@@ -159,11 +151,9 @@ function f(){
 </script>'
 } > public/archive/index.html
 
-total_posts=${#sorted_data[@]}
-main_size=$(wc -c < public/index.html)
-archive_size=$(wc -c < public/archive/index.html)
+post_count=$(ls content/*.md 2>/dev/null | wc -l)
+total_size=$(du -sh public/ 2>/dev/null | cut -f1 || echo "N/A")
 
-echo "✅ Built $total_posts posts"
-echo "📦 Main page: $main_size bytes ($POSTS_PER_INDEX recent posts)"
-echo "📚 Archive: $archive_size bytes (all posts)"
-echo "🚀 Ready for deployment!"
+echo "✅ Built $post_count posts successfully!"
+echo "📦 Total size: $total_size"
+echo "🚀 Blog is ready!"
