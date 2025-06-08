@@ -4,11 +4,42 @@ set -e
 rm -rf public
 mkdir -p public/p public/archive
 
-echo "Building minimal blog..."
+echo "Building minimal blog with pagination..."
+
+POSTS_PER_MAIN_PAGE=20
+
+# Collect all posts with dates for sorting
+declare -a post_files
+declare -a post_dates
+
+for f in content/*.md; do
+    [ -f "$f" ] || continue
+    filename=$(basename "$f")
+    date_part=$(echo "$filename" | cut -d- -f1-3)
+    post_files+=("$f")
+    post_dates+=("$date_part")
+done
+
+# Sort posts by date (newest first) using a simple approach
+echo "Sorting posts by date..."
+temp_file=$(mktemp)
+for i in "${!post_files[@]}"; do
+    echo "${post_dates[$i]} ${post_files[$i]}" >> "$temp_file"
+done
+
+# Sort and extract filenames
+sorted_files=$(sort -r "$temp_file" | cut -d' ' -f2-)
+rm "$temp_file"
+
+# Convert back to array
+sorted_post_files=()
+while IFS= read -r line; do
+    sorted_post_files+=("$line")
+done <<< "$sorted_files"
 
 # Generate individual post pages
 i=1
-for f in content/*.md; do
+for f in "${sorted_post_files[@]}"; do
     [ -f "$f" ] || continue
     
     filename=$(basename "$f")
@@ -43,7 +74,7 @@ code{font-family:monospace;font-size:.9em}
 strong{font-weight:600}
 nav{margin:1.5em 0;padding:.5em 0;border-bottom:1px solid #eee}
 </style>
-<nav><a href="../">← Blog</a></nav>
+<nav><a href="../">← Blog</a> | <a href="../archive/">Archive</a></nav>
 <h1>$title</h1>
 <small>$short_date</small>
 $content
@@ -55,7 +86,9 @@ EOF
     ((i++))
 done
 
-# Generate main index page
+total_posts=${#sorted_post_files[@]}
+
+# Generate main index page (RECENT POSTS ONLY)
 {
     echo '<!DOCTYPE html><title>My Blog</title>
 <style>
@@ -67,15 +100,19 @@ a{color:#06c;text-decoration:none}
 a:hover{text-decoration:underline}
 .post{margin-bottom:2em;padding:1em;background:#fafafa;border-radius:4px}
 .meta{margin:1em 0;padding:.5em 0;border-top:1px solid #eee;text-align:center}
+.archive-link{background:#e8f5e8;padding:1em;border-radius:4px;margin:2em 0;text-align:center;border:1px solid #4caf50}
 </style>
 <h1>My Blog</h1>
-<input id=s placeholder="Search posts..." onkeyup="f()">
+<input id=s placeholder="Search recent posts..." onkeyup="f()">
 <div id=p>'
     
-    # Add all posts to main page (simple approach)
+    # Add only recent posts to main page
+    count=0
     i=1
-    for f in content/*.md; do
+    for f in "${sorted_post_files[@]}"; do
         [ -f "$f" ] || continue
+        [ $count -ge $POSTS_PER_MAIN_PAGE ] && break
+        
         filename=$(basename "$f")
         date_part=$(echo "$filename" | cut -d- -f1-3)
         year=$(echo "$date_part" | cut -d- -f1)
@@ -87,23 +124,30 @@ a:hover{text-decoration:underline}
         title=$(head -1 "$f" | sed 's/^# //')
         excerpt=$(sed -n '3p' "$f")
         echo "<div class=post><small>$short_date</small><h2><a href=\"p/$i.html\">$title</a></h2>$excerpt</div>"
+        ((count++))
         ((i++))
     done
     
-    echo '</div>
-<script>
+    echo '</div>'
+    
+    # Add archive link if more posts exist
+    if [ $total_posts -gt $POSTS_PER_MAIN_PAGE ]; then
+        echo "<div class=\"archive-link\">📚 <a href=\"archive/\">View all $total_posts posts in archive</a> 📚</div>"
+    fi
+    
+    echo '<script>
 let o,p=document.getElementById("p");
 function f(){
     let q=s.value.toLowerCase();
     if(!o)o=p.innerHTML;
     if(!q){p.innerHTML=o;return}
     let r=Array.from(p.children).filter(e=>e.textContent.toLowerCase().includes(q));
-    p.innerHTML=r.length?r.map(e=>e.outerHTML).join(""):"<div class=post><p>No posts found</p></div>"
+    p.innerHTML=r.length?r.map(e=>e.outerHTML).join(""):"<div class=post><p>No posts found in recent posts. <a href=\"archive/\">Search all posts</a></p></div>"
 }
 </script>'
 } > public/index.html
 
-# Generate simple archive page
+# Generate complete archive page (ALL POSTS)
 {
     echo '<!DOCTYPE html><title>Blog Archive</title>
 <style>
@@ -114,15 +158,17 @@ h2{margin:0;font-size:1.1em}
 a{color:#06c;text-decoration:none}
 a:hover{text-decoration:underline}
 .post{margin-bottom:1.5em;padding:.8em;background:#fafafa;border-radius:4px}
+.stats{background:#fff3cd;padding:1em;border-radius:4px;margin:1em 0;text-align:center;border:1px solid #ffc107}
 </style>
 <nav><a href="../">← Home</a></nav>
 <h1>All Posts</h1>
+<div class="stats">📊 Total: '$total_posts' posts | 🔍 All searchable below</div>
 <input id=s placeholder="Search all posts..." onkeyup="f()">
 <div id=p>'
     
-    # Add all posts to archive
+    # Add ALL posts to archive
     i=1
-    for f in content/*.md; do
+    for f in "${sorted_post_files[@]}"; do
         [ -f "$f" ] || continue
         filename=$(basename "$f")
         date_part=$(echo "$filename" | cut -d- -f1-3)
@@ -151,9 +197,10 @@ function f(){
 </script>'
 } > public/archive/index.html
 
-post_count=$(ls content/*.md 2>/dev/null | wc -l)
-total_size=$(du -sh public/ 2>/dev/null | cut -f1 || echo "N/A")
+main_size=$(wc -c < public/index.html)
+archive_size=$(wc -c < public/archive/index.html)
 
-echo "✅ Built $post_count posts successfully!"
-echo "📦 Total size: $total_size"
-echo "🚀 Blog is ready!"
+echo "✅ Built $total_posts posts successfully!"
+echo "📦 Main page: $main_size bytes ($POSTS_PER_MAIN_PAGE recent posts)"
+echo "📚 Archive: $archive_size bytes (all $total_posts posts)"
+echo "🚀 Blog is scalable and ready!"
