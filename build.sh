@@ -19,92 +19,95 @@ total=${#files[@]}
 
 echo "📁 Processing $total files with consistent styling..."
 
-# Enhanced markdown processing function
+# Simple but effective markdown processing function
 process_markdown() {
     local file="$1"
-    tail -n +3 "$file" | awk '
-    BEGIN { in_code_block = 0; in_list = 0 }
-    
-    # Handle code blocks with language detection
-    /^```/ {
-        if (in_code_block) {
-            print "</code></pre>"
-            in_code_block = 0
-        } else {
-            lang = substr($0, 4)
-            if (lang != "") {
-                print "<pre data-lang=\"" lang "\"><code>"
-            } else {
-                print "<pre><code>"
+    tail -n +3 "$file" | sed '
+        # Handle code blocks first
+        /^```/,/^```/ {
+            /^```$/ {
+                s/.*/CODEBLOCK_MARKER/
+                b
             }
-            in_code_block = 1
+            /^```.*/ {
+                s/.*/CODEBLOCK_MARKER/
+                b
+            }
+            s/&/\&amp;/g
+            s/</\&lt;/g
+            s/>/\&gt;/g
+            s/^/CODE_LINE:/
+            b
+        }
+        
+        # Handle headers
+        s/^### \(.*\)/<h3>\1<\/h3>/
+        s/^## \(.*\)/<h2>\1<\/h2>/
+        s/^# \(.*\)/<h1>\1<\/h1>/
+        
+        # Handle lists
+        s/^[•*-] \(.*\)/<li>\1<\/li>/
+        
+        # Handle bold and inline code
+        s/\*\*\([^*]*\)\*\*/<strong>\1<\/strong>/g
+        s/`\([^`]*\)`/<code>\1<\/code>/g
+        
+        # Handle links
+        s/\[\([^]]*\)\](\([^)]*\))/<a href="\2">\1<\/a>/g
+        
+        # Handle empty lines
+        /^$/ s/^$/<\/p><p>/
+        
+        # Wrap regular text in paragraphs
+        /^[^<]/ s/^/<p>/
+        /^<p>/ s/$/<\/p>/
+    ' | awk '
+    BEGIN { in_code = 0; in_list = 0 }
+    
+    /CODEBLOCK_MARKER/ {
+        if (in_code) {
+            print "</code></pre>"
+            in_code = 0
+        } else {
+            if (in_list) { print "</ul>"; in_list = 0 }
+            print "<pre><code>"
+            in_code = 1
         }
         next
     }
     
-    # If in code block, escape HTML and preserve formatting
-    in_code_block {
-        gsub(/&/, "\\&amp;")
-        gsub(/</, "\\&lt;")
-        gsub(/>/, "\\&gt;")
-        gsub(/"/, "\\&quot;")
+    /^CODE_LINE:/ {
+        gsub(/^CODE_LINE:/, "")
         print
         next
     }
     
-    # Handle headers
-    /^### / {
-        gsub(/^### /, "")
-        gsub(/[<>&"'"'"']/, "")
-        if (in_list) { print "</ul>"; in_list = 0 }
-        print "<h3>" $0 "</h3>"
-        next
-    }
-    
-    /^## / {
-        gsub(/^## /, "")
-        gsub(/[<>&"'"'"']/, "")
-        if (in_list) { print "</ul>"; in_list = 0 }
-        print "<h2>" $0 "</h2>"
-        next
-    }
-    
-    # Handle lists
-    /^[•*-] / {
-        gsub(/^[•*-] /, "")
-        # Process inline formatting
-        gsub(/\*\*([^*]+)\*\*/, "<strong>\\1</strong>")
-        gsub(/`([^`]+)`/, "<code>\\1</code>")
-        gsub(/[<>&"'"'"']/, "")
+    /^<li>/ {
         if (!in_list) { print "<ul>"; in_list = 1 }
-        print "<li>" $0 "</li>"
+        print
         next
     }
     
-    # Empty lines
-    /^$/ {
+    /^<h[123]>/ {
         if (in_list) { print "</ul>"; in_list = 0 }
-        print "</p><p>"
+        print
         next
     }
     
-    # Regular text with enhanced inline formatting
+    /^<\/p><p>$/ {
+        if (in_list) { print "</ul>"; in_list = 0 }
+        print
+        next
+    }
+    
     {
-        if (in_list) { print "</ul>"; in_list = 0 }
-        # Process inline formatting with better code handling
-        gsub(/\*\*([^*]+)\*\*/, "<strong>\\1</strong>")
-        gsub(/`([^`]+)`/, "<code>\\1</code>")
-        gsub(/\[([^\]]+)\]\(([^)]+)\)/, "<a href=\"\\2\">\\1</a>")
-        # Escape remaining HTML chars
-        gsub(/&/, "\\&amp;")
-        gsub(/<([^\/])/, "\\&lt;\\1")
-        gsub(/([^>])>/, "\\1\\&gt;")
-        if (NF > 0) print "<p>" $0 "</p>"
+        if (in_list && !/^<li>/) { print "</ul>"; in_list = 0 }
+        print
     }
     
     END {
+        if (in_code) print "</code></pre>"
         if (in_list) print "</ul>"
-        if (in_code_block) print "</code></pre>"
     }
     ' | sed '
         # Clean up paragraph tags
