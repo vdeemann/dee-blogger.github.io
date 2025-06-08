@@ -8,7 +8,6 @@ rm -rf public
 mkdir -p public/p public/archive
 
 # Configuration
-POSTS_PER_PAGE=20
 SITE_TITLE="${SITE_TITLE:-My Blog}"
 
 # Basic CSS
@@ -33,12 +32,12 @@ for i in "${!files[@]}"; do
     file="${files[$i]}"
     num=$((i + 1))
     
-    # Extract basic info
-    title=$(head -1 "$file" | sed 's/^# *//' | sed 's/[<>&"]//g')
-    content=$(tail -n +3 "$file" | sed 's/[<>&"]//g' | sed 's/^$/<p>/' | sed 's/^[^<]/<p>&/')
+    # Extract basic info safely
+    title=$(head -1 "$file" | sed 's/^# *//' | tr -d '<>&"')
+    content=$(tail -n +3 "$file" | tr -d '<>&"' | sed 's/^$/<p>/' | sed 's/^[^<]/<p>&/')
     
     # Simple date from filename
-    date=$(basename "$file" | cut -d- -f1-3 | sed 's/-/\//g' | sed 's|.*/||')
+    date=$(basename "$file" | cut -d- -f1-3 | sed 's/-/\//g')
     
     # Create post
     cat > "public/p/$num.html" << EOF
@@ -54,7 +53,7 @@ EOF
     echo "✅ Post $num: $title"
 done
 
-# Generate main page
+# Generate main page with simpler approach
 echo "🏠 Generating main page..."
 {
     echo "<!DOCTYPE html><title>$SITE_TITLE</title>"
@@ -63,24 +62,26 @@ echo "🏠 Generating main page..."
     echo '<input id="s" placeholder="Search posts..." onkeyup="f()">'
     echo '<div id="posts">'
     
-    # Recent posts (reverse order)
-    count=0
-    for ((i=total-1; i>=0 && count<POSTS_PER_PAGE; i--)); do
-        file="${files[$i]}"
-        num=$((i + 1))
-        title=$(head -1 "$file" | sed 's/^# *//' | sed 's/[<>&"]//g')
-        excerpt=$(sed -n '3p' "$file" | sed 's/[<>&"]//g')
+    # Get recent 20 posts (simpler approach)
+    ls content/*.md 2>/dev/null | sort -r | head -20 | while read file; do
+        # Find the post number
+        post_num=1
+        for f in $(ls content/*.md | sort); do
+            if [ "$f" = "$file" ]; then
+                break
+            fi
+            post_num=$((post_num + 1))
+        done
+        
+        title=$(head -1 "$file" | sed 's/^# *//' | tr -d '<>&"')
+        excerpt=$(sed -n '3p' "$file" | tr -d '<>&"')
         date=$(basename "$file" | cut -d- -f1-3 | sed 's/-/\//g')
         
-        echo "<div class=\"post\"><small>$date</small><h2><a href=\"p/$num.html\">$title</a></h2><p>$excerpt</p></div>"
-        ((count++))
+        echo "<div class=\"post\"><small>$date</small><h2><a href=\"p/$post_num.html\">$title</a></h2><p>$excerpt</p></div>"
     done
     
     echo '</div>'
-    
-    if [ $total -gt $POSTS_PER_PAGE ]; then
-        echo "<p>📚 <a href=\"archive/\">View all $total posts</a></p>"
-    fi
+    echo "<p>📚 <a href=\"archive/\">View all $total posts</a></p>"
     
     echo '<script>
 function f(){
@@ -93,7 +94,7 @@ function f(){
 </script>'
 } > public/index.html
 
-# Generate archive
+# Generate archive with simpler approach
 echo "📚 Generating archive..."
 {
     echo "<!DOCTYPE html><title>Archive - $SITE_TITLE</title>"
@@ -103,15 +104,22 @@ echo "📚 Generating archive..."
     echo '<input id="s" placeholder="Search all posts..." onkeyup="f()">'
     echo '<div id="posts">'
     
-    # All posts (reverse order)
-    for ((i=total-1; i>=0; i--)); do
-        file="${files[$i]}"
-        num=$((i + 1))
-        title=$(head -1 "$file" | sed 's/^# *//' | sed 's/[<>&"]//g')
-        excerpt=$(sed -n '3p' "$file" | sed 's/[<>&"]//g')
+    # All posts in reverse order
+    ls content/*.md 2>/dev/null | sort -r | while read file; do
+        # Find the post number
+        post_num=1
+        for f in $(ls content/*.md | sort); do
+            if [ "$f" = "$file" ]; then
+                break
+            fi
+            post_num=$((post_num + 1))
+        done
+        
+        title=$(head -1 "$file" | sed 's/^# *//' | tr -d '<>&"')
+        excerpt=$(sed -n '3p' "$file" | tr -d '<>&"')
         date=$(basename "$file" | cut -d- -f1-3 | sed 's/-/\//g')
         
-        echo "<div class=\"post\"><small>$date</small><h2><a href=\"../p/$num.html\">$title</a></h2><p>$excerpt</p></div>"
+        echo "<div class=\"post\"><small>$date</small><h2><a href=\"../p/$post_num.html\">$title</a></h2><p>$excerpt</p></div>"
     done
     
     echo '</div>'
