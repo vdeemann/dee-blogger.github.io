@@ -8,8 +8,8 @@ mkdir -p public/p public/archive
 
 SITE_TITLE="${SITE_TITLE:-My Blog}"
 
-# Consistent blog styling CSS
-CSS='body{max-width:40em;margin:2em auto;padding:0 1em;font-family:system-ui,sans-serif;line-height:1.6;color:#333}a{color:#0066cc;text-decoration:none}a:hover{text-decoration:underline}h1{font-size:1.8em;margin:0;color:#222}h2{font-size:1.3em;margin:2em 0 1em;color:#333}h3{font-size:1.1em;margin:1.5em 0 .5em;color:#444}p{margin:1em 0}small{color:#666;display:block;margin-bottom:1em}strong{font-weight:600}code{background:#f1f3f4;padding:.2em .4em;border-radius:3px;font-family:monospace}pre{background:#f8f9fa;padding:1em;margin:1.5em 0;border-radius:6px;overflow-x:auto}pre code{background:none;padding:0}.post{margin-bottom:2em;padding:1em;background:#fafafa;border-radius:4px}input{width:100%;margin-bottom:1em;padding:.5em;border:1px solid #ddd;border-radius:4px}.stats{background:#fff3cd;padding:1em;border-radius:4px;margin:1em 0;text-align:center}nav{margin:1.5em 0;padding:.5em 0;border-bottom:1px solid #eee}'
+# Smooth, readable blog styling CSS
+CSS='body{max-width:40em;margin:2em auto;padding:0 1em;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;line-height:1.6;color:#333;-webkit-font-smoothing:antialiased}a{color:#0066cc;text-decoration:none}a:hover{text-decoration:underline}h1{font-size:1.8em;margin:0 0 .3em 0;color:#222;font-weight:600}h2{font-size:1.3em;margin:2em 0 1em;color:#333;font-weight:600}h3{font-size:1.1em;margin:1.5em 0 .5em;color:#444;font-weight:600}p{margin:1em 0;color:#333}small{color:#666;display:block;margin-bottom:1.5em;font-size:.9em}strong{font-weight:600}code{background:#f1f3f4;padding:.2em .4em;border-radius:3px;font-family:"SF Mono",Monaco,monospace;font-size:.9em}pre{background:#f8f9fa;padding:1em;margin:1.5em 0;border-radius:6px;overflow-x:auto;line-height:1.4}pre code{background:none;padding:0}.post{margin-bottom:2em;padding:1em;background:#fafafa;border-radius:4px}input{width:100%;margin-bottom:1em;padding:.5em;border:1px solid #ddd;border-radius:4px}nav{margin:1.5em 0;padding:.5em 0;border-bottom:1px solid #eee}.stats{background:#fff3cd;padding:1em;border-radius:4px;margin:1em 0;text-align:center}'
 
 files=($(ls content/*.md 2>/dev/null | sort))
 total=${#files[@]}
@@ -53,9 +53,9 @@ for i in "${!files[@]}"; do
     ')
     date=$(basename "$file" | cut -d- -f1-3 | sed 's/-/\//g')
     
-    # Generate clean, consistent post layout
+    # Generate clean post layout with timestamp below title
     cat > "public/p/$num.html" << EOF
-<!DOCTYPE html><title>$title</title><style>$CSS</style><nav><a href=../>← Blog</a> | <a href=../archive/>Archive</a></nav><small>$date</small><h1>$title</h1>$content<nav style="border-top:1px solid #eee;margin-top:2em;padding-top:1em"><a href=../>← Back to Blog</a></nav>
+<!DOCTYPE html><title>$title</title><style>$CSS</style><nav><a href=../>← Blog</a> | <a href=../archive/>Archive</a></nav><h1>$title</h1><small>$date</small>$content<nav style="border-top:1px solid #eee;margin-top:2em;padding-top:1em"><a href=../>← Back to Blog</a></nav>
 EOF
 done
 
