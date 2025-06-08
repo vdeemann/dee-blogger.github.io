@@ -8,8 +8,11 @@ mkdir -p public/p public/archive
 
 SITE_TITLE="${SITE_TITLE:-My Blog}"
 
-# Compact CSS for main/archive pages
+# Compact CSS for main page + Timeline CSS for archive
 COMPACT_CSS='body{max-width:40em;margin:2em auto;padding:0 1em;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;line-height:1.4;color:#333;-webkit-font-smoothing:antialiased}a{color:#0066cc;text-decoration:none}a:hover{text-decoration:underline}h1{font-size:1.8em;margin:0 0 .5em 0;color:#222;font-weight:600}h2{font-size:1.1em;margin:0;color:#333;font-weight:600}p{margin:.2em 0;color:#333}small{color:#666;display:block;margin:0;font-size:.85em}.post{margin-bottom:.6em;padding:.4em .6em;background:#fafafa;border-radius:3px;border:1px solid #e8e8e8}input{width:100%;margin-bottom:.5em;padding:.4em;border:1px solid #ddd;border-radius:3px;font-size:.9em}nav{margin:.8em 0;padding:.3em 0}.stats{background:#fff3cd;padding:.5em;border-radius:3px;margin:.5em 0;text-align:center;font-size:.9em}'
+
+# Timeline CSS for archive page
+TIMELINE_CSS='body{max-width:45em;margin:2em auto;padding:0 1em;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;line-height:1.5;color:#333;-webkit-font-smoothing:antialiased}a{color:#0066cc;text-decoration:none}a:hover{text-decoration:underline}h1{font-size:1.8em;margin:0 0 .5em 0;color:#222;font-weight:600}h2{font-size:1.1em;margin:0;color:#333;font-weight:600}p{margin:.3em 0;color:#333}small{color:#666;display:block;margin:0;font-size:.85em}input{width:100%;margin-bottom:1em;padding:.4em;border:1px solid #ddd;border-radius:3px;font-size:.9em}nav{margin:.8em 0;padding:.3em 0}.stats{background:#fff3cd;padding:.5em;border-radius:3px;margin:.5em 0;text-align:center;font-size:.9em}.timeline{position:relative;margin:2em 0;padding-left:2em}.timeline:before{content:"";position:absolute;left:15px;top:0;bottom:0;width:2px;background:linear-gradient(to bottom,#0066cc,#e1e8ed)}.year-section{margin-bottom:3em}.year-header{position:relative;margin-bottom:1.5em}.year-header h2{background:#0066cc;color:white;padding:.5em 1em;border-radius:20px;display:inline-block;font-size:1.2em;margin:0;position:relative;z-index:2}.year-header:before{content:"";position:absolute;left:-10px;top:50%;transform:translateY(-50%);width:20px;height:20px;background:#0066cc;border-radius:50%;border:3px solid white;box-shadow:0 0 0 2px #0066cc}.month-section{margin-bottom:2em;position:relative}.month-header{position:relative;margin-bottom:1em;padding-left:1em}.month-header h3{background:#f8f9fa;color:#333;padding:.3em .8em;border-radius:15px;display:inline-block;font-size:1em;margin:0;border:1px solid #e1e8ed;position:relative;z-index:2}.month-header:before{content:"";position:absolute;left:-6px;top:50%;transform:translateY(-50%);width:12px;height:12px;background:white;border:2px solid #0066cc;border-radius:50%}.post-item{position:relative;margin-bottom:.8em;padding:.6em .8em;background:white;border-radius:6px;border:1px solid #e1e8ed;margin-left:1em;transition:all 0.2s ease}.post-item:hover{background:#f8f9fa;border-color:#0066cc;transform:translateX(2px);box-shadow:0 2px 4px rgba(0,102,204,0.1)}.post-item:before{content:"";position:absolute;left:-7px;top:50%;transform:translateY(-50%);width:6px;height:6px;background:#0066cc;border-radius:50%}.search-active .timeline:before{background:#ddd}.search-active .year-header:before,.search-active .month-header:before,.search-active .post-item:before{background:#ddd;border-color:#ddd}.search-active .year-header h2{background:#666}'
 
 # Elegant CSS for individual blog posts with compact code blocks
 POST_CSS='body{max-width:40em;margin:2em auto;padding:0 1em;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;line-height:1.6;color:#333;-webkit-font-smoothing:antialiased}a{color:#0066cc;text-decoration:none}a:hover{text-decoration:underline}h1{font-size:1.8em;margin:0 0 .3em 0;color:#222;font-weight:600}h2{font-size:1.3em;margin:2em 0 1em;color:#333;font-weight:600}h3{font-size:1.1em;margin:1.5em 0 .5em;color:#444;font-weight:600}p{margin:1em 0;color:#333}small{color:#666;display:block;margin-bottom:1.5em;font-size:.9em}strong{font-weight:600}code{background:#f6f8fa;color:#24292e;padding:.1em .3em;border-radius:3px;font-family:"SF Mono",Monaco,monospace;font-size:.85em}.code-container{position:relative;margin:.8em 0}.copy-btn{position:absolute;top:4px;right:4px;background:#fff;border:1px solid #d1d9e0;border-radius:3px;padding:4px 8px;font-size:11px;color:#586069;cursor:pointer;font-family:system-ui;z-index:10;box-shadow:0 1px 2px rgba(0,0,0,0.1)}.copy-btn:hover{background:#f6f8fa;color:#0366d6;border-color:#0366d6}.copy-btn:active{background:#e1e8ed;transform:scale(0.95)}.copy-success{color:#fff!important;background:#28a745!important;border-color:#28a745!important}pre{background:#f6f8fa;padding:.3em .5em;margin:0;border-radius:4px;overflow-x:auto;line-height:1.1;border:1px solid #e1e4e8}pre code{background:none;padding:0;font-size:.75em;color:#24292e;font-family:"SF Mono",Monaco,monospace;line-height:1.1;display:block;white-space:pre}ul{margin:1em 0;padding-left:1.5em}li{margin:.5em 0;color:#333}nav{margin:1.5em 0;padding:.5em 0;border-bottom:1px solid #eee}blockquote{background:#f6f8fa;border-left:4px solid #0366d6;margin:1.5em 0;padding:1em 1.5em;border-radius:0 6px 6px 0;color:#586069;font-style:italic}'
@@ -222,27 +225,172 @@ done
     echo "</div><p>📚 <a href=archive/>View all $total posts</a></p><script>let o,p=document.getElementById('p');function f(){let q=s.value.toLowerCase();if(!o)o=p.innerHTML;if(!q){p.innerHTML=o;return}let r=Array.from(p.children).filter(e=>e.textContent.toLowerCase().includes(q));p.innerHTML=r.length?r.map(e=>e.outerHTML).join(''):'<p>No posts found</p>'}</script>"
 } > public/index.html
 
-# Generate compact archive
+# Generate timeline archive
 {
-    echo "<!DOCTYPE html><title>Archive</title><style>$COMPACT_CSS</style><a href=../>← Home</a><h1>Archive</h1><div class=stats>$total posts</div><input id=s placeholder=\"Search...\" onkeyup=f()><div id=p>"
+    echo "<!DOCTYPE html><title>Archive</title><style>$TIMELINE_CSS</style><a href=../>← Home</a><h1>Archive Timeline</h1><div class=stats>📊 Total: $total posts organized chronologically</div><input id=s placeholder=\"Search all posts...\" onkeyup=f()><div class=\"timeline\" id=timeline>"
     
-    ls content/*.md | sort -r | while read file; do
-        num=1
-        for f in $(ls content/*.md | sort); do [ "$f" = "$file" ] && break; num=$((num+1)); done
+    # Create associative arrays for grouping posts by year/month
+    declare -A years
+    declare -A months
+    
+    # First pass: collect all posts and organize by date
+    while IFS= read -r file; do
+        [ ! -f "$file" ] && continue
         
-        title=$(head -1 "$file" | sed 's/^# *//' | sed 's/[<>&"'"'"']//g')
-        excerpt=$(sed -n '3p' "$file" | sed 's/\*\*\([^*]*\)\*\*/<strong>\1<\/strong>/g; s/`\([^`]*\)`/<code>\1<\/code>/g; s/[<>&"'"'"']//g')
-        [ -z "$excerpt" ] && excerpt="..."
-        date=$(basename "$file" | cut -d- -f1-3 | sed 's/-/\//g')
+        filename=$(basename "$file")
+        date_part=$(echo "$filename" | cut -d- -f1-3)
+        year=$(echo "$date_part" | cut -d- -f1)
+        month=$(echo "$date_part" | cut -d- -f2)
         
-        echo "<div class=post><small>$date</small><h2><a href=../p/$num.html>$title</a></h2><p>$excerpt</p></div>"
+        # Convert month number to name
+        case "$month" in
+            01) month_name="January" ;;
+            02) month_name="February" ;;
+            03) month_name="March" ;;
+            04) month_name="April" ;;
+            05) month_name="May" ;;
+            06) month_name="June" ;;
+            07) month_name="July" ;;
+            08) month_name="August" ;;
+            09) month_name="September" ;;
+            10) month_name="October" ;;
+            11) month_name="November" ;;
+            12) month_name="December" ;;
+        esac
+        
+        years["$year"]=1
+        months["$year-$month"]="$month_name"
+        
+    done < <(ls content/*.md | sort -r)
+    
+    # Generate timeline by year (newest first)
+    for year in $(printf '%s\n' "${!years[@]}" | sort -nr); do
+        echo "<div class=\"year-section\">"
+        echo "<div class=\"year-header\"><h2>$year</h2></div>"
+        
+        # Generate months for this year (newest first)
+        for month_key in $(printf '%s\n' "${!months[@]}" | grep "^$year-" | sort -nr); do
+            month_num=$(echo "$month_key" | cut -d- -f2)
+            month_name="${months[$month_key]}"
+            
+            echo "<div class=\"month-section\">"
+            echo "<div class=\"month-header\"><h3>$month_name</h3></div>"
+            
+            # Generate posts for this year/month
+            ls content/*.md | sort -r | while read file; do
+                [ ! -f "$file" ] && continue
+                
+                filename=$(basename "$file")
+                file_year=$(echo "$filename" | cut -d- -f1)
+                file_month=$(echo "$filename" | cut -d- -f2)
+                
+                if [ "$file_year" = "$year" ] && [ "$file_month" = "$month_num" ]; then
+                    # Find post number
+                    num=1
+                    for f in $(ls content/*.md | sort); do
+                        if [ "$f" = "$file" ]; then
+                            break
+                        fi
+                        num=$((num + 1))
+                    done
+                    
+                    title=$(head -1 "$file" | sed 's/^# *//' | sed 's/[<>&"'"'"']//g')
+                    excerpt=$(sed -n '3p' "$file" | sed 's/\*\*\([^*]*\)\*\*/<strong>\1<\/strong>/g; s/`\([^`]*\)`/<code>\1<\/code>/g; s/[<>&"'"'"']//g')
+                    [ -z "$excerpt" ] && excerpt="..."
+                    date=$(echo "$filename" | cut -d- -f1-3 | sed 's/-/\//g')
+                    
+                    echo "<div class=\"post-item\">"
+                    echo "<small>$date</small>"
+                    echo "<h2><a href=\"../p/$num.html\">$title</a></h2>"
+                    echo "<p>$excerpt</p>"
+                    echo "</div>"
+                fi
+            done
+            
+            echo "</div>" # Close month-section
+        done
+        
+        echo "</div>" # Close year-section
     done
     
-    echo "</div><script>let o,p=document.getElementById('p');function f(){let q=s.value.toLowerCase();if(!o)o=p.innerHTML;if(!q){p.innerHTML=o;return}let r=Array.from(p.children).filter(e=>e.textContent.toLowerCase().includes(q));p.innerHTML=r.length?r.map(e=>e.outerHTML).join(''):'<p>No posts found</p>'}</script>"
+    echo "</div>" # Close timeline
+    
+    # Enhanced search script for timeline
+    cat << 'EOF'
+<script>
+let originalTimeline;
+function f() {
+    const query = document.getElementById('s').value.toLowerCase();
+    const timeline = document.getElementById('timeline');
+    const body = document.body;
+    
+    if (!originalTimeline) {
+        originalTimeline = timeline.innerHTML;
+    }
+    
+    if (!query) {
+        timeline.innerHTML = originalTimeline;
+        body.classList.remove('search-active');
+        return;
+    }
+    
+    body.classList.add('search-active');
+    
+    // Find all matching posts
+    const yearSections = Array.from(timeline.children);
+    let hasResults = false;
+    let filteredHTML = '';
+    
+    yearSections.forEach(yearSection => {
+        const yearHeader = yearSection.querySelector('.year-header h2').textContent;
+        const monthSections = Array.from(yearSection.querySelectorAll('.month-section'));
+        let yearHasResults = false;
+        let yearHTML = '';
+        
+        monthSections.forEach(monthSection => {
+            const monthHeader = monthSection.querySelector('.month-header h3').textContent;
+            const posts = Array.from(monthSection.querySelectorAll('.post-item'));
+            let monthHasResults = false;
+            let monthHTML = '';
+            
+            posts.forEach(post => {
+                if (post.textContent.toLowerCase().includes(query)) {
+                    monthHTML += post.outerHTML;
+                    monthHasResults = true;
+                    hasResults = true;
+                }
+            });
+            
+            if (monthHasResults) {
+                yearHTML += `<div class="month-section">
+                    <div class="month-header"><h3>${monthHeader}</h3></div>
+                    ${monthHTML}
+                </div>`;
+                yearHasResults = true;
+            }
+        });
+        
+        if (yearHasResults) {
+            filteredHTML += `<div class="year-section">
+                <div class="year-header"><h2>${yearHeader}</h2></div>
+                ${yearHTML}
+            </div>`;
+        }
+    });
+    
+    if (hasResults) {
+        timeline.innerHTML = filteredHTML;
+    } else {
+        timeline.innerHTML = '<div class="post-item"><p>No posts found</p></div>';
+    }
+}
+</script>
+EOF
 } > public/archive/index.html
 
-echo "✅ Elegant blog built with clearly visible copy buttons!"
+echo "✅ Elegant blog built with timeline archive!"
 echo "📊 $total posts generated"
-echo "🎨 All posts have uniform styling with compact, copyable code blocks"
-echo "📋 Code sections now have prominent '📋 Copy' buttons that are always visible"
+echo "🎨 Main page: Compact post listings"
+echo "📋 Individual posts: Copy-enabled code blocks"
+echo "🗓️ Archive: Beautiful vertical timeline organized by year/month"
 echo "🚀 Blog is ready!"
