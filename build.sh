@@ -40,10 +40,8 @@ content_files=(content/*.md)
 log "Building minimal blog..."
 
 # Create a sorted list of files by date (filename based)
-# This ensures consistent ordering regardless of filesystem
 get_sorted_files() {
-    local reverse_flag="$1"
-    if [ "$reverse_flag" = "reverse" ]; then
+    if [ "$1" = "reverse" ]; then
         ls content/*.md 2>/dev/null | sort -r || true
     else
         ls content/*.md 2>/dev/null | sort || true
@@ -176,11 +174,10 @@ EOF
 # Create a lookup table for post numbers to avoid O(n²) complexity
 declare -A post_numbers
 create_post_lookup() {
-    local i=1
-    while IFS= read -r -d '' file; do
-        post_numbers["$file"]=$i
-        ((i++))
-    done < <(get_sorted_files | tr '\n' '\0')
+    i=1
+    while IFS= read -r file; do
+        [ -f "$file" ] && post_numbers["$file"]=$i && ((i++))
+    done < <(get_sorted_files)
 }
 
 log "Creating post number lookup table..."
@@ -192,20 +189,22 @@ total_posts=0
 while IFS= read -r file; do
     [ ! -f "$file" ] && continue
     
-    local filename=$(basename "$file")
-    local short_date=$(parse_date "$file")
-    local title=$(get_title "$file")
-    local content=$(process_content "$file")
-    local post_num=${post_numbers["$file"]}
+    filename=$(basename "$file")
+    short_date=$(parse_date "$file")
+    title=$(get_title "$file")
+    content=$(process_content "$file")
+    post_num=${post_numbers["$file"]}
     
     # Generate navigation (prev/next)
-    local nav_links=""
+    nav_links=""
     if [ $post_num -gt 1 ]; then
         nav_links="<a href=\"$((post_num-1)).html\">← Previous</a> | "
     fi
     nav_links="${nav_links}<a href=\"../\">Home</a>"
-    if [ -f "content/$(printf "%04d" $((post_num+1)))*.md" ]; then
-        nav_links="${nav_links} | <a href=\"$((post_num+1)).html\">Next →</a>"
+    # Simple next link check
+    next_num=$((post_num+1))
+    if [ -n "$(find content -name "*.md" | sed -n "${next_num}p")" ]; then
+        nav_links="${nav_links} | <a href=\"$next_num.html\">Next →</a>"
     fi
     
     cat > "public/p/$post_num.html" << EOF
@@ -250,15 +249,15 @@ log "Generating main index page..."
 EOF
     
     # Add recent posts (newest first)
-    local count=0
+    count=0
     while IFS= read -r file && [ $count -lt $POSTS_PER_MAIN_PAGE ]; do
         [ ! -f "$file" ] && continue
         
-        local filename=$(basename "$file")
-        local short_date=$(parse_date "$file")
-        local title=$(get_title "$file")
-        local excerpt=$(get_excerpt "$file")
-        local post_num=${post_numbers["$file"]}
+        filename=$(basename "$file")
+        short_date=$(parse_date "$file")
+        title=$(get_title "$file")
+        excerpt=$(get_excerpt "$file")
+        post_num=${post_numbers["$file"]}
         
         echo "<div class=\"post\"><small>$short_date</small><h2><a href=\"p/$post_num.html\">$title</a></h2><p>$excerpt</p></div>"
         ((count++))
@@ -324,11 +323,11 @@ EOF
     while IFS= read -r file; do
         [ ! -f "$file" ] && continue
         
-        local filename=$(basename "$file")
-        local short_date=$(parse_date "$file")
-        local title=$(get_title "$file")
-        local excerpt=$(get_excerpt "$file")
-        local post_num=${post_numbers["$file"]}
+        filename=$(basename "$file")
+        short_date=$(parse_date "$file")
+        title=$(get_title "$file")
+        excerpt=$(get_excerpt "$file")
+        post_num=${post_numbers["$file"]}
         
         echo "<div class=\"post\"><small>$short_date</small><h2><a href=\"../p/$post_num.html\">$title</a></h2><p>$excerpt</p></div>"
     done < <(get_sorted_files reverse)
@@ -371,7 +370,7 @@ log "Generating sitemap..."
     
     while IFS= read -r file; do
         [ ! -f "$file" ] && continue
-        local post_num=${post_numbers["$file"]}
+        post_num=${post_numbers["$file"]}
         echo "  <url><loc>$BASE_URL/p/$post_num.html</loc><priority>0.6</priority></url>"
     done < <(get_sorted_files reverse)
     
