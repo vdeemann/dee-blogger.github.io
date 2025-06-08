@@ -2,7 +2,7 @@
 
 *Exploring the technical frontier of open source firmware, memory subsystem engineering, and the quest to unlock hidden potential in legacy server hardware*
 
-![KCMA-D8 Server Board](https://images.unsplash.com/photo-1518709268805-4e9042af2176?w=800&h=400&fit=crop)
+![KCMA-D8 Server Board](https://theretroweb.com/motherboard/image/screenshot-20230731-172325-64c7d2bcb24fd107720459.png)
 
 ## Introduction: When Hardware Exceeds Official Specifications
 
