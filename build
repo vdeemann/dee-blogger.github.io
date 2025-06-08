@@ -4,7 +4,7 @@ set -e
 rm -rf public
 mkdir -p public/p
 
-echo "Building ultra-minimal blog..."
+echo "Building optimized ultra-minimal blog..."
 
 # Generate individual post pages
 i=1
@@ -21,7 +21,7 @@ for f in content/*.md; do
     short_date="$month/$day/${year#20}"
     title=$(head -1 "$f" | sed 's/^# //')
     
-    # Simple processing - just add <p> tags and handle headers
+    # Simple processing - add <p> tags and handle headers
     content=$(tail -n +3 "$f" | sed '
         s/^$/<p>/
         s/^## \(.*\)/<h2>\1<\/h2>/
@@ -30,36 +30,36 @@ for f in content/*.md; do
         s/^[^<#*]/<p>&/
     ')
     
+    # Generate optimized individual post page
     cat > "public/p/$i.html" << EOF
 <!DOCTYPE html><title>$title</title>
 <style>
-body{max-width:40em;margin:2em auto;padding:0 1em;font-family:system-ui,-apple-system,BlinkMacSystemFont,sans-serif;line-height:1.6;color:#333}
-a{color:#06c;text-decoration:none}
+body{max-width:40em;margin:2em auto;padding:0 1em;font-family:system-ui,sans-serif;line-height:1.6;color:#333}
+a{color:#06c}
 a:hover{text-decoration:underline}
-h1{font-size:1.8em;margin-bottom:0.5em}
+h1{font-size:1.8em;margin-bottom:.5em}
 h2{font-size:1.3em;margin:2em 0 1em;color:#222}
 p{margin-bottom:1em}
 small{color:#666;display:block;margin-bottom:1em}
 pre{background:#f8f8f8;padding:1em;margin:1.5em 0;border-radius:4px;overflow-x:auto;border-left:3px solid #ddd}
-code{font-family:Consolas,Monaco,monospace;font-size:0.9em;line-height:1.4}
+code{font-family:monospace;font-size:.9em}
 strong{font-weight:600}
-ul{margin:1em 0;padding-left:2em}
-li{margin-bottom:0.5em}
 </style>
-<div style="margin:1.5em 0;padding:0.5em 0;border-bottom:1px solid #eee"><a href="../">← Blog</a></div>
+<nav style="margin:1.5em 0;padding:.5em 0;border-bottom:1px solid #eee"><a href="../">← Blog</a></nav>
 <h1>$title</h1>
 <small>$short_date</small>
 $content
-<div style="margin:1.5em 0;padding:0.5em 0;border-top:1px solid #eee"><a href="../">← Back to Blog</a></div>
+<nav style="margin:1.5em 0;padding:.5em 0;border-top:1px solid #eee"><a href="../">← Back to Blog</a></nav>
 EOF
     
-    echo "Generated post $i: $title"
+    size=$(wc -c < "public/p/$i.html")
+    echo "Generated post $i: $title ($size bytes)"
     ((i++))
 done
 
-# Generate main index (unchanged)
+# Generate optimized main index page
 {
-    echo '<!DOCTYPE html><title>My Blog</title><style>body{max-width:40em;margin:2em auto;padding:0 1em;font-family:system-ui,-apple-system,BlinkMacSystemFont,sans-serif;line-height:1.6;color:#333}input{width:100%;margin-bottom:1em}small{color:#666;display:block;margin:0}h2{margin:0}a{color:#06c}.post{margin-bottom:2em}</style><h1>My Blog</h1><input id=s placeholder="Search posts..." onkeyup="f()"><div id=p>'
+    echo '<!DOCTYPE html><title>My Blog</title><style>body{max-width:40em;margin:2em auto;padding:0 1em;font-family:system-ui,sans-serif;line-height:1.6;color:#333}input{width:100%;margin-bottom:1em}small{color:#666;display:block;margin:0}h2{margin:0}a{color:#06c}.post{margin-bottom:2em}</style><h1>My Blog</h1><input id=s placeholder="Search posts..." onkeyup="f()"><div id=p>'
     
     i=1
     for f in content/*.md; do
@@ -78,8 +78,11 @@ done
         ((i++))
     done
     
-    echo '</div><script>let o,posts;function f(){let q=s.value.toLowerCase(),d=p;if(!o){o=d.innerHTML;posts=Array.from(d.children);}if(!q){d.innerHTML=o;return}let filtered=posts.filter(post=>post.textContent.toLowerCase().includes(q));d.innerHTML="";filtered.forEach(post=>d.appendChild(post.cloneNode(true)));if(!filtered.length)d.innerHTML="<p>No posts found"}</script>'
+    echo '</div><script>let o,p=document.getElementById("p");function f(){let q=s.value.toLowerCase();if(!o)o=p.innerHTML;if(!q){p.innerHTML=o;return}let r=Array.from(p.children).filter(e=>e.textContent.toLowerCase().includes(q));p.innerHTML=r.length?r.map(e=>e.outerHTML).join(""):"<p>No posts found"}</script>'
 } > public/index.html
 
 post_count=$(ls content/*.md 2>/dev/null | wc -l)
-echo "Built $post_count posts successfully!"
+total_size=$(du -sh public/ 2>/dev/null | cut -f1 || echo "N/A")
+echo "✅ Built $post_count posts successfully!"
+echo "📦 Total optimized size: $total_size"
+echo "🚀 Blog optimized and ready for deployment!"
