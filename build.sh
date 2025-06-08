@@ -8,8 +8,11 @@ mkdir -p public/p public/archive
 
 SITE_TITLE="${SITE_TITLE:-My Blog}"
 
-# Ultra-compact styling CSS
-CSS='body{max-width:40em;margin:2em auto;padding:0 1em;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;line-height:1.4;color:#333;-webkit-font-smoothing:antialiased}a{color:#0066cc;text-decoration:none}a:hover{text-decoration:underline}h1{font-size:1.8em;margin:0;color:#222;font-weight:600}h2{font-size:1.1em;margin:0;color:#333;font-weight:600}h3{font-size:1em;margin:0;color:#444;font-weight:600}p{margin:.2em 0;color:#333}small{color:#666;display:block;margin:0;font-size:.85em}strong{font-weight:600}code{background:#f1f3f4;padding:.1em .3em;border-radius:2px;font-family:"SF Mono",Monaco,monospace;font-size:.85em}pre{background:#f8f9fa;padding:.5em;margin:.5em 0;border-radius:3px;overflow-x:auto;line-height:1.3}pre code{background:none;padding:0;font-size:.8em}ul{margin:.3em 0;padding-left:1.2em}li{margin:.1em 0;color:#333}.post{margin-bottom:.8em;padding:.4em .6em;background:#fafafa;border-radius:3px;border:1px solid #e8e8e8}input{width:100%;margin-bottom:.5em;padding:.4em;border:1px solid #ddd;border-radius:3px;font-size:.9em}nav{margin:.8em 0;padding:.3em 0;border-bottom:1px solid #eee}.stats{background:#fff3cd;padding:.5em;border-radius:3px;margin:.5em 0;text-align:center;font-size:.9em}'
+# Compact CSS for main/archive pages
+COMPACT_CSS='body{max-width:40em;margin:2em auto;padding:0 1em;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;line-height:1.4;color:#333;-webkit-font-smoothing:antialiased}a{color:#0066cc;text-decoration:none}a:hover{text-decoration:underline}h1{font-size:1.8em;margin:0 0 .5em 0;color:#222;font-weight:600}h2{font-size:1.1em;margin:0;color:#333;font-weight:600}p{margin:.2em 0;color:#333}small{color:#666;display:block;margin:0;font-size:.85em}.post{margin-bottom:.6em;padding:.4em .6em;background:#fafafa;border-radius:3px;border:1px solid #e8e8e8}input{width:100%;margin-bottom:.5em;padding:.4em;border:1px solid #ddd;border-radius:3px;font-size:.9em}nav{margin:.8em 0;padding:.3em 0}.stats{background:#fff3cd;padding:.5em;border-radius:3px;margin:.5em 0;text-align:center;font-size:.9em}'
+
+# Elegant CSS for individual blog posts  
+POST_CSS='body{max-width:40em;margin:2em auto;padding:0 1em;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;line-height:1.6;color:#333;-webkit-font-smoothing:antialiased}a{color:#0066cc;text-decoration:none}a:hover{text-decoration:underline}h1{font-size:1.8em;margin:0 0 .3em 0;color:#222;font-weight:600}h2{font-size:1.3em;margin:2em 0 1em;color:#333;font-weight:600}h3{font-size:1.1em;margin:1.5em 0 .5em;color:#444;font-weight:600}p{margin:1em 0;color:#333}small{color:#666;display:block;margin-bottom:1.5em;font-size:.9em}strong{font-weight:600}code{background:#f1f3f4;padding:.2em .4em;border-radius:3px;font-family:"SF Mono",Monaco,monospace;font-size:.9em}pre{background:#f8f9fa;padding:1em;margin:1.5em 0;border-radius:6px;overflow-x:auto;line-height:1.4;border:1px solid #e1e8ed}pre code{background:none;padding:0;font-size:.85em}ul{margin:1em 0;padding-left:1.5em}li{margin:.5em 0;color:#333}nav{margin:1.5em 0;padding:.5em 0;border-bottom:1px solid #eee}'
 
 files=($(ls content/*.md 2>/dev/null | sort))
 total=${#files[@]}
@@ -115,7 +118,7 @@ for i in "${!files[@]}"; do
     # Extract date from filename
     date=$(basename "$file" | cut -d- -f1-3 | sed 's/-/\//g')
     
-    # Generate elegant post layout
+    # Generate elegant individual post layout
     cat > "public/p/$num.html" << EOF
 <!DOCTYPE html>
 <html lang="en">
@@ -123,7 +126,7 @@ for i in "${!files[@]}"; do
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>$title</title>
-<style>$CSS</style>
+<style>$POST_CSS</style>
 </head>
 <body>
 <nav><a href="../">← Blog</a> | <a href="../archive/">Archive</a></nav>
@@ -138,9 +141,9 @@ EOF
     echo "✅ Post $num: $title"
 done
 
-# Generate main page
+# Generate compact main page
 {
-    echo "<!DOCTYPE html><title>$SITE_TITLE</title><style>$CSS</style><h1>$SITE_TITLE</h1><input id=s placeholder=\"Search...\" onkeyup=f()><div id=p>"
+    echo "<!DOCTYPE html><title>$SITE_TITLE</title><style>$COMPACT_CSS</style><h1>$SITE_TITLE</h1><input id=s placeholder=\"Search...\" onkeyup=f()><div id=p>"
     
     # Recent 20 posts with consistent formatting
     count=0
@@ -159,9 +162,9 @@ done
     echo "</div><p>📚 <a href=archive/>View all $total posts</a></p><script>let o,p=document.getElementById('p');function f(){let q=s.value.toLowerCase();if(!o)o=p.innerHTML;if(!q){p.innerHTML=o;return}let r=Array.from(p.children).filter(e=>e.textContent.toLowerCase().includes(q));p.innerHTML=r.length?r.map(e=>e.outerHTML).join(''):'<p>No posts found</p>'}</script>"
 } > public/index.html
 
-# Generate archive with consistent formatting
+# Generate compact archive
 {
-    echo "<!DOCTYPE html><title>Archive</title><style>$CSS</style><a href=../>← Home</a><h1>Archive</h1><div class=stats>$total posts</div><input id=s placeholder=\"Search...\" onkeyup=f()><div id=p>"
+    echo "<!DOCTYPE html><title>Archive</title><style>$COMPACT_CSS</style><a href=../>← Home</a><h1>Archive</h1><div class=stats>$total posts</div><input id=s placeholder=\"Search...\" onkeyup=f()><div id=p>"
     
     ls content/*.md | sort -r | while read file; do
         num=1
