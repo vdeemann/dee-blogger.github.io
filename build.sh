@@ -10,7 +10,7 @@ SITE_TITLE="${SITE_TITLE:-My Blog}"
 RED='\033[0;31m'
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
-NC='\033[0m' # No Color
+NC='\033[0m'
 
 log() {
     echo -e "${GREEN}[$(date +'%H:%M:%S')]${NC} $1"
@@ -38,6 +38,11 @@ content_files=(content/*.md)
 [ ! -f "${content_files[0]}" ] && error "No markdown files found in content/"
 
 log "Building minimal blog..."
+
+# Function to escape HTML entities
+escape_html() {
+    echo "$1" | sed 's/&/\&amp;/g; s/</\&lt;/g; s/>/\&gt;/g; s/"/\&quot;/g; s/'"'"'/\&#39;/g'
+}
 
 # Function to extract date parts and format
 parse_date() {
@@ -70,9 +75,10 @@ get_title() {
         return
     fi
     
-    title=$(head -1 "$file" 2>/dev/null | sed 's/^# *//' | sed 's/[<>&"'"'"']//g')
+    title=$(head -1 "$file" 2>/dev/null | sed 's/^# *//')
     [ -z "$title" ] && title="Untitled Post"
-    echo "$title"
+    # Escape HTML entities in title
+    escape_html "$title"
 }
 
 # Function to safely extract excerpt
@@ -83,12 +89,13 @@ get_excerpt() {
         return
     fi
     
-    excerpt=$(sed -n '3p' "$file" 2>/dev/null | sed 's/[<>&"'"'"']//g')
+    excerpt=$(sed -n '3p' "$file" 2>/dev/null)
     [ -z "$excerpt" ] && excerpt="..."
-    echo "$excerpt"
+    # Escape HTML entities in excerpt
+    escape_html "$excerpt"
 }
 
-# Enhanced markdown processing with error handling
+# Simple markdown processing that's safer
 process_content() {
     file="$1"
     if [ ! -f "$file" ]; then
@@ -96,53 +103,69 @@ process_content() {
         return
     fi
     
-    # Process content with error handling
-    content=$(tail -n +3 "$file" 2>/dev/null | sed '
-        # Convert empty lines to paragraph breaks
-        s/^$/<\/p><p>/
+    # Read content starting from line 3, process line by line to avoid heredoc issues
+    content=""
+    in_code_block=false
+    
+    tail -n +3 "$file" 2>/dev/null | while IFS= read -r line; do
+        # Handle code blocks
+        if echo "$line" | grep -q '^```'; then
+            if [ "$in_code_block" = true ]; then
+                echo "</code></pre>"
+                in_code_block=false
+            else
+                echo "<pre><code>"
+                in_code_block=true
+            fi
+            continue
+        fi
+        
+        # If in code block, escape and output as-is
+        if [ "$in_code_block" = true ]; then
+            escape_html "$line"
+            continue
+        fi
+        
+        # Empty lines become paragraph breaks
+        if [ -z "$line" ]; then
+            echo "</p><p>"
+            continue
+        fi
         
         # Headers
-        s/^### \(.*\)/<h3>\1<\/h3>/
-        s/^## \(.*\)/<h2>\1<\/h2>/
-        s/^# \(.*\)/<h1>\1<\/h1>/
+        if echo "$line" | grep -q '^### '; then
+            echo "<h3>$(escape_html "$(echo "$line" | sed 's/^### //')")</h3>"
+            continue
+        fi
         
-        # Bold text
-        s/^\*\*\([^*]*\)\*\*:/<strong>\1:<\/strong>/
-        s/\*\*\([^*]*\)\*\*/<strong>\1<\/strong>/g
+        if echo "$line" | grep -q '^## '; then
+            echo "<h2>$(escape_html "$(echo "$line" | sed 's/^## //')")</h2>"
+            continue
+        fi
         
-        # Italic text
-        s/\*\([^*]*\)\*/<em>\1<\/em>/g
+        if echo "$line" | grep -q '^# '; then
+            echo "<h1>$(escape_html "$(echo "$line" | sed 's/^# //')")</h1>"
+            continue
+        fi
         
-        # Code blocks (simple)
-        s/^```.*/<pre><code>/
-        s/^```$/<\/code><\/pre>/
+        # Lists
+        if echo "$line" | grep -q '^- '; then
+            echo "<li>$(escape_html "$(echo "$line" | sed 's/^- //')")</li>"
+            continue
+        fi
         
-        # Inline code
-        s/`\([^`]*\)`/<code>\1<\/code>/g
+        if echo "$line" | grep -q '^\* '; then
+            echo "<li>$(escape_html "$(echo "$line" | sed 's/^\* //')")</li>"
+            continue
+        fi
         
-        # Links [text](url) - escape quotes
-        s/\[\([^]]*\)\](\([^)]*\))/<a href="\2">\1<\/a>/g
-        
-        # Unordered lists
-        s/^- \(.*\)/<li>\1<\/li>/
-        s/^\* \(.*\)/<li>\1<\/li>/
-        
-        # Wrap non-tag lines in paragraphs
-        /^[^<]/s/^/<p>/
-        /^<p>/s/$/<\/p>/
-    ' | sed '
+        # Regular paragraphs
+        echo "<p>$(escape_html "$line")</p>"
+    done | sed '
         # Clean up multiple paragraph tags
         s/<\/p><p>/<\/p>\n<p>/g
         s/^<\/p>//
-        s/<p>$//
-    ')
-    
-    # Return content or fallback
-    if [ -n "$content" ]; then
-        echo "$content"
-    else
-        echo "<p>Content could not be processed</p>"
-    fi
+        s/<p>$//'
 }
 
 # Generate CSS
@@ -195,14 +218,13 @@ done < <(find content -name "*.md" -type f -print0 | sort -z)
 total_posts=${#sorted_files[@]}
 log "Found $total_posts markdown files"
 
-# Generate individual post pages with better error handling
+# Generate individual post pages with safer file writing
 log "Generating individual posts..."
 post_count=0
 for ((i=0; i<${#sorted_files[@]}; i++)); do
     file="${sorted_files[$i]}"
     post_num=$((i+1))
     
-    # Add debugging
     log "Processing file $post_num: $(basename "$file")"
     
     # Skip if file doesn't exist or isn't readable
@@ -216,11 +238,16 @@ for ((i=0; i<${#sorted_files[@]}; i++)); do
     short_date=$(parse_date "$file")
     title=$(get_title "$file")
     
-    # Process content with error handling
-    if ! content=$(process_content "$file"); then
+    log "Title extracted: $title"
+    
+    # Process content with error handling - save to temp file first
+    temp_content="/tmp/content_$$.tmp"
+    if ! process_content "$file" > "$temp_content"; then
         warn "Failed to process content for: $file"
-        content="<p>Content processing failed</p>"
+        echo "<p>Content processing failed</p>" > "$temp_content"
     fi
+    
+    log "Content processed, size: $(wc -c < "$temp_content") bytes"
     
     # Generate navigation
     nav_links=""
@@ -232,29 +259,46 @@ for ((i=0; i<${#sorted_files[@]}; i++)); do
         nav_links="${nav_links} | <a href=\"$((post_num+1)).html\">Next →</a>"
     fi
     
-    # Create post file with error handling
+    # Create post file by writing parts separately to avoid heredoc issues
     post_file="public/p/$post_num.html"
-    if ! cat > "$post_file" << EOF
+    
+    # Write HTML header
+    cat > "$post_file" << 'EOF'
 <!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>$title - $SITE_TITLE</title>
-<style>$(generate_css)</style>
+EOF
+    
+    # Write title
+    echo "<title>$title - $SITE_TITLE</title>" >> "$post_file"
+    
+    # Write CSS
+    echo "<style>" >> "$post_file"
+    generate_css >> "$post_file"
+    echo "</style>" >> "$post_file"
+    
+    # Write body start
+    cat >> "$post_file" << 'EOF'
 </head>
 <body>
 <nav><a href="../">← Blog</a> | <a href="../archive/">Archive</a></nav>
-<h1>$title</h1>
-<small>$short_date</small>
-$content
-<nav style="border-top:1px solid #eee;border-bottom:0;margin-top:2em">$nav_links</nav>
-</body>
-</html>
 EOF
-    then
-        error "Failed to create post file: $post_file"
-    fi
+    
+    # Write title and date
+    echo "<h1>$title</h1>" >> "$post_file"
+    echo "<small>$short_date</small>" >> "$post_file"
+    
+    # Write content
+    cat "$temp_content" >> "$post_file"
+    
+    # Write navigation and footer
+    echo "<nav style=\"border-top:1px solid #eee;border-bottom:0;margin-top:2em\">$nav_links</nav>" >> "$post_file"
+    echo "</body></html>" >> "$post_file"
+    
+    # Clean up temp file
+    rm -f "$temp_content"
     
     log "Generated: $title (#$post_num)"
     ((post_count++))
