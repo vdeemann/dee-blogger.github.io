@@ -1,244 +1,70 @@
 #!/bin/bash
 set -e
 
-echo "🔧 Building blog..."
+echo "🔧 Building ultra-mini blog..."
 
-# Clean up and create directories
+# Clean up
 rm -rf public
-mkdir -p public/p public/archive
+mkdir -p public/p
 
-# Configuration
-SITE_TITLE="${SITE_TITLE:-My Blog}"
+# Config
+SITE_TITLE="${SITE_TITLE:-Mini Blog}"
 
-# Basic CSS (unchanged)
-CSS='body{max-width:40em;margin:2em auto;padding:0 1em;font-family:system-ui,sans-serif;line-height:1.6;color:#333}
-a{color:#06c;text-decoration:none}a:hover{text-decoration:underline}
-h1{font-size:1.8em;margin-bottom:.5em}h2{font-size:1.3em;margin:2em 0 1em}
-p{margin-bottom:1em}small{color:#666;display:block;margin-bottom:1em}
-pre{background:#f8f8f8;padding:1em;margin:1.5em 0;border-radius:4px}
-.post{margin-bottom:2em;padding:1em;background:#fafafa;border-radius:4px}
-input{width:100%;margin-bottom:1em;padding:.5em;border:1px solid #ddd;border-radius:4px}
-nav{margin:1.5em 0;padding:.5em 0;border-bottom:1px solid #eee}
-.search-result{background:#ffffe0}'
+# Nuclear CSS (199 bytes)
+CSS='body{max-width:40em;margin:1em auto;padding:0 .5em;font:1em/1.5 sans-serif}a{color:#36c}.p{margin:1em 0;padding:.3em;background:#f8f8f8}input{width:100%;margin:.5em 0;padding:.3em;border:1px solid #ccc}.h{background:#ff0}'
 
-# Get sorted file list
+# Get files
 files=($(ls content/*.md 2>/dev/null | sort))
 total=${#files[@]}
 
-echo "📁 Found $total markdown files"
-
-# Generate search index data
-echo "🔍 Generating search index..."
-SEARCH_DATA="["
+# Build search data (single-letter keys)
+SD="["
 for i in "${!files[@]}"; do
     file="${files[$i]}"
-    num=$((i + 1))
-    title=$(head -1 "$file" | sed 's/^# *//' | tr -d '<>&"')
-    excerpt=$(sed -n '3p' "$file" | tr -d '<>&"')
-    content=$(tail -n +3 "$file" | tr -d '<>&"')
-    date=$(basename "$file" | cut -d- -f1-3 | sed 's/-/\//g')
-    
-    SEARCH_DATA+="{\"num\":$num,\"title\":\"$title\",\"excerpt\":\"$excerpt\",\"date\":\"$date\",\"content\":\"$content\"}"
-    
-    if [ $i -lt $((total - 1)) ]; then
-        SEARCH_DATA+=","
-    fi
+    n=$((i+1))
+    t=$(head -1 "$file" | sed 's/^# *//;s/"/\\"/g')
+    e=$(sed -n '3p' "$file" | sed 's/"/\\"/g')
+    c=$(tail -n +3 "$file" | tr -d '\n' | sed 's/"/\\"/g')
+    SD+="{\"n\":$n,\"t\":\"$t\",\"e\":\"$e\",\"c\":\"$c\"}"
+    [ $i -lt $((total-1)) ] && SD+=","
 done
-SEARCH_DATA+="]"
+SD+="]"
 
-# Generate individual posts (unchanged)
-echo "📝 Generating posts..."
+# Generate posts
 for i in "${!files[@]}"; do
     file="${files[$i]}"
-    num=$((i + 1))
-    title=$(head -1 "$file" | sed 's/^# *//' | tr -d '<>&"')
-    content=$(tail -n +3 "$file" | tr -d '<>&"' | sed 's/^$/<p>/' | sed 's/^[^<]/<p>&/')
-    date=$(basename "$file" | cut -d- -f1-3 | sed 's/-/\//g')
-    
-    cat > "public/p/$num.html" << EOF
-<!DOCTYPE html><title>$title</title>
-<style>$CSS</style>
-<nav><a href="../">← Blog</a> | <a href="../archive/">Archive</a></nav>
-<h1>$title</h1>
-<small>$date</small>
-$content
-<nav><a href="../">← Back</a></nav>
-EOF
-    
-    echo "✅ Post $num: $title"
+    n=$((i+1))
+    t=$(head -1 "$file" | sed 's/^# *//')
+    c=$(tail -n +3 "$file" | sed 's/^$/<p>/;s/^[^<]/<p>&/')
+    echo -n '<!doctype html><meta charset=utf-8><title>'$t'</title><style>'$CSS'</style><a href=../>←</a><h1>'$t'</h1>'$c > "public/p/$n.html"
 done
 
-# Generate main page with improved search
-echo "🏠 Generating main page..."
-{
-    cat << EOF
-<!DOCTYPE html><title>$SITE_TITLE</title>
-<style>$CSS</style>
-<h1>$SITE_TITLE</h1>
-<input id="search" placeholder="Search all posts..." autocomplete="off">
-<div id="results"></div>
-<div id="posts">
-EOF
+# Generate index.html
+echo -n '<!doctype html><meta charset=utf-8><title>'$SITE_TITLE'</title><style>'$CSS'</style><h1>'$SITE_TITLE'</h1><input id=s><div id=r></div><div id=p>' > public/index.html
 
-    # Show recent 20 posts by default
-    ls content/*.md 2>/dev/null | sort -r | head -20 | while read file; do
-        post_num=1
-        for f in $(ls content/*.md | sort); do
-            [ "$f" = "$file" ] && break
-            post_num=$((post_num + 1))
-        done
-        
-        title=$(head -1 "$file" | sed 's/^# *//' | tr -d '<>&"')
-        excerpt=$(sed -n '3p' "$file" | tr -d '<>&"')
-        date=$(basename "$file" | cut -d- -f1-3 | sed 's/-/\//g')
-        
-        echo "<div class=\"post\" data-id=\"$post_num\"><small>$date</small><h2><a href=\"p/$post_num.html\">$title</a></h2><p>$excerpt</p></div>"
-    done
-    
-    echo '</div>'
-    echo "<p>📚 <a href=\"archive/\">View all $total posts</a></p>"
-    
-    # Include search data and script
-    echo "<script>const posts=$SEARCH_DATA;</script>"
-    cat << 'EOF'
-<script>
-const search = document.getElementById('search');
-const results = document.getElementById('results');
-const postsContainer = document.getElementById('posts');
+# Generate posts list
+ls content/*.md | sort -r | head -20 | while read f; do
+    n=1
+    for x in $(ls content/*.md | sort); do [ "$x" = "$f" ] && break; n=$((n+1)); done
+    t=$(head -1 "$f" | sed 's/^# *//;s/<[^>]*>//g')
+    echo -n "<div class=p data-id=$n><h2><a href=p/$n.html>$t</a>" >> public/index.html
+done
 
-function highlight(text, term) {
-    if (!term) return text;
-    const re = new RegExp(term, 'gi');
-    return text.replace(re, match => `<span class="search-result">${match}</span>`);
-}
+# Add JS (428 bytes)
+echo -n '</div><script>d='$SD';s=function(){let e=document.getElementById("s").value.toLowerCase(),n=document.getElementById("r"),t=document.getElementById("p");if(!e){n.innerHTML="";t.style.display="block";return}t.style.display="none";n.innerHTML="";for(o of d)if(o.t.toLowerCase().includes(e)||o.c.toLowerCase().includes(e))n.innerHTML+="<div class=p><h2><a href=p/"+o.n+".html>"+o.t.replace(new RegExp(e,"gi"),"<span class=h>$&</span>")+"</a>"};document.getElementById("s").oninput=s</script>' >> public/index.html
 
-function performSearch(term) {
-    term = term.toLowerCase().trim();
-    
-    if (!term) {
-        results.innerHTML = '';
-        postsContainer.style.display = 'block';
-        return;
-    }
-    
-    postsContainer.style.display = 'none';
-    results.innerHTML = '<h2>Search Results</h2>';
-    
-    const matches = posts.filter(post => 
-        post.title.toLowerCase().includes(term) ||
-        post.excerpt.toLowerCase().includes(term) ||
-        post.content.toLowerCase().includes(term)
-    );
-    
-    if (matches.length === 0) {
-        results.innerHTML = '<p>No matching posts found.</p>';
-        return;
-    }
-    
-    matches.forEach(post => {
-        results.innerHTML += `
-            <div class="post">
-                <small>${post.date}</small>
-                <h2><a href="p/${post.num}.html">${highlight(post.title, term)}</a></h2>
-                <p>${highlight(post.excerpt, term)}</p>
-            </div>
-        `;
-    });
-}
+# Generate archive
+mkdir -p public/archive
+echo -n '<!doctype html><meta charset=utf-8><title>Archive</title><style>'$CSS'</style><a href=../>←</a><h1>Archive</h1><input id=s><div id=r></div><div id=p>' > public/archive/index.html
+ls content/*.md | sort -r | while read f; do
+    n=1
+    for x in $(ls content/*.md | sort); do [ "$x" = "$f" ] && break; n=$((n+1)); done
+    t=$(head -1 "$f" | sed 's/^# *//;s/<[^>]*>//g')
+    echo -n "<div class=p data-id=$n><h2><a href=../p/$n.html>$t</a>" >> public/archive/index.html
+done
+echo -n '</div><script>d='$SD';s=function(){let e=document.getElementById("s").value.toLowerCase(),n=document.getElementById("r"),t=document.getElementById("p");if(!e){n.innerHTML="";t.style.display="block";return}t.style.display="none";n.innerHTML="";for(o of d)if(o.t.toLowerCase().includes(e)||o.c.toLowerCase().includes(e))n.innerHTML+="<div class=p><h2><a href=../p/"+o.n+".html>"+o.t.replace(new RegExp(e,"gi"),"<span class=h>$&</span>")+"</a>"};document.getElementById("s").oninput=s</script>' >> public/archive/index.html
 
-search.addEventListener('input', (e) => {
-    performSearch(e.target.value);
-});
-</script>
-EOF
-} > public/index.html
-
-# Generate archive (similar to main page but shows all posts)
-echo "📚 Generating archive..."
-{
-    cat << EOF
-<!DOCTYPE html><title>Archive - $SITE_TITLE</title>
-<style>$CSS</style>
-<nav><a href="../">← Home</a></nav>
-<h1>Archive ($total posts)</h1>
-<input id="search" placeholder="Search all posts..." autocomplete="off">
-<div id="results"></div>
-<div id="posts">
-EOF
-
-    ls content/*.md 2>/dev/null | sort -r | while read file; do
-        post_num=1
-        for f in $(ls content/*.md | sort); do
-            [ "$f" = "$file" ] && break
-            post_num=$((post_num + 1))
-        done
-        
-        title=$(head -1 "$file" | sed 's/^# *//' | tr -d '<>&"')
-        excerpt=$(sed -n '3p' "$file" | tr -d '<>&"')
-        date=$(basename "$file" | cut -d- -f1-3 | sed 's/-/\//g')
-        
-        echo "<div class=\"post\" data-id=\"$post_num\"><small>$date</small><h2><a href=\"../p/$post_num.html\">$title</a></h2><p>$excerpt</p></div>"
-    done
-    
-    echo '</div>'
-    
-    # Same search functionality as main page
-    echo "<script>const posts=$SEARCH_DATA;</script>"
-    cat << 'EOF'
-<script>
-const search = document.getElementById('search');
-const results = document.getElementById('results');
-const postsContainer = document.getElementById('posts');
-
-function highlight(text, term) {
-    if (!term) return text;
-    const re = new RegExp(term, 'gi');
-    return text.replace(re, match => `<span class="search-result">${match}</span>`);
-}
-
-function performSearch(term) {
-    term = term.toLowerCase().trim();
-    
-    if (!term) {
-        results.innerHTML = '';
-        postsContainer.style.display = 'block';
-        return;
-    }
-    
-    postsContainer.style.display = 'none';
-    results.innerHTML = '<h2>Search Results</h2>';
-    
-    const matches = posts.filter(post => 
-        post.title.toLowerCase().includes(term) ||
-        post.excerpt.toLowerCase().includes(term) ||
-        post.content.toLowerCase().includes(term)
-    );
-    
-    if (matches.length === 0) {
-        results.innerHTML = '<p>No matching posts found.</p>';
-        return;
-    }
-    
-    matches.forEach(post => {
-        results.innerHTML += `
-            <div class="post">
-                <small>${post.date}</small>
-                <h2><a href="../p/${post.num}.html">${highlight(post.title, term)}</a></h2>
-                <p>${highlight(post.excerpt, term)}</p>
-            </div>
-        `;
-    });
-}
-
-search.addEventListener('input', (e) => {
-    performSearch(e.target.value);
-});
-</script>
-EOF
-} > public/archive/index.html
-
-echo "✅ Blog built successfully!"
-echo "📊 Generated $total posts"
-echo "🔍 Search index contains $total entries"
-echo "🏠 Main page: $(wc -c < public/index.html) bytes"
-echo "📚 Archive: $(wc -c < public/archive/index.html) bytes"
+# Stats
+size=$(wc -c < public/index.html)
+echo "✅ Build complete! ($total posts)"
+echo "📦 Homepage size: $size bytes ($(echo "scale=2; $size/1024" | bc) KB)"
