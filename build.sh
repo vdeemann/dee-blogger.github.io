@@ -8,8 +8,8 @@ mkdir -p public/p public/archive
 
 SITE_TITLE="${SITE_TITLE:-My Blog}"
 
-# Ultra-compressed CSS (under 500 bytes)
-CSS='body{max-width:40em;margin:2em auto;padding:0 1em;font-family:sans-serif;line-height:1.6}a{color:#06c;text-decoration:none}h1{font-size:1.8em;margin-bottom:.5em}h2{font-size:1.3em;margin:0}.post{margin-bottom:2em;padding:1em;background:#fafafa;border-radius:4px}small{color:#666;display:block;margin-bottom:1em}input{width:100%;margin-bottom:1em;padding:.5em;border:1px solid #ddd;border-radius:4px}.stats{background:#fff3cd;padding:1em;border-radius:4px;margin:1em 0;text-align:center}'
+# Consistent blog styling CSS
+CSS='body{max-width:40em;margin:2em auto;padding:0 1em;font-family:system-ui,sans-serif;line-height:1.6;color:#333}a{color:#0066cc;text-decoration:none}a:hover{text-decoration:underline}h1{font-size:1.8em;margin:0;color:#222}h2{font-size:1.3em;margin:2em 0 1em;color:#333}h3{font-size:1.1em;margin:1.5em 0 .5em;color:#444}p{margin:1em 0}small{color:#666;display:block;margin-bottom:1em}strong{font-weight:600}code{background:#f1f3f4;padding:.2em .4em;border-radius:3px;font-family:monospace}pre{background:#f8f9fa;padding:1em;margin:1.5em 0;border-radius:6px;overflow-x:auto}pre code{background:none;padding:0}.post{margin-bottom:2em;padding:1em;background:#fafafa;border-radius:4px}input{width:100%;margin-bottom:1em;padding:.5em;border:1px solid #ddd;border-radius:4px}.stats{background:#fff3cd;padding:1em;border-radius:4px;margin:1em 0;text-align:center}nav{margin:1.5em 0;padding:.5em 0;border-bottom:1px solid #eee}'
 
 files=($(ls content/*.md 2>/dev/null | sort))
 total=${#files[@]}
@@ -22,12 +22,40 @@ for i in "${!files[@]}"; do
     num=$((i + 1))
     
     title=$(head -1 "$file" | sed 's/^# *//' | sed 's/[<>&"'"'"']//g')
-    content=$(tail -n +3 "$file" | sed 's/[<>&"'"'"']//g' | sed 's/^$/<p>/' | sed 's/^[^<#-]/<p>&/')
+    # Process markdown content properly for consistent formatting
+    content=$(tail -n +3 "$file" | sed '
+        # Convert headers
+        s/^### \(.*\)/<h3>\1<\/h3>/
+        s/^## \(.*\)/<h2>\1<\/h2>/
+        s/^# \(.*\)/<h1>\1<\/h1>/
+        
+        # Convert bold text
+        s/\*\*\([^*]*\)\*\*/<strong>\1<\/strong>/g
+        
+        # Convert inline code
+        s/`\([^`]*\)`/<code>\1<\/code>/g
+        
+        # Convert lists
+        s/^- \(.*\)/<li>\1<\/li>/
+        s/^\* \(.*\)/<li>\1<\/li>/
+        
+        # Wrap regular paragraphs
+        /^[^<#-]/s/^/<p>/
+        /^<p>/s/$/<\/p>/
+        
+        # Empty lines for paragraph breaks
+        s/^$/<\/p><p>/
+    ' | sed '
+        # Clean up extra paragraph tags
+        s/<\/p><p>/<\/p>\n<p>/g
+        s/^<\/p>//
+        s/<p>$//
+    ')
     date=$(basename "$file" | cut -d- -f1-3 | sed 's/-/\//g')
     
-    # Ultra-minimal HTML (no unnecessary attributes, spaces, or structure)
+    # Generate clean, consistent post layout
     cat > "public/p/$num.html" << EOF
-<!DOCTYPE html><title>$title</title><style>$CSS</style><a href=../>← Blog</a><small>$date</small><h1>$title</h1>$content<a href=../>← Back</a>
+<!DOCTYPE html><title>$title</title><style>$CSS</style><nav><a href=../>← Blog</a> | <a href=../archive/>Archive</a></nav><small>$date</small><h1>$title</h1>$content<nav style="border-top:1px solid #eee;margin-top:2em;padding-top:1em"><a href=../>← Back to Blog</a></nav>
 EOF
 done
 
@@ -42,7 +70,7 @@ done
         for f in $(ls content/*.md | sort); do [ "$f" = "$file" ] && break; num=$((num+1)); done
         
         title=$(head -1 "$file" | sed 's/^# *//' | sed 's/[<>&"'"'"']//g')
-        excerpt=$(sed -n '3p' "$file" | sed 's/[<>&"'"'"']//g')
+        excerpt=$(sed -n '3p' "$file" | sed 's/\*\*\([^*]*\)\*\*/<strong>\1<\/strong>/g; s/`\([^`]*\)`/<code>\1<\/code>/g')
         [ -z "$excerpt" ] && excerpt="..."
         date=$(basename "$file" | cut -d- -f1-3 | sed 's/-/\//g')
         
@@ -62,7 +90,7 @@ done
         for f in $(ls content/*.md | sort); do [ "$f" = "$file" ] && break; num=$((num+1)); done
         
         title=$(head -1 "$file" | sed 's/^# *//' | sed 's/[<>&"'"'"']//g')
-        excerpt=$(sed -n '3p' "$file" | sed 's/[<>&"'"'"']//g')
+        excerpt=$(sed -n '3p' "$file" | sed 's/\*\*\([^*]*\)\*\*/<strong>\1<\/strong>/g; s/`\([^`]*\)`/<code>\1<\/code>/g')
         [ -z "$excerpt" ] && excerpt="..."
         date=$(basename "$file" | cut -d- -f1-3 | sed 's/-/\//g')
         
