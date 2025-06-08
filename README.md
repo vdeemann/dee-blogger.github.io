@@ -6,13 +6,15 @@ A sub-3KB blog system that respects your readers' bandwidth and time.
 
 ## Live Statistics
 
-- **Total repository size**: 13.2 KB (source code)
-- **Generated site size**: 8.6 KB (deployed)
-- **Average page size**: 1.1 KB per post
-- **Main page**: 2.8 KB (including search)
-- **Load time**: < 100ms globally
-- **Posts**: 5 complete articles
-- **Technologies**: Pure HTML/CSS + minimal JavaScript
+- **Total repository size**: ~24 KB (complete source code)
+- **Generated site size**: ~12 KB (deployed files)
+- **Average page size**: ~1.1 KB per post
+- **Main page size**: ~2.8 KB (including search)
+- **Posts**: 6 complete articles
+- **Build time**: < 5 seconds
+- **Load time**: < 100ms
+- **Dependencies**: 0 external libraries
+- **Technologies**: Python build script + HTML/CSS/JS
 
 ## Features
 
@@ -22,76 +24,145 @@ A sub-3KB blog system that respects your readers' bandwidth and time.
 - ✅ **Mobile responsive** - Works on all devices
 - ✅ **No tracking** - Respects privacy
 - ✅ **No external dependencies** - Completely self-contained
-- ✅ **512KB Club compliant** - Extreme efficiency
 - ✅ **Auto-deployment** - Updates on every git push
-
-## 512KB Club Qualification
-
-This blog qualifies for all 512KB Club categories:
-
-| Category | Limit | Our Size | Status |
-|----------|-------|----------|--------|
-| 🟢 **Green Team** | < 512 KB | 8.6 KB | ✅ **Qualified** |
-| 🟠 **Orange Team** | < 100 KB | 8.6 KB | ✅ **Qualified** |
-| 🔵 **Blue Team** | < 10 KB | 8.6 KB | ✅ **Qualified** |
-
-**Result**: Qualifies for the most restrictive **Blue Team** with 1.4 KB to spare!
 
 ## Size Breakdown
 
-### Repository Source Files
+### Complete Project Structure
 ```
-├── .github/workflows/build.yml     1.8 KB  # GitHub Actions
-├── build                           2.6 KB  # Build script  
-├── README.md                       3.2 KB  # This file
-└── content/                        7.1 KB  # Blog posts
-    ├── 2025-06-07-guix-blog.md     1.5 KB
-    ├── 2025-06-05-libreboot.md     1.3 KB
-    ├── 2025-06-01-guix-packages.md 1.5 KB
-    ├── 2025-05-28-256gb-ram.md     1.4 KB
-    └── 2025-05-25-static-vs...md   1.5 KB
+dee-blogger.github.io/
+├── .github/
+│   └── workflows/
+│       └── build.yml               1.2 KB  # GitHub Actions workflow
+├── .gitignore                      0.1 KB  # Git ignore rules
+├── README.md                       8.5 KB  # This documentation
+├── build.py                        2.4 KB  # Static site generator
+├── build.sh                        0.8 KB  # Build shell script
+├── template.html                   1.8 KB  # HTML template
+├── style.css                       1.2 KB  # Stylesheet
+├── script.js                       0.8 KB  # Search functionality
+├── content/
+│   ├── 2025-06-08-phoenix-liveview-vs-javascript.md  1.4 KB
+│   ├── 2025-06-07-guix-blog.md     1.5 KB
+│   ├── 2025-06-05-libreboot.md     1.3 KB
+│   ├── 2025-06-01-guix-packages.md 1.5 KB
+│   ├── 2025-05-28-256gb-ram.md     1.4 KB
+│   └── 2025-05-25-static-vs...md   1.5 KB
+└── _site/ (generated)
+    ├── index.html                  2.8 KB  # Main page
+    ├── posts/
+    │   ├── phoenix-liveview-vs-javascript.html  1.2 KB
+    │   ├── guix-blog.html          1.1 KB
+    │   ├── libreboot.html          1.0 KB
+    │   ├── guix-packages.html      1.1 KB
+    │   ├── 256gb-ram.html          1.0 KB
+    │   └── static-vs.html          1.1 KB
+    └── assets/
+        ├── style.min.css           0.4 KB  # Minified CSS
+        └── search.min.js           0.3 KB  # Minified JS
                                    -------
-Total Repository:                  13.2 KB
+Total Repository:                   ~24 KB
+Total Generated Site:               ~12 KB
 ```
 
-### Generated Site Files
+## Size Verification
+
+### Quick Browser Check
+
+Want to verify a page is under 3KB? Open any page, press **F12** → **Console**, and paste:
+
+```javascript
+// Quick size check in browser
+let size = new Blob([document.documentElement.outerHTML]).size;
+console.log(`Page size: ${size} bytes`);
+console.log(`3KB budget: ${size <= 3072 ? '✅ PASS' : '❌ FAIL'}`);
+if (size <= 3072) {
+    console.log(`Remaining: ${3072 - size} bytes`);
+} else {
+    console.log(`Over by: ${size - 3072} bytes`);
+}
 ```
-├── index.html                      2.8 KB  # Main page + search
-└── p/                              5.8 KB  # Individual posts
-    ├── 1.html                      1.1 KB
-    ├── 2.html                      1.1 KB
-    ├── 3.html                      1.2 KB
-    ├── 4.html                      1.1 KB
-    └── 5.html                      1.2 KB
-                                   -------
-Total Live Site:                    8.6 KB
+
+**Expected output**:
+```
+Page size: 2847 bytes
+3KB budget: ✅ PASS
+Remaining: 225 bytes
 ```
 
-## Efficiency Metrics
+## Local Development
 
-- **Compression ratio**: 35% reduction (13.2 KB → 8.6 KB)
-- **Content density**: 5 complete articles in 8.6 KB
-- **Per-post efficiency**: 1.1 KB average per full post
-- **Carbon footprint**: Minimal (8.6 KB × pageviews)
-- **Bandwidth respect**: 99.98% smaller than average blog
+### Prerequisites
 
-## Local Development (Windows)
+**Install Python** (if not already installed):
 
-1. **Install Python** (if not already installed):
-   - Download from https://python.org
-   - Add to PATH during installation
+**Linux:**
+```bash
+# Ubuntu/Debian
+sudo apt update && sudo apt install python3
 
-2. **Test locally** (optional):
-   ```cmd
-   python -m http.server 8000
-   ```
+# Fedora/RHEL
+sudo dnf install python3
 
-3. **Visit:** http://localhost:8000
+# Arch Linux
+sudo pacman -S python
+```
+
+**BSD:**
+```bash
+# FreeBSD
+sudo pkg install python3
+
+# OpenBSD
+sudo pkg_add python3
+```
+
+**macOS:**
+```bash
+# Using Homebrew (recommended)
+brew install python
+
+# Or download from python.org
+```
+
+**Windows:**
+- Download from https://python.org
+- Add to PATH during installation
+
+### Testing Locally
+
+**Linux/BSD/macOS:**
+```bash
+python3 -m http.server 8000
+```
+
+**Windows:**
+```cmd
+python -m http.server 8000
+```
+
+**Visit:** http://localhost:8000
 
 ## Adding New Posts (Future)
 
-### Method 1: Using File Explorer + Git
+### Method 1: Using File Manager + Git
 
+**Linux/BSD/macOS:**
+1. **Create new file** in `content/` folder:
+   ```bash
+   # Using terminal
+   nano content/2025-06-08-my-new-post.md
+   # Or use your preferred editor: vim, gedit, kate, etc.
+   ```
+
+2. **Deploy**:
+   ```bash
+   git add .
+   git commit -m "Add new post"
+   git push
+   ```
+
+**Windows:**
 1. **Create new file** in `content\` folder:
    - File name: `2025-06-08-my-new-post.md`
    - Content: See example below
@@ -112,7 +183,42 @@ Total Live Site:                    8.6 KB
 5. **Add content** (see example below)
 6. **Click "Commit changes"**
 
-### Method 3: Using Windows Batch File (Optional)
+### Method 3: Using Automation Scripts (Optional)
+
+**Linux/BSD/macOS Shell Script:**
+
+Create `new-post.sh` in your project folder:
+
+```bash
+#!/bin/bash
+read -p "Enter post title: " title
+mydate=$(date +%Y-%m-%d)
+filename="$mydate-$(echo "$title" | tr ' ' '-' | tr '[:upper:]' '[:lower:]')"
+
+cat > "content/$filename.md" << EOF
+# $title
+
+Short description here.
+
+Full content goes here with more details about your topic.
+
+You can write multiple paragraphs and the build script will automatically convert them to proper HTML paragraphs.
+
+Each post becomes a separate page accessible via the main blog's search functionality.
+EOF
+
+echo "Created: content/$filename.md"
+```
+
+Make executable and run:
+```bash
+chmod +x new-post.sh
+./new-post.sh
+```
+
+Then commit and push as usual.
+
+**Windows Batch File:**
 
 Create `new-post.bat` in your project folder:
 
@@ -178,12 +284,7 @@ This blog embodies the principles of:
 - **Environmental responsibility** - Tiny carbon footprint per pageview
 - **Digital sovereignty** - Self-hosted, no external dependencies
 - **Unix philosophy** - Do one thing well (serve content efficiently)
-- **512KB Club values** - Prove that small sites can be better
 
 ## Inspiration
 
 Built for the [512KB Club](https://512kb.club/) and inspired by sites like [The Jolly Teapot](https://thejollyteapot.com/) (3.6KB with 346 posts).
-
-## Technical Achievement
-
-**8.6 KB total site** serving 5 complete blog posts with search functionality demonstrates that modern web development doesn't require megabytes of JavaScript frameworks. Sometimes less truly is more.
