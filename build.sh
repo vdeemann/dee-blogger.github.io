@@ -199,31 +199,43 @@ for i in "${!files[@]}"; do
     
     content=$(process_markdown "$file")
     
-    cat > "public/p/${num}.html" << HTML_EOF
+    cat > "public/p/${num}.html" << 'HTML_EOF'
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width,initial-scale=1">
-    <title>${title} - ${SITE_TITLE}</title>
-    <meta name="description" content="${excerpt:0:160}">
-    <style>${POST_CSS}</style>
+HTML_EOF
+    echo "    <title>${title} - ${SITE_TITLE}</title>" >> "public/p/${num}.html"
+    echo "    <meta name=\"description\" content=\"${excerpt:0:160}\">" >> "public/p/${num}.html"
+    cat >> "public/p/${num}.html" << 'HTML_EOF2'
+    <style>
+HTML_EOF2
+    echo "${POST_CSS}" >> "public/p/${num}.html"
+    cat >> "public/p/${num}.html" << 'HTML_EOF3'
+    </style>
 </head>
 <body>
     <nav><a href="../">← Blog</a> | <a href="../archive/">Archive</a></nav>
-    <h1>${title}</h1>
-    <small>${date}</small>
+HTML_EOF3
+    echo "    <h1>${title}</h1>" >> "public/p/${num}.html"
+    echo "    <small>${date}</small>" >> "public/p/${num}.html"
+    cat >> "public/p/${num}.html" << 'HTML_EOF4'
     <div class="post-meta">
-        <p><strong>Published:</strong> ${date}</p>
-        <p><strong>Reading time:</strong> ~$(echo "$content" | wc -w | awk '{print int($1/200)+1}') min</p>
+HTML_EOF4
+    echo "        <p><strong>Published:</strong> ${date}</p>" >> "public/p/${num}.html"
+    echo "        <p><strong>Reading time:</strong> ~$(echo "$content" | wc -w | awk '{print int($1/200)+1}') min</p>" >> "public/p/${num}.html"
+    cat >> "public/p/${num}.html" << 'HTML_EOF5'
     </div>
-    ${content}
+HTML_EOF5
+    echo "${content}" >> "public/p/${num}.html"
+    cat >> "public/p/${num}.html" << 'HTML_EOF6'
     <nav style="border-top:1px solid #e2e8f0;margin-top:3em;padding-top:1.5em">
         <a href="../">← Back to Blog</a> | <a href="../archive/">Archive</a>
     </nav>
 </body>
 </html>
-HTML_EOF
+HTML_EOF6
 
     echo "✅ Processed: $num - $title"
 done
@@ -231,25 +243,39 @@ done
 # Generate main page with archive-style consistency
 echo "🏠 Generating main page with consistent styling..."
 
-cat > public/index.html << MAIN_EOF
+cat > public/index.html << 'MAIN_EOF'
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width,initial-scale=1">
-    <title>${SITE_TITLE}</title>
-    <meta name="description" content="A blog with ${total} posts">
-    <style>${SHARED_CSS}</style>
+MAIN_EOF
+
+echo "    <title>${SITE_TITLE}</title>" >> public/index.html
+echo "    <meta name=\"description\" content=\"A blog with ${total} posts\">" >> public/index.html
+
+cat >> public/index.html << 'MAIN_EOF2'
+    <style>
+MAIN_EOF2
+
+echo "${SHARED_CSS}" >> public/index.html
+
+cat >> public/index.html << 'MAIN_EOF3'
+    </style>
 </head>
 <body>
-    <h1>${SITE_TITLE}</h1>
-    <div class="stats">📊 ${total} posts published</div>
+MAIN_EOF3
+
+echo "    <h1>${SITE_TITLE}</h1>" >> public/index.html
+echo "    <div class=\"stats\">📊 ${total} posts published</div>" >> public/index.html
+
+cat >> public/index.html << 'MAIN_EOF4'
     <input id="search" placeholder="Search posts..." autocomplete="off">
     <div id="search-info" class="search-results" style="display:none">
         <span id="search-count">0</span> posts found
     </div>
     <div id="posts">
-MAIN_EOF
+MAIN_EOF4
 
 # Get recent posts (last 20, sorted by date newest first)
 recent_nums=($(for file in "${files[@]}"; do
@@ -263,13 +289,26 @@ for num in "${recent_nums[@]}"; do
     date="${post_data["$num,date"]}"
     excerpt="${post_data["$num,excerpt"]}"
     
-    cat >> public/index.html << POST_EOF
-        <div class="post" data-title="${title,,}" data-excerpt="${excerpt,,}" data-searchable="${title,,} ${excerpt,,}" onclick="window.location.href='p/${num}.html'">
-            <small>${date}</small>
-            <h2><a href="p/${num}.html">${title}</a></h2>
-            <div class="excerpt">${excerpt}</div>
-        </div>
+    cat >> public/index.html << 'POST_EOF'
+        <div class="post" data-title="
 POST_EOF
+    echo "${title,,}" | tr -d '\n' >> public/index.html
+    cat >> public/index.html << 'POST_EOF2'
+" data-excerpt="
+POST_EOF2
+    echo "${excerpt,,}" | tr -d '\n' >> public/index.html
+    cat >> public/index.html << 'POST_EOF3'
+" data-searchable="
+POST_EOF3
+    echo "${title,,} ${excerpt,,}" | tr -d '\n' >> public/index.html
+    cat >> public/index.html << 'POST_EOF4'
+" onclick="window.location.href='p/
+POST_EOF4
+    echo "${num}.html'\">" >> public/index.html
+    echo "            <small>${date}</small>" >> public/index.html
+    echo "            <h2><a href=\"p/${num}.html\">${title}</a></h2>" >> public/index.html
+    echo "            <div class=\"excerpt\">${excerpt}</div>" >> public/index.html
+    echo "        </div>" >> public/index.html
 done
 
 cat >> public/index.html << MAIN_END_EOF
@@ -406,23 +445,41 @@ MAIN_END_EOF
 # Generate archive page with fixed sticky header and search
 echo "📚 Generating archive with fixed search and sticky header..."
 
-cat > public/archive/index.html << ARCHIVE_START_EOF
+cat > public/archive/index.html << 'ARCHIVE_START_EOF'
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width,initial-scale=1">
-    <title>Archive - ${SITE_TITLE}</title>
-    <meta name="description" content="Chronological archive of all ${total} posts">
-    <style>${SHARED_CSS}</style>
+ARCHIVE_START_EOF
+
+echo "    <title>Archive - ${SITE_TITLE}</title>" >> public/archive/index.html
+echo "    <meta name=\"description\" content=\"Chronological archive of all ${total} posts\">" >> public/archive/index.html
+
+cat >> public/archive/index.html << 'ARCHIVE_START_EOF2'
+    <style>
+ARCHIVE_START_EOF2
+
+echo "${SHARED_CSS}" >> public/archive/index.html
+
+cat >> public/archive/index.html << 'ARCHIVE_START_EOF3'
+    </style>
 </head>
 <body>
     <nav><a href="../">← Home</a></nav>
     <h1>Archive</h1>
-    <div class="stats">📊 ${total} posts chronologically ordered</div>
+ARCHIVE_START_EOF3
+
+echo "    <div class=\"stats\">📊 ${total} posts chronologically ordered</div>" >> public/archive/index.html
+
+cat >> public/archive/index.html << 'ARCHIVE_START_EOF4'
     <input id="search-main" placeholder="Search all posts..." autocomplete="off">
     <div id="search-info" class="search-results" style="display:none">
-        <span id="search-count">0</span> of ${total} posts found
+ARCHIVE_START_EOF4
+
+echo "        <span id=\"search-count\">0</span> of ${total} posts found" >> public/archive/index.html
+
+cat >> public/archive/index.html << 'ARCHIVE_START_EOF5'
     </div>
     
     <div id="sticky-header" class="sticky-header">
@@ -431,7 +488,7 @@ cat > public/archive/index.html << ARCHIVE_START_EOF
     </div>
     
     <div class="archive-content" id="archive">
-ARCHIVE_START_EOF
+ARCHIVE_START_EOF5
 
 # Sort all posts chronologically (newest first)
 sorted_nums=($(for file in "${files[@]}"; do
@@ -459,22 +516,18 @@ for ym in $(printf '%s\n' "${!year_months[@]}" | sort -rn); do
     # Year section
     if [ "$year" != "$current_year" ]; then
         [ -n "$current_year" ] && echo "        </div>" >> public/archive/index.html
-        cat >> public/archive/index.html << YEAR_EOF
-        <div class="year-section" data-year="$year">
-            <div class="year-header">
-                <h2>$year</h2>
-            </div>
-YEAR_EOF
+        echo "        <div class=\"year-section\" data-year=\"$year\">" >> public/archive/index.html
+        echo "            <div class=\"year-header\">" >> public/archive/index.html
+        echo "                <h2>$year</h2>" >> public/archive/index.html
+        echo "            </div>" >> public/archive/index.html
         current_year="$year"
     fi
     
     # Month section
-    cat >> public/archive/index.html << MONTH_EOF
-            <div class="month-section" data-month="$month" data-year-month="$year $month_name">
-                <div class="month-header">
-                    <h3>$month_name</h3>
-                </div>
-MONTH_EOF
+    echo "            <div class=\"month-section\" data-month=\"$month\" data-year-month=\"$year $month_name\">" >> public/archive/index.html
+    echo "                <div class=\"month-header\">" >> public/archive/index.html
+    echo "                    <h3>$month_name</h3>" >> public/archive/index.html
+    echo "                </div>" >> public/archive/index.html
     
     # Posts in this month (sorted by day, newest first)
     month_nums=($(printf '%s\n' ${year_months[$ym]} | xargs -n1 | while read num; do
@@ -486,13 +539,26 @@ MONTH_EOF
         date="${post_data["$num,date"]}"
         excerpt="${post_data["$num,excerpt"]}"
         
-        cat >> public/archive/index.html << POST_ARCHIVE_EOF
-                <div class="post" data-title="${title,,}" data-excerpt="${excerpt,,}" data-searchable="${title,,} ${excerpt,,}" onclick="window.location.href='../p/${num}.html'">
-                    <small>${date}</small>
-                    <h3><a href="../p/${num}.html">${title}</a></h3>
-                    <div class="excerpt">${excerpt}</div>
-                </div>
+        cat >> public/archive/index.html << 'POST_ARCHIVE_EOF'
+                <div class="post" data-title="
 POST_ARCHIVE_EOF
+        echo "${title,,}" | tr -d '\n' >> public/archive/index.html
+        cat >> public/archive/index.html << 'POST_ARCHIVE_EOF2'
+" data-excerpt="
+POST_ARCHIVE_EOF2
+        echo "${excerpt,,}" | tr -d '\n' >> public/archive/index.html
+        cat >> public/archive/index.html << 'POST_ARCHIVE_EOF3'
+" data-searchable="
+POST_ARCHIVE_EOF3
+        echo "${title,,} ${excerpt,,}" | tr -d '\n' >> public/archive/index.html
+        cat >> public/archive/index.html << 'POST_ARCHIVE_EOF4'
+" onclick="window.location.href='../p/
+POST_ARCHIVE_EOF4
+        echo "${num}.html'\">" >> public/archive/index.html
+        echo "                    <small>${date}</small>" >> public/archive/index.html
+        echo "                    <h3><a href=\"../p/${num}.html\">${title}</a></h3>" >> public/archive/index.html
+        echo "                    <div class=\"excerpt\">${excerpt}</div>" >> public/archive/index.html
+        echo "                </div>" >> public/archive/index.html
     done
     echo "            </div>" >> public/archive/index.html
 done
