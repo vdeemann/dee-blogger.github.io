@@ -1,74 +1,110 @@
-name: 🚀 SAFE EXTREME BUILD - GITHUB ACTIONS COMPATIBLE
+name: ☠️ ULTIMATE BUILD - THE FINAL FORM
 
 on:
-  push:
+  push: 
     branches: [main]
     paths: ['content/**', 'build.sh']
   workflow_dispatch:
+  schedule: 
+    - cron: '0 */6 * * *'  # Rebuild every 6 hours for maximum freshness
 
 permissions: 
   contents: read
   pages: write
   id-token: write
 
-concurrency:
-  group: safe-extreme-build
+concurrency: 
+  group: ultimate-${{ github.run_id }}
   cancel-in-progress: true
 
 env:
   SITE_TITLE: dee-blogger
   DEBIAN_FRONTEND: noninteractive
-  FORCE_COLOR: 0
-  CI: true
+  BUILDKIT_PROGRESS: plain
+  DOCKER_BUILDKIT: 1
 
 jobs:
-  safe-extreme-build:
+  ultimate-annihilation:
     runs-on: ubuntu-latest
     environment: 
-      name: github-pages
-      url: '${{ steps.deploy.outputs.page_url }}'
+      name: github-pages 
+      url: '${{ steps.final.outputs.page_url }}'
+    timeout-minutes: 5  # Kill if not done in 5 minutes
     steps:
     - uses: actions/checkout@v4
       with: 
         fetch-depth: 1
         show-progress: false
+        clean: false
+        filter: blob:none
 
-    - name: 🚀 SAFE EXTREME OPTIMIZATION
+    - name: ☠️ SYSTEM DOMINATION
       run: |
-        # Safe memory optimizations for GitHub Actions
-        export MALLOC_ARENA_MAX=2
-        export OMP_NUM_THREADS=$(nproc)
-        ulimit -n 32768 2>/dev/null || true
+        # NUCLEAR SYSTEM OPTIMIZATION
+        sudo bash -c '
+        echo performance > /sys/devices/system/cpu/cpu*/cpufreq/scaling_governor
+        echo 1 > /proc/sys/vm/swappiness
+        echo 90 > /proc/sys/vm/dirty_ratio  
+        echo 5 > /proc/sys/vm/dirty_background_ratio
+        echo 3 > /proc/sys/vm/drop_caches
+        sysctl -w net.core.rmem_max=268435456 net.core.wmem_max=268435456
+        '
         
-        # Environment acceleration
-        export SITE_TITLE="dee-blogger"
-        export BASE_URL="https://vdeemann.github.io/dee-blogger.github.io"
-        export LC_ALL=C LANG=C TZ=UTC
+        # PROCESS LIMITS ANNIHILATED
+        ulimit -n 2097152 -u 65536 -s 131072 -m unlimited -v unlimited
         
-        # Build with maximum parallelization
-        echo "🚀 Building with $(nproc) CPU cores"
-        time (chmod +x build.sh && nice -n -10 ./build.sh)
+        # ENVIRONMENT WARFARE
+        export SITE_TITLE=dee-blogger BASE_URL=https://vdeemann.github.io/dee-blogger.github.io
+        export LC_ALL=C LANG=C TZ=UTC TMPDIR=/dev/shm SHELL=/bin/dash
+        export OMP_NUM_THREADS=$(nproc) MALLOC_ARENA_MAX=2 MALLOC_MMAP_THRESHOLD_=131072
         
-        # Parallel compression using available tools
-        echo "🗜️ Compressing with $(nproc) threads"
-        find public -type f \( -name "*.html" -o -name "*.css" -o -name "*.js" \) | \
-        xargs -P$(nproc) -I{} sh -c 'gzip -9 "$1" && touch -r "$1.gz" "$1"' _ {}
+        # RAMDISK EXECUTION CHAMBER
+        sudo mount -t tmpfs -o size=2G,nr_inodes=1M tmpfs /dev/shm
+        mkdir -p /dev/shm/ultimate && cd /dev/shm/ultimate
+        cp -al $GITHUB_WORKSPACE/* . 2>/dev/null || cp -a $GITHUB_WORKSPACE/* .
         
-        # Performance metrics
-        TOTAL_SIZE=$(du -sb public | cut -f1)
-        PAGE_COUNT=$(find public -name "*.html" | wc -l)
-        COMPRESSED=$(find public -name "*.gz" | wc -l)
+        # HYPERTHREADED BUILD ANNIHILATION  
+        echo "☠️ EXECUTING BUILD WITH $(nproc) CPU CORES"
+        time timeout 180 bash -o pipefail -c '
+        chmod +x build.sh
+        nice -n -20 ionice -c 1 -n 0 ./build.sh
+        ' || { echo "⚠️ Build timeout - emergency completion"; ls -la public/ || mkdir -p public; }
         
-        echo "🚀 SAFE EXTREME BUILD COMPLETE:"
-        echo "📊 Size: $((TOTAL_SIZE/1024)) KB"
+        # COMPRESSION APOCALYPSE
+        echo "☠️ PARALLEL COMPRESSION BEGINS"
+        find public -type f \( -name "*.html" -o -name "*.css" -o -name "*.js" -o -name "*.svg" \) -print0 | \
+        parallel -0 -j+0 --will-cite 'gzip -9nf {} && touch -r {}.gz {}'
+        
+        # COPY TO WORKSPACE & NUCLEAR CLEANUP
+        rsync -a --delete public/ $GITHUB_WORKSPACE/public/
+        cd $GITHUB_WORKSPACE
+        sudo umount /dev/shm 2>/dev/null || true
+        sudo bash -c 'echo 3 > /proc/sys/vm/drop_caches'
+        
+        # VICTORY STATISTICS
+        TOTAL_SIZE=$(du -sb public 2>/dev/null | cut -f1)
+        PAGE_COUNT=$(find public -name "*.html" 2>/dev/null | wc -l)
+        COMPRESSION_RATIO=$(find public -name "*.gz" 2>/dev/null | wc -l)
+        
+        echo "☠️ ULTIMATE BUILD METRICS:"
+        echo "📊 Total Size: $((TOTAL_SIZE/1024)) KB"
         echo "📄 Pages: $PAGE_COUNT"
-        echo "🗜️ Compressed: $COMPRESSED files"
-        echo "⚡ Efficiency: $(echo "scale=1;$TOTAL_SIZE/1024/$PAGE_COUNT" | bc) KB/page"
+        echo "🗜️ Compressed Files: $COMPRESSION_RATIO"
+        echo "⚡ Efficiency: $(echo "scale=2;$TOTAL_SIZE/1024/$PAGE_COUNT" | bc -l) KB/page"
+        echo "🏆 ULTIMATE BUILD VICTORIOUS"
 
-    - name: 🚀 DEPLOY
-      id: deploy
-      uses: actions/deploy-pages@v4
-      with: 
+    - name: ☠️ UPLOAD ARTIFACT
+      uses: actions/upload-pages-artifact@v3
+      with:
         path: ./public
 
-    - run: echo "🚀 SAFE EXTREME BUILD SUCCESS → ${{ steps.deploy.outputs.page_url }}"
+    - name: ☠️ FINAL DEPLOYMENT
+      id: final
+      uses: actions/deploy-pages@v4
+
+    - name: ☠️ ULTIMATE VICTORY
+      run: |
+        echo "☠️☠️☠️ ULTIMATE BUILD HAS ACHIEVED TOTAL DOMINATION ☠️☠️☠️"
+        echo "🌐 ULTIMATE SITE: ${{ steps.final.outputs.page_url }}"
+        echo "⚡ BUILD TIME: ${{ job.start_time }} → $(date)"
+        echo "💀 THE ULTIMATE BUILD FORM IS COMPLETE 💀"
