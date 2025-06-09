@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e
 
-echo "🔧 Building smart blog with auto-diagram detection..."
+echo "🔧 Building elegant, consistent blog with Mermaid support..."
 
 rm -rf public
 mkdir -p public/p public/archive
@@ -14,29 +14,19 @@ COMPACT_CSS='body{max-width:40em;margin:2em auto;padding:0 1em;font-family:-appl
 # Timeline CSS for archive page
 TIMELINE_CSS='body{max-width:45em;margin:2em auto;padding:0 1em;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;line-height:1.5;color:#333;-webkit-font-smoothing:antialiased}a{color:#0066cc;text-decoration:none}a:hover{text-decoration:underline}h1{font-size:1.8em;margin:0 0 .5em 0;color:#222;font-weight:600}h2{font-size:1.1em;margin:0;color:#333;font-weight:600}p{margin:.3em 0;color:#333}small{color:#666;display:block;margin:0;font-size:.85em}input{width:100%;margin-bottom:1em;padding:.4em;border:1px solid #ddd;border-radius:3px;font-size:.9em}nav{margin:.8em 0;padding:.3em 0}.stats{background:#fff3cd;padding:.5em;border-radius:3px;margin:.5em 0;text-align:center;font-size:.9em}.timeline{position:relative;margin:2em 0;padding-left:2em}.timeline:before{content:"";position:absolute;left:15px;top:0;bottom:0;width:2px;background:linear-gradient(to bottom,#0066cc,#e1e8ed)}.year-section{margin-bottom:3em}.year-header{position:relative;margin-bottom:1.5em}.year-header h2{background:#0066cc;color:white;padding:.5em 1em;border-radius:20px;display:inline-block;font-size:1.2em;margin:0;position:relative;z-index:2}.year-header:before{content:"";position:absolute;left:-10px;top:50%;transform:translateY(-50%);width:20px;height:20px;background:#0066cc;border-radius:50%;border:3px solid white;box-shadow:0 0 0 2px #0066cc}.month-section{margin-bottom:2em;position:relative}.month-header{position:relative;margin-bottom:1em;padding-left:1em}.month-header h3{background:#f8f9fa;color:#333;padding:.3em .8em;border-radius:15px;display:inline-block;font-size:1em;margin:0;border:1px solid #e1e8ed;position:relative;z-index:2}.month-header:before{content:"";position:absolute;left:-6px;top:50%;transform:translateY(-50%);width:12px;height:12px;background:white;border:2px solid #0066cc;border-radius:50%}.post-item{position:relative;margin-bottom:.8em;padding:.6em .8em;background:white;border-radius:6px;border:1px solid #e1e8ed;margin-left:1em;transition:all 0.2s ease}.post-item:hover{background:#f8f9fa;border-color:#0066cc;transform:translateX(2px);box-shadow:0 2px 4px rgba(0,102,204,0.1)}.post-item:before{content:"";position:absolute;left:-7px;top:50%;transform:translateY(-50%);width:6px;height:6px;background:#0066cc;border-radius:50%}.search-active .timeline:before{background:#ddd}.search-active .year-header:before,.search-active .month-header:before,.search-active .post-item:before{background:#ddd;border-color:#ddd}.search-active .year-header h2{background:#666}'
 
-# CSS for posts without diagrams (ultra-lightweight)
-POST_CSS_BASIC='body{max-width:40em;margin:2em auto;padding:0 1em;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;line-height:1.6;color:#333;-webkit-font-smoothing:antialiased}a{color:#0066cc;text-decoration:none}a:hover{text-decoration:underline}h1{font-size:1.8em;margin:0 0 .3em 0;color:#222;font-weight:600}h2{font-size:1.3em;margin:2em 0 1em;color:#333;font-weight:600}h3{font-size:1.1em;margin:1.5em 0 .5em;color:#444;font-weight:600}p{margin:1em 0;color:#333}small{color:#666;display:block;margin-bottom:1.5em;font-size:.9em}strong{font-weight:600}code{background:#f6f8fa;color:#24292e;padding:.1em .3em;border-radius:3px;font-family:"SF Mono",Monaco,monospace;font-size:.85em}.code-container{position:relative;margin:.8em 0}.copy-btn{position:absolute;top:4px;right:4px;background:#fff;border:1px solid #d1d9e0;border-radius:3px;padding:4px 8px;font-size:11px;color:#586069;cursor:pointer;font-family:system-ui;z-index:10;box-shadow:0 1px 2px rgba(0,0,0,0.1)}.copy-btn:hover{background:#f6f8fa;color:#0366d6;border-color:#0366d6}.copy-btn:active{background:#e1e8ed;transform:scale(0.95)}.copy-success{color:#fff!important;background:#28a745!important;border-color:#28a745!important}pre{background:#f6f8fa;padding:.3em .5em;margin:0;border-radius:4px;overflow-x:auto;line-height:1.1;border:1px solid #e1e4e8}pre code{background:none;padding:0;font-size:.75em;color:#24292e;font-family:"SF Mono",Monaco,monospace;line-height:1.1;display:block;white-space:pre}ul{margin:1em 0;padding-left:1.5em}li{margin:.5em 0;color:#333}nav{margin:1.5em 0;padding:.5em 0;border-bottom:1px solid #eee}blockquote{background:#f6f8fa;border-left:4px solid #0366d6;margin:1.5em 0;padding:1em 1.5em;border-radius:0 6px 6px 0;color:#586069;font-style:italic}'
-
-# CSS for posts with diagrams (includes Mermaid styling)
-POST_CSS_DIAGRAM='body{max-width:40em;margin:2em auto;padding:0 1em;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;line-height:1.6;color:#333;-webkit-font-smoothing:antialiased}a{color:#0066cc;text-decoration:none}a:hover{text-decoration:underline}h1{font-size:1.8em;margin:0 0 .3em 0;color:#222;font-weight:600}h2{font-size:1.3em;margin:2em 0 1em;color:#333;font-weight:600}h3{font-size:1.1em;margin:1.5em 0 .5em;color:#444;font-weight:600}p{margin:1em 0;color:#333}small{color:#666;display:block;margin-bottom:1.5em;font-size:.9em}strong{font-weight:600}code{background:#f6f8fa;color:#24292e;padding:.1em .3em;border-radius:3px;font-family:"SF Mono",Monaco,monospace;font-size:.85em}.code-container{position:relative;margin:.8em 0}.copy-btn{position:absolute;top:4px;right:4px;background:#fff;border:1px solid #d1d9e0;border-radius:3px;padding:4px 8px;font-size:11px;color:#586069;cursor:pointer;font-family:system-ui;z-index:10;box-shadow:0 1px 2px rgba(0,0,0,0.1)}.copy-btn:hover{background:#f6f8fa;color:#0366d6;border-color:#0366d6}.copy-btn:active{background:#e1e8ed;transform:scale(0.95)}.copy-success{color:#fff!important;background:#28a745!important;border-color:#28a745!important}pre{background:#f6f8fa;padding:.3em .5em;margin:0;border-radius:4px;overflow-x:auto;line-height:1.1;border:1px solid #e1e4e8}pre code{background:none;padding:0;font-size:.75em;color:#24292e;font-family:"SF Mono",Monaco,monospace;line-height:1.1;display:block;white-space:pre}ul{margin:1em 0;padding-left:1.5em}li{margin:.5em 0;color:#333}nav{margin:1.5em 0;padding:.5em 0;border-bottom:1px solid #eee}blockquote{background:#f6f8fa;border-left:4px solid #0366d6;margin:1.5em 0;padding:1em 1.5em;border-radius:0 6px 6px 0;color:#586069;font-style:italic}.mermaid{margin:1.5em 0;text-align:center;background:#fff;border:1px solid #e1e4e8;border-radius:6px;padding:1em}.mermaid-container{position:relative;margin:1.5em 0}.mermaid-title{background:#f6f8fa;color:#333;padding:.5em 1em;border:1px solid #e1e4e8;border-bottom:none;border-radius:6px 6px 0 0;font-size:.9em;font-weight:600;margin:0}'
+# Enhanced CSS for individual blog posts with Mermaid and chart support
+POST_CSS='body{max-width:40em;margin:2em auto;padding:0 1em;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;line-height:1.6;color:#333;-webkit-font-smoothing:antialiased}a{color:#0066cc;text-decoration:none}a:hover{text-decoration:underline}h1{font-size:1.8em;margin:0 0 .3em 0;color:#222;font-weight:600}h2{font-size:1.3em;margin:2em 0 1em;color:#333;font-weight:600}h3{font-size:1.1em;margin:1.5em 0 .5em;color:#444;font-weight:600}p{margin:1em 0;color:#333}small{color:#666;display:block;margin-bottom:1.5em;font-size:.9em}strong{font-weight:600}code{background:#f6f8fa;color:#24292e;padding:.1em .3em;border-radius:3px;font-family:"SF Mono",Monaco,monospace;font-size:.85em}.code-container{position:relative;margin:.8em 0}.copy-btn{position:absolute;top:4px;right:4px;background:#fff;border:1px solid #d1d9e0;border-radius:3px;padding:4px 8px;font-size:11px;color:#586069;cursor:pointer;font-family:system-ui;z-index:10;box-shadow:0 1px 2px rgba(0,0,0,0.1)}.copy-btn:hover{background:#f6f8fa;color:#0366d6;border-color:#0366d6}.copy-btn:active{background:#e1e8ed;transform:scale(0.95)}.copy-success{color:#fff!important;background:#28a745!important;border-color:#28a745!important}pre{background:#f6f8fa;padding:.3em .5em;margin:0;border-radius:4px;overflow-x:auto;line-height:1.1;border:1px solid #e1e4e8}pre code{background:none;padding:0;font-size:.75em;color:#24292e;font-family:"SF Mono",Monaco,monospace;line-height:1.1;display:block;white-space:pre}ul{margin:1em 0;padding-left:1.5em}li{margin:.5em 0;color:#333}nav{margin:1.5em 0;padding:.5em 0;border-bottom:1px solid #eee}blockquote{background:#f6f8fa;border-left:4px solid #0366d6;margin:1.5em 0;padding:1em 1.5em;border-radius:0 6px 6px 0;color:#586069;font-style:italic}.mermaid{margin:1.5em 0;text-align:center;background:#fff;border:1px solid #e1e4e8;border-radius:6px;padding:1em}.mermaid-container{position:relative;margin:1.5em 0}.mermaid-title{background:#f6f8fa;color:#333;padding:.5em 1em;border:1px solid #e1e4e8;border-bottom:none;border-radius:6px 6px 0 0;font-size:.9em;font-weight:600;margin:0}.chart-container{margin:1.5em 0;padding:1em;background:#fff;border:1px solid #e1e4e8;border-radius:6px}.chart-title{color:#333;font-size:.9em;font-weight:600;margin:0 0 1em 0;text-align:center}'
 
 files=($(ls content/*.md 2>/dev/null | sort))
 total=${#files[@]}
 
-echo "📁 Processing $total files with smart auto-detection..."
+echo "📁 Processing $total files with Mermaid and chart support..."
 
-# Function to check if file contains diagrams
-has_diagrams() {
-    local file="$1"
-    grep -q '^```mermaid' "$file" 2>/dev/null
-}
-
-# Enhanced markdown processing function
+# Enhanced markdown processing function with Mermaid and chart support
 process_markdown() {
     local file="$1"
-    
     tail -n +3 "$file" | sed '
-        # Handle Mermaid diagrams
+        # Handle Mermaid diagrams first
         /^```mermaid/,/^```$/ {
             /^```mermaid.*/ {
                 s/.*/MERMAID_START/
@@ -210,7 +200,7 @@ process_markdown() {
         s/<p>$//'
 }
 
-# Generate individual posts
+# Generate individual posts with Mermaid support
 for i in "${!files[@]}"; do
     file="${files[$i]}"
     num=$((i + 1))
@@ -218,58 +208,13 @@ for i in "${!files[@]}"; do
     # Extract title safely
     title=$(head -1 "$file" | sed 's/^# *//' | sed 's/[<>&"'"'"']//g')
     
-    # Check if this post has diagrams
-    needs_mermaid=$(has_diagrams "$file" && echo "true" || echo "false")
-    
-    # Choose appropriate CSS
-    if [ "$needs_mermaid" = "true" ]; then
-        post_css="$POST_CSS_DIAGRAM"
-        script_section='<script src="https://cdnjs.cloudflare.com/ajax/libs/mermaid/10.6.1/mermaid.min.js"></script>
-<script>
-// Initialize Mermaid
-mermaid.initialize({
-    startOnLoad: true,
-    theme: "default",
-    themeVariables: {
-        primaryColor: "#0066cc",
-        primaryTextColor: "#333",
-        primaryBorderColor: "#e1e4e8",
-        lineColor: "#666",
-        secondaryColor: "#f6f8fa",
-        tertiaryColor: "#fff"
-    },
-    flowchart: {
-        htmlLabels: true,
-        curve: "linear"
-    }
-});
-
-// Auto-resize for mobile
-function resizeMermaidDiagrams() {
-    const mermaidDivs = document.querySelectorAll(".mermaid");
-    mermaidDivs.forEach(div => {
-        const svg = div.querySelector("svg");
-        if (svg) {
-            svg.style.maxWidth = "100%";
-            svg.style.height = "auto";
-        }
-    });
-}
-
-window.addEventListener("load", resizeMermaidDiagrams);
-window.addEventListener("resize", resizeMermaidDiagrams);'
-    else
-        post_css="$POST_CSS_BASIC"
-        script_section=''
-    fi
-    
-    # Process content
+    # Process content with enhanced markdown including Mermaid
     content=$(process_markdown "$file")
     
     # Extract date from filename
     date=$(basename "$file" | cut -d- -f1-3 | sed 's/-/\//g')
     
-    # Generate individual post layout
+    # Generate individual post layout with Mermaid and chart support
     cat > "public/p/$num.html" << EOF
 <!DOCTYPE html>
 <html lang="en">
@@ -277,8 +222,9 @@ window.addEventListener("resize", resizeMermaidDiagrams);'
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>$title</title>
-<style>$post_css</style>
-$script_section
+<style>$POST_CSS</style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mermaid/10.6.1/mermaid.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.min.js"></script>
 </head>
 <body>
 <nav><a href="../">← Blog</a> | <a href="../archive/">Archive</a></nav>
@@ -287,53 +233,98 @@ $script_section
 $content
 <nav style="border-top:1px solid #eee;margin-top:2em;padding-top:1em"><a href="../">← Back to Blog</a></nav>
 <script>
-// Copy code functionality (always available)
+// Initialize Mermaid with custom configuration
+mermaid.initialize({
+    startOnLoad: true,
+    theme: 'default',
+    themeVariables: {
+        primaryColor: '#0066cc',
+        primaryTextColor: '#333',
+        primaryBorderColor: '#e1e4e8',
+        lineColor: '#666',
+        secondaryColor: '#f6f8fa',
+        tertiaryColor: '#fff'
+    },
+    flowchart: {
+        htmlLabels: true,
+        curve: 'linear'
+    },
+    sequence: {
+        actorMargin: 50,
+        width: 150,
+        height: 65,
+        boxMargin: 10,
+        boxTextMargin: 5,
+        noteMargin: 10,
+        messageMargin: 35
+    },
+    gantt: {
+        titleTopMargin: 25,
+        barHeight: 20,
+        fontSize: 11,
+        fontFamily: '-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif'
+    }
+});
+
+// Copy code functionality
 function copyCode(btn) {
     const pre = btn.nextElementSibling;
-    const code = pre.querySelector("code");
+    const code = pre.querySelector('code');
     const text = code.textContent;
     
     navigator.clipboard.writeText(text).then(() => {
         const original = btn.textContent;
-        btn.textContent = "✓ Copied!";
-        btn.classList.add("copy-success");
+        btn.textContent = '✓ Copied!';
+        btn.classList.add('copy-success');
         setTimeout(() => {
             btn.textContent = original;
-            btn.classList.remove("copy-success");
+            btn.classList.remove('copy-success');
         }, 2000);
     }).catch(() => {
         // Fallback for older browsers
-        const textArea = document.createElement("textarea");
+        const textArea = document.createElement('textarea');
         textArea.value = text;
-        textArea.style.position = "absolute";
-        textArea.style.left = "-9999px";
+        textArea.style.position = 'absolute';
+        textArea.style.left = '-9999px';
         document.body.appendChild(textArea);
         textArea.select();
-        document.execCommand("copy");
+        document.execCommand('copy');
         document.body.removeChild(textArea);
         
         const original = btn.textContent;
-        btn.textContent = "✓ Copied!";
-        btn.classList.add("copy-success");
+        btn.textContent = '✓ Copied!';
+        btn.classList.add('copy-success');
         setTimeout(() => {
             btn.textContent = original;
-            btn.classList.remove("copy-success");
+            btn.classList.remove('copy-success');
         }, 2000);
     });
 }
+
+// Auto-resize Mermaid diagrams for mobile
+function resizeMermaidDiagrams() {
+    const mermaidDivs = document.querySelectorAll('.mermaid');
+    mermaidDivs.forEach(div => {
+        const svg = div.querySelector('svg');
+        if (svg) {
+            svg.style.maxWidth = '100%';
+            svg.style.height = 'auto';
+        }
+    });
+}
+
+// Run resize on load and window resize
+window.addEventListener('load', resizeMermaidDiagrams);
+window.addEventListener('resize', resizeMermaidDiagrams);
 </script>
 </body>
 </html>
 EOF
     
-    if [ "$needs_mermaid" = "true" ]; then
-        echo "✅ Post $num: $title (with diagrams)"
-    else
-        echo "✅ Post $num: $title"
-    fi
+    echo "✅ Post $num: $title"
 done
 
-# Generate compact main page
+# Generate compact main page (unchanged)
 {
     echo "<!DOCTYPE html><title>$SITE_TITLE</title><style>$COMPACT_CSS</style><h1>$SITE_TITLE</h1><input id=s placeholder=\"Search...\" onkeyup=f()><div id=p>"
     
@@ -348,18 +339,13 @@ done
         [ -z "$excerpt" ] && excerpt="..."
         date=$(basename "$file" | cut -d- -f1-3 | sed 's/-/\//g')
         
-        # Add diagram indicator
-        if has_diagrams "$file"; then
-            echo "<div class=post><small>$date</small><h2><a href=p/$num.html>$title 📊</a></h2><p>$excerpt</p></div>"
-        else
-            echo "<div class=post><small>$date</small><h2><a href=p/$num.html>$title</a></h2><p>$excerpt</p></div>"
-        fi
+        echo "<div class=post><small>$date</small><h2><a href=p/$num.html>$title</a></h2><p>$excerpt</p></div>"
     done
     
     echo "</div><p>📚 <a href=archive/>View all $total posts</a></p><script>let o,p=document.getElementById('p');function f(){let q=s.value.toLowerCase();if(!o)o=p.innerHTML;if(!q){p.innerHTML=o;return}let r=Array.from(p.children).filter(e=>e.textContent.toLowerCase().includes(q));p.innerHTML=r.length?r.map(e=>e.outerHTML).join(''):'<p>No posts found</p>'}</script>"
 } > public/index.html
 
-# Generate timeline archive (with diagram indicators)
+# Generate timeline archive (unchanged)
 {
     echo "<!DOCTYPE html><title>Archive</title><style>$TIMELINE_CSS</style><a href=../>← Home</a><h1>Archive Timeline</h1><div class=stats>📊 Total: $total posts organized chronologically</div><input id=s placeholder=\"Search all posts...\" onkeyup=f()><div class=\"timeline\" id=timeline>"
     
@@ -435,11 +421,7 @@ done
                     
                     echo "<div class=\"post-item\">"
                     echo "<small>$date</small>"
-                    if has_diagrams "$file"; then
-                        echo "<h2><a href=\"../p/$num.html\">$title 📊</a></h2>"
-                    else
-                        echo "<h2><a href=\"../p/$num.html\">$title</a></h2>"
-                    fi
+                    echo "<h2><a href=\"../p/$num.html\">$title</a></h2>"
                     echo "<p>$excerpt</p>"
                     echo "</div>"
                 fi
@@ -526,11 +508,10 @@ function f() {
 EOF
 } > public/archive/index.html
 
-echo "✅ Smart blog built with auto-diagram detection!"
+echo "✅ Enhanced blog built with Mermaid and chart support!"
 echo "📊 $total posts generated"
-echo "🎨 Posts without diagrams: Ultra-lightweight (~3KB)"
-echo "📈 Posts with diagrams: Auto-loads Mermaid.js (~1.5MB)"
-echo "📋 All posts: Copy-enabled code blocks"
-echo "🗓️ Archive: Timeline with diagram indicators (📊)"
-echo "⚡ Performance: Zero bloat unless diagrams are present!"
-echo "🚀 Blog is ready with intelligent resource loading!"
+echo "🎨 Main page: Compact post listings"
+echo "📋 Individual posts: Copy-enabled code blocks + Mermaid diagrams"
+echo "📈 Mermaid support: Flowcharts, sequence diagrams, Gantt charts, and more"
+echo "🗓️ Archive: Beautiful vertical timeline organized by year/month"
+echo "🚀 Blog is ready with enhanced diagram support!"
