@@ -342,8 +342,29 @@ extract_excerpt() {
     echo "$excerpt"
 }
 
-# Get month name from number
-get_month_name() {
+# Function to extract post number consistently
+extract_post_number() {
+    local file="$1"
+    local slug=$(basename "$file" .md)
+    local num
+    
+    # Try different numbering schemes
+    if [[ "$slug" =~ ^[0-9]+$ ]]; then
+        # Pure number filename
+        num="$slug"
+    elif [[ "$slug" =~ ^([0-9]+) ]]; then
+        # Number at start
+        num="${BASH_REMATCH[1]}"
+    elif [[ "$slug" =~ ([0-9]+)$ ]]; then
+        # Number at end
+        num="${BASH_REMATCH[1]}"
+    else
+        # Use filename as hash for consistent numbering
+        num=$(echo "$slug" | cksum | cut -d' ' -f1)
+    fi
+    
+    echo "$num"
+}
     local month="$1"
     case "$month" in
         01) echo "January" ;;
@@ -406,21 +427,9 @@ for i in "${!files[@]}"; do
     slug=$(basename "$file" .md)
     echo "  📎 Slug: $slug"
     
-    # Try different numbering schemes
-    if [[ "$slug" =~ ^[0-9]+$ ]]; then
-        # Pure number filename
-        num="$slug"
-    elif [[ "$slug" =~ ^([0-9]+) ]]; then
-        # Number at start
-        num="${BASH_REMATCH[1]}"
-    elif [[ "$slug" =~ ([0-9]+)$ ]]; then
-        # Number at end
-        num="${BASH_REMATCH[1]}"
-    else
-        # Use index + 1 as fallback
-        num="$((i + 1))"
-        echo "  ⚠️  No number in filename, using: $num"
-    fi
+    # Use consistent numbering function
+    num=$(extract_post_number "$file")
+    echo "  🔢 Post number: $num"
     
     # Extract date from filename or use current date
     if [[ "$slug" =~ ^([0-9]{4})-([0-9]{2})-([0-9]{2}) ]]; then
@@ -534,9 +543,19 @@ processed_nums=($(for key in "${!post_data[@]}"; do
     fi
 done | sort -n))
 
-for num in "${processed_nums[@]}"; do
-    echo "  $num: ${post_data["$num,title"]} (${post_data["$num,date"]})"
-done
+if [ ${#processed_nums[@]} -eq 0 ]; then
+    echo "  ⚠️  No posts were successfully processed!"
+    echo "  🔍 Checking post_data array..."
+    echo "  📊 post_data keys: ${#post_data[@]}"
+    for key in "${!post_data[@]}"; do
+        echo "    $key = ${post_data[$key]}"
+    done
+else
+    echo "  ✅ Successfully processed ${#processed_nums[@]} posts:"
+    for num in "${processed_nums[@]}"; do
+        echo "  $num: ${post_data["$num,title"]} (${post_data["$num,date"]})"
+    done
+fi
 
 # Check for duplicates
 echo ""
@@ -586,10 +605,27 @@ echo '    <div id="posts">' >> public/index.html
 
 # Get recent posts (last 20, sorted by date newest first)
 recent_nums=($(for file in "${files[@]}"; do
-    slug=$(basename "$file" .md)
-    num=$(echo "$slug" | grep -o '[0-9]\+$' || echo "1")
+    num=$(extract_post_number "$file")
     echo "${post_data["$num,sort_date"]} $num"
 done | sort -rn | head -20 | cut -d' ' -f2))
+
+echo "🔍 Recent posts for main page:"
+if [ ${#recent_nums[@]} -eq 0 ]; then
+    echo "  ⚠️  No recent posts found! This is why the main page is empty."
+    echo "  📊 Total processed posts: ${#processed_nums[@]}"
+    echo "  🔍 Debugging recent_nums generation..."
+    for file in "${files[@]}"; do
+        num=$(extract_post_number "$file")
+        sort_date="${post_data["$num,sort_date"]}"
+        title="${post_data["$num,title"]}"
+        echo "    File: $file -> Num: $num, Date: $sort_date, Title: $title"
+    done
+else
+    echo "  ✅ Found ${#recent_nums[@]} recent posts to display"
+    for num in "${recent_nums[@]}"; do
+        echo "    $num: ${post_data["$num,title"]}"
+    done
+fi
 
 for num in "${recent_nums[@]}"; do
     title="${post_data["$num,title"]}"
@@ -643,8 +679,7 @@ echo '    <div class="archive-content" id="archive">' >> public/archive/index.ht
 
 # Sort all posts chronologically (newest first)
 sorted_nums=($(for file in "${files[@]}"; do
-    slug=$(basename "$file" .md)
-    num=$(echo "$slug" | grep -o '[0-9]\+$' || echo "1")
+    num=$(extract_post_number "$file")
     echo "${post_data["$num,sort_date"]} $num"
 done | sort -rn | cut -d' ' -f2))
 
