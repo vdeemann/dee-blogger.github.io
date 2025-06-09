@@ -1,382 +1,110 @@
-name: 🚀 EXTREME PERFORMANCE BUILD - Push GitHub's Limits
+name: 🔧 DEBUG - Simple Blog Build
 
 on:
   push:
     branches: [main]
-    paths: ['content/**', 'build.sh', 'scripts/**']
   workflow_dispatch:
-    inputs:
-      force_full_build:
-        description: 'Force full rebuild (ignore incremental)'
-        required: false
-        default: 'false'
-        type: boolean
-      max_parallel_jobs:
-        description: 'Max parallel jobs (1-20)'
-        required: false
-        default: '12'
-        type: string
 
 permissions:
   contents: read
   pages: write
   id-token: write
-  actions: write
-
-concurrency:
-  group: extreme-build-${{ github.ref }}
-  cancel-in-progress: true
-
-env:
-  SITE_TITLE: "dee-blogger"
-  CHUNK_SIZE: 400
-  MAX_PARALLEL_JOBS: ${{ github.event.inputs.max_parallel_jobs || '12' }}
-  FORCE_FULL_BUILD: ${{ github.event.inputs.force_full_build || 'false' }}
-  DEBIAN_FRONTEND: noninteractive
 
 jobs:
-  # Phase 1: Analyze and plan the build
-  analyze:
-    runs-on: ubuntu-latest
-    outputs:
-      total_posts: ${{ steps.analyze.outputs.total_posts }}
-      chunks_needed: ${{ steps.analyze.outputs.chunks_needed }}
-      build_type: ${{ steps.analyze.outputs.build_type }}
-      changed_files: ${{ steps.analyze.outputs.changed_files }}
-      max_jobs: ${{ steps.analyze.outputs.max_jobs }}
-      chunk_matrix: ${{ steps.analyze.outputs.chunk_matrix }}
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: 50  # For better incremental detection
-          
-      - name: Analyze repository and plan build
-        id: analyze
-        run: |
-          # Count total posts
-          total_posts=$(find content -name "*.md" -type f | wc -l)
-          echo "📊 Total posts: $total_posts"
-          
-          # Calculate optimal chunk size and job count
-          if [ "$total_posts" -lt 500 ]; then
-            chunk_size=100
-            max_jobs=2
-          elif [ "$total_posts" -lt 2000 ]; then
-            chunk_size=200
-            max_jobs=4
-          elif [ "$total_posts" -lt 10000 ]; then
-            chunk_size=400
-            max_jobs=8
-          else
-            chunk_size=800
-            max_jobs=12
-          fi
-          
-          chunks_needed=$(( (total_posts + chunk_size - 1) / chunk_size ))
-          
-          # Determine build type (incremental vs full)
-          if [ "$FORCE_FULL_BUILD" = "true" ]; then
-            build_type="full"
-            changed_files=""
-          else
-            changed_files=$(git diff --name-only HEAD~1 -- content/ | head -100 | tr '\n' ' ' || echo "")
-            if [ -n "$changed_files" ] && [ "$total_posts" -gt 1000 ]; then
-              build_type="incremental"
-              # For incremental, we still need some chunks for changed files
-              chunks_needed=$(( ($(echo "$changed_files" | wc -w) + chunk_size - 1) / chunk_size ))
-              chunks_needed=$([ "$chunks_needed" -lt 1 ] && echo 1 || echo "$chunks_needed")
-            else
-              build_type="full"
-              changed_files=""
-            fi
-          fi
-          
-          # Cap max jobs to GitHub's limits and available resources
-          max_jobs=$([ "$max_jobs" -gt "$MAX_PARALLEL_JOBS" ] && echo "$MAX_PARALLEL_JOBS" || echo "$max_jobs")
-          max_jobs=$([ "$chunks_needed" -lt "$max_jobs" ] && echo "$chunks_needed" || echo "$max_jobs")
-          
-          echo "🔧 Build plan:"
-          echo "  Type: $build_type"
-          echo "  Chunks: $chunks_needed"
-          echo "  Max jobs: $max_jobs"
-          echo "  Chunk size: $chunk_size"
-          
-          # Generate matrix array for chunks
-          if [ "$chunks_needed" -gt 0 ]; then
-            chunk_array="["
-            for ((i=0; i<chunks_needed; i++)); do
-              [ $i -gt 0 ] && chunk_array+=","
-              chunk_array+="$i"
-            done
-            chunk_array+="]"
-          else
-            chunk_array="[0]"  # Fallback for edge cases
-          fi
-          
-          # Output for matrix
-          echo "total_posts=$total_posts" >> $GITHUB_OUTPUT
-          echo "chunks_needed=$chunks_needed" >> $GITHUB_OUTPUT
-          echo "build_type=$build_type" >> $GITHUB_OUTPUT
-          echo "changed_files=$changed_files" >> $GITHUB_OUTPUT
-          echo "max_jobs=$max_jobs" >> $GITHUB_OUTPUT
-          echo "chunk_matrix=$chunk_array" >> $GITHUB_OUTPUT
-          
-          # Create build metadata
-          echo "{\"total_posts\":$total_posts,\"build_type\":\"$build_type\",\"timestamp\":\"$(date -u +%Y-%m-%dT%H:%M:%SZ)\"}" > build_metadata.json
-          
-      - name: Upload build metadata
-        uses: actions/upload-artifact@v4
-        with:
-          name: build-metadata
-          path: build_metadata.json
-          retention-days: 1
-
-  # Phase 2: Parallel post processing
-  build-posts:
-    needs: analyze
-    if: fromJson(needs.analyze.outputs.chunks_needed) > 0
-    runs-on: ubuntu-latest
-    strategy:
-      max-parallel: ${{ fromJson(needs.analyze.outputs.max_jobs) }}
-      matrix:
-        chunk: ${{ fromJson(needs.analyze.outputs.chunk_matrix) }}
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: 1
-          
-      - name: Setup high-performance environment
-        run: |
-          # Install optimized tools
-          sudo apt-get update -qq
-          sudo apt-get install -y -qq parallel bc pv pigz
-          
-          # Optimize for performance
-          echo 'vm.swappiness=1' | sudo tee -a /etc/sysctl.conf
-          echo 'vm.vfs_cache_pressure=50' | sudo tee -a /etc/sysctl.conf
-          sudo sysctl -p
-          
-          # Setup tmpfs for faster I/O
-          sudo mount -t tmpfs -o size=2G tmpfs /tmp
-          
-      - name: Create processing environment
-        run: |
-          mkdir -p public/p chunks temp
-          export TMPDIR=/tmp
-          
-      - name: Generate file chunks
-        run: |
-          if [ "${{ needs.analyze.outputs.build_type }}" = "incremental" ]; then
-            # Process only changed files
-            echo "${{ needs.analyze.outputs.changed_files }}" | tr ' ' '\n' | grep -E '\.md$' > all_files.txt
-          else
-            # Process all files, sorted for consistent chunking
-            find content -name "*.md" -type f | sort > all_files.txt
-          fi
-          
-          total_files=$(wc -l < all_files.txt)
-          chunk_size=$(( (total_files + ${{ needs.analyze.outputs.chunks_needed }} - 1) / ${{ needs.analyze.outputs.chunks_needed }} ))
-          
-          # Create this chunk's file list
-          start_line=$(( ${{ matrix.chunk }} * chunk_size + 1 ))
-          end_line=$(( start_line + chunk_size - 1 ))
-          
-          sed -n "${start_line},${end_line}p" all_files.txt > "chunks/chunk_${{ matrix.chunk }}.txt"
-          
-          files_in_chunk=$(wc -l < "chunks/chunk_${{ matrix.chunk }}.txt")
-          echo "📦 Chunk ${{ matrix.chunk }}: $files_in_chunk files (lines $start_line-$end_line)"
-          
-      - name: Process posts in parallel
-        run: |
-          chmod +x build.sh
-          export CHUNK_ID=${{ matrix.chunk }}
-          export CHUNK_FILE="chunks/chunk_${{ matrix.chunk }}.txt"
-          export TOTAL_POSTS=${{ needs.analyze.outputs.total_posts }}
-          
-          # Use all CPU cores for this chunk
-          export PARALLEL_JOBS=$(nproc)
-          
-          echo "🚀 Processing chunk ${{ matrix.chunk }} with $PARALLEL_JOBS parallel jobs"
-          
-          # Time the chunk processing
-          time ./build.sh process_chunk
-          
-      - name: Compress chunk output
-        run: |
-          # Create compressed archive of this chunk's output
-          cd public
-          tar -cf - p/ | pigz -9 > "../chunk_${{ matrix.chunk }}_posts.tar.gz"
-          
-          # Generate chunk statistics
-          post_count=$(find p -name "*.html" | wc -l)
-          total_size=$(du -sb p | cut -f1)
-          avg_size=$(( total_size / post_count ))
-          
-          echo "📊 Chunk ${{ matrix.chunk }} stats:"
-          echo "  Posts: $post_count"
-          echo "  Size: $(( total_size / 1024 )) KB"
-          echo "  Avg/post: $(( avg_size / 1024 )) KB"
-          
-          # Save stats
-          echo "${{ matrix.chunk }},$post_count,$total_size" > "../chunk_${{ matrix.chunk }}_stats.csv"
-          
-      - name: Upload chunk artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: posts-chunk-${{ matrix.chunk }}
-          path: |
-            chunk_${{ matrix.chunk }}_posts.tar.gz
-            chunk_${{ matrix.chunk }}_stats.csv
-          retention-days: 1
-          compression-level: 0  # Already compressed
-
-  # Phase 3: Generate index and archive pages
-  build-pages:
-    needs: [analyze, build-posts]
-    if: always() && needs.analyze.result == 'success'
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: 1
-          
-      - name: Setup environment
-        run: |
-          sudo apt-get update -qq && sudo apt-get install -y -qq parallel bc pv pigz
-          mkdir -p public/p public/archive temp
-          
-      - name: Download all post chunks
-        if: fromJson(needs.analyze.outputs.chunks_needed) > 0
-        uses: actions/download-artifact@v4
-        with:
-          pattern: posts-chunk-*
-          merge-multiple: true
-          
-      - name: Download build metadata
-        uses: actions/download-artifact@v4
-        with:
-          name: build-metadata
-          
-      - name: Combine all post chunks
-        if: fromJson(needs.analyze.outputs.chunks_needed) > 0
-        run: |
-          if [ "${{ needs.analyze.outputs.chunks_needed }}" -gt 0 ]; then
-            echo "🔄 Combining ${{ needs.analyze.outputs.chunks_needed }} chunks..."
-            
-            # Extract all chunks in parallel
-            ls chunk_*_posts.tar.gz 2>/dev/null | parallel -j+0 'cd public && pigz -dc ../{}| tar -xf -' || true
-            
-            # Combine statistics
-            echo "chunk,posts,size" > combined_stats.csv
-            cat chunk_*_stats.csv >> combined_stats.csv 2>/dev/null || echo "0,0,0" >> combined_stats.csv
-            
-            # Calculate totals
-            total_posts=$(awk -F, 'NR>1 {sum+=$2} END {print sum+0}' combined_stats.csv)
-            total_size=$(awk -F, 'NR>1 {sum+=$3} END {print sum+0}' combined_stats.csv)
-          else
-            echo "🔄 No post chunks to combine - building index/archive only"
-            total_posts=0
-            total_size=0
-          fi
-          
-          echo "📊 Combined stats:"
-          echo "  Total posts: $total_posts"
-          echo "  Total size: $(( total_size / 1024 )) KB"
-          if [ "$total_posts" -gt 0 ]; then
-            echo "  Average per post: $(( total_size / total_posts / 1024 )) KB"
-          fi
-          
-      - name: Generate optimized index page
-        run: |
-          chmod +x build.sh
-          export TOTAL_POSTS=${{ needs.analyze.outputs.total_posts }}
-          ./build.sh generate_index
-          
-      - name: Generate streaming archive
-        run: |
-          ./build.sh generate_archive
-          
-      - name: Generate sitemap and RSS
-        run: |
-          ./build.sh generate_sitemap
-          ./build.sh generate_rss
-          
-      - name: Final optimization pass
-        run: |
-          echo "🗜️ Final optimization..."
-          
-          # Remove any empty directories
-          find public -type d -empty -delete
-          
-          # Generate compression statistics
-          original_size=$(du -sb public | cut -f1)
-          
-          # Create .gz versions for browsers that support them
-          find public -name "*.html" -o -name "*.css" -o -name "*.js" | \
-            parallel -j+0 'gzip -9c {} > {}.gz'
-          
-          compressed_size=$(du -sb public | cut -f1)
-          savings=$(( (original_size - compressed_size) * 100 / original_size ))
-          
-          echo "📈 Optimization results:"
-          echo "  Original: $(( original_size / 1024 )) KB"
-          echo "  With .gz: $(( compressed_size / 1024 )) KB"
-          echo "  Savings: ${savings}%"
-          
-      - name: Upload final site
-        uses: actions/upload-pages-artifact@v3
-        with:
-          path: ./public
-
-  # Phase 4: Deploy to GitHub Pages
-  deploy:
-    needs: [analyze, build-pages]
-    if: always() && needs.build-pages.result == 'success'
+  debug-build:
     runs-on: ubuntu-latest
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        
+      - name: Debug - Check repository structure
+        run: |
+          echo "📁 Repository structure:"
+          ls -la
+          echo
+          echo "📝 Content directory:"
+          if [ -d "content" ]; then
+            find content -name "*.md" | head -10
+            echo "Total markdown files: $(find content -name "*.md" | wc -l)"
+          else
+            echo "❌ No content directory found!"
+            echo "Creating sample content..."
+            mkdir -p content
+            cat > content/2023-01-01-welcome-1.md << 'EOF'
+          # Welcome to My Blog
+          
+          This is a test post to verify the build system works.
+          
+          Content goes here!
+          EOF
+          fi
+          
+      - name: Debug - Check build script
+        run: |
+          echo "🔧 Build script status:"
+          if [ -f "build.sh" ]; then
+            echo "✅ build.sh exists"
+            echo "File permissions: $(ls -la build.sh)"
+            echo "First 10 lines:"
+            head -10 build.sh
+          else
+            echo "❌ build.sh missing!"
+            echo "Creating minimal build script..."
+            cat > build.sh << 'EOF'
+          #!/bin/bash
+          set -e
+          echo "🚀 Building simple blog..."
+          rm -rf public
+          mkdir -p public
+          echo "<!DOCTYPE html><html><head><title>Debug Blog</title></head><body><h1>Blog is working!</h1><p>Found $(find content -name "*.md" | wc -l) posts</p></body></html>" > public/index.html
+          echo "✅ Build complete"
+          EOF
+            chmod +x build.sh
+          fi
+          
+      - name: Run build
+        run: |
+          chmod +x build.sh
+          ./build.sh
+          
+      - name: Debug - Check build output
+        run: |
+          echo "📊 Build output:"
+          if [ -d "public" ]; then
+            echo "✅ public directory exists"
+            find public -type f | head -10
+            echo "Total files: $(find public -type f | wc -l)"
+            echo
+            echo "📄 Index file content:"
+            if [ -f "public/index.html" ]; then
+              cat public/index.html
+            else
+              echo "❌ No index.html found"
+            fi
+          else
+            echo "❌ No public directory created"
+            exit 1
+          fi
+          
+      - name: Setup Pages
+        uses: actions/configure-pages@v4
+        
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: ./public
+          
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
         
-      - name: Post-deployment verification
+      - name: Success notification
         run: |
-          echo "🚀 Deployment completed!"
-          echo "🌐 Site URL: ${{ steps.deployment.outputs.page_url }}"
-          echo "📊 Build summary:"
-          echo "  Posts processed: ${{ needs.analyze.outputs.total_posts }}"
-          echo "  Build type: ${{ needs.analyze.outputs.build_type }}"
-          echo "  Parallel jobs used: ${{ needs.analyze.outputs.max_jobs }}"
-          
-          # Optional: Warm up the site
-          curl -s -o /dev/null "${{ steps.deployment.outputs.page_url }}" || true
-
-  # Phase 5: Cleanup artifacts
-  cleanup:
-    needs: [deploy]
-    runs-on: ubuntu-latest
-    if: always()
-    steps:
-      - name: Cleanup build artifacts
-        uses: actions/github-script@v7
-        with:
-          script: |
-            // Clean up temporary artifacts after successful deployment
-            const artifacts = await github.rest.actions.listWorkflowRunArtifacts({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              run_id: context.runId,
-            });
-            
-            for (const artifact of artifacts.data.artifacts) {
-              if (artifact.name.startsWith('posts-chunk-') || artifact.name === 'build-metadata') {
-                await github.rest.actions.deleteArtifact({
-                  owner: context.repo.owner,
-                  repo: context.repo.repo,
-                  artifact_id: artifact.id,
-                });
-                console.log(`🗑️ Cleaned up artifact: ${artifact.name}`);
-              }
-            }
+          echo "🎉 Build and deployment completed!"
+          echo "🌐 Your site should be available at: ${{ steps.deployment.outputs.page_url }}"
+          echo "📊 Final stats:"
+          echo "  - Total files deployed: $(find public -type f | wc -l)"
+          echo "  - Site size: $(du -sh public | cut -f1)"
