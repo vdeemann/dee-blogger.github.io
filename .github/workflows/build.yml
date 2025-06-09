@@ -1,4 +1,3 @@
-# .github/workflows/build.yml
 name: Build and Deploy Blog
 
 on:
@@ -8,13 +7,11 @@ on:
     branches: [ main ]
   workflow_dispatch:
 
-# Sets permissions of the GITHUB_TOKEN to allow deployment to GitHub Pages
 permissions:
   contents: read
   pages: write
   id-token: write
 
-# Allow only one concurrent deployment, skipping runs queued between the run in-progress and latest queued.
 concurrency:
   group: "pages"
   cancel-in-progress: false
@@ -25,96 +22,81 @@ env:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
-    
+    runs-on: ubuntu-latest # Use 'self-hosted, bsd' here if you add a BSD runner
     steps:
     - name: Checkout repository
       uses: actions/checkout@v4
       with:
-        fetch-depth: 0  # Fetch all history for better git operations
-    
+        fetch-depth: 1  # Changed from 0 to 1 for faster checkouts
+
     - name: Validate content directory
       run: |
         if [ ! -d "content" ]; then
           echo "❌ Error: content/ directory not found"
           exit 1
         fi
-        
         content_count=$(find content -name "*.md" -type f | wc -l)
         if [ "$content_count" -eq 0 ]; then
           echo "❌ Error: No markdown files found in content/"
           exit 1
         fi
-        
         echo "✅ Found $content_count markdown files"
-    
+
     - name: Setup Pages
       id: pages
       uses: actions/configure-pages@v5
-      
+
     - name: Make build script executable
       run: chmod +x build.sh
-    
+
     - name: Build blog
       run: |
         export BASE_URL="${{ steps.pages.outputs.base_url }}"
         export SITE_TITLE="${{ env.SITE_TITLE }}"
         ./build.sh
-    
+
+    # You may optionally comment out the below validation for slightly faster builds
     - name: Validate build output
       run: |
-        # Check that essential files were created
         if [ ! -f "public/index.html" ]; then
           echo "❌ Error: Main index.html not generated"
           exit 1
         fi
-        
         if [ ! -f "public/archive/index.html" ]; then
           echo "❌ Error: Archive index.html not generated"
           exit 1
         fi
-        
-        # Count generated post files
         post_count=$(find public/p -name "*.html" -type f 2>/dev/null | wc -l)
         echo "✅ Generated $post_count post pages"
-        
-        # Check file sizes (ensure they're not empty)
         main_size=$(wc -c < public/index.html)
         archive_size=$(wc -c < public/archive/index.html)
-        
         if [ "$main_size" -lt 1000 ]; then
           echo "❌ Warning: Main page seems too small ($main_size bytes)"
         fi
-        
         if [ "$archive_size" -lt 1000 ]; then
           echo "❌ Warning: Archive page seems too small ($archive_size bytes)"
         fi
-        
         echo "✅ Build validation completed successfully"
         echo "📊 Main page: $main_size bytes"
         echo "📊 Archive page: $archive_size bytes"
-    
+
     - name: Upload artifact
       uses: actions/upload-pages-artifact@v3
       with:
         path: ./public
 
   deploy:
-    # Only run deploy on main branch pushes (not PRs)
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
-    
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
-    
     runs-on: ubuntu-latest
     needs: build
-    
     steps:
     - name: Deploy to GitHub Pages
       id: deployment
       uses: actions/deploy-pages@v4
-      
+
     - name: Verify deployment
       run: |
         echo "🚀 Blog deployed successfully!"
