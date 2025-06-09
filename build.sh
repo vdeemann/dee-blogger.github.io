@@ -241,8 +241,7 @@ EOF
 process_markdown() {
     file="$1"
     
-    tail -n +2 "$file" | awk '
-    BEGIN { in_code = 0; in_list = 0; in_blockquote = 0 }
+    tail -n +2 "$file" | awk 'BEGIN { in_code = 0; in_list = 0; in_blockquote = 0 }
     
     /^```/ {
         if (in_code) {
@@ -404,7 +403,7 @@ for i in "${!files[@]}"; do
     head -n3 "$file" | sed 's/^/    /'
     
     # Extract title more carefully
-    title=$(head -n1 "$file" | sed 's/^# *//' | sed 's/[<>&"'\'']/./g' | sed 's/^\s*//;s/\s*$//')
+    title=$(head -n1 "$file" | sed 's/^# *//' | sed 's/[<>&"'"'"']/./g' | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')
     if [ -z "$title" ]; then
         title="Untitled Post $((i + 1))"
         echo "  ⚠️  No title found, using: $title"
@@ -428,7 +427,7 @@ for i in "${!files[@]}"; do
         echo "  📅 Date from filename: $date"
     else
         # Try to extract date from file content
-        file_date=$(grep -E '^date:|^Date:' "$file" | head -1 | sed 's/^[Dd]ate:\s*//' | sed 's/[^0-9\-\/]//g')
+        file_date=$(grep -E '^date:|^Date:' "$file" | head -1 | sed 's/^[Dd]ate: *//' | sed 's/[^0-9\-\/]//g')
         if [ -n "$file_date" ]; then
             if [[ "$file_date" =~ ^([0-9]{4})-([0-9]{2})-([0-9]{2}) ]]; then
                 year="${BASH_REMATCH[1]}"
