@@ -10,8 +10,8 @@ BASE_URL="${BASE_URL:-https://vdeemann.github.io/dee-blogger.github.io}"
 rm -rf public
 mkdir -p public/p public/archive
 
-# Shared CSS for both main and archive pages (consistent styling)
-SHARED_CSS='body{max-width:50em;margin:2em auto;padding:0 1em;font-family:system-ui,sans-serif;line-height:1.5;color:#333;background:#fff;position:relative}a{color:#0066cc;text-decoration:none}a:hover{text-decoration:underline}h1{font-size:1.9em;margin:0 0 .5em;color:#1a1a1a;font-weight:700}h2{font-size:1.2em;margin:0 0 .3em;color:#333;font-weight:600}h3{font-size:1.1em;margin:0 0 .3em;color:#444;font-weight:600}p{margin:.4em 0}small{color:#666;display:block;margin:0 0 .3em;font-size:.9em}.post{margin:0 0 .6em;padding:.5em .7em;background:#fafafa;border-radius:4px;border:1px solid #e8e8e8;cursor:pointer}.post:hover{background:#f5f5f5;border-color:#ddd;transform:translateY(-1px);box-shadow:0 2px 4px rgba(0,0,0,.1);transition:all .2s ease}input{width:100%;margin:0 0 1em;padding:.6em;border:1px solid #ddd;border-radius:4px;font-size:.95em;background:#fff;box-sizing:border-box}nav{margin:1em 0;padding:.5em 0;border-bottom:1px solid #eee}.stats{background:#fff3cd;padding:.6em 1em;border-radius:4px;margin:1em 0;text-align:center;font-size:.95em;border:1px solid #ffeaa7}.search-highlight{background:#ffeb3b;padding:0 .2em;border-radius:2px}.excerpt{color:#666;margin:.3em 0 0;font-size:.9em;line-height:1.4}.search-results{background:#e8f4fd;padding:.8em;border-radius:4px;margin:1em 0;border-left:4px solid #0066cc}.no-results{text-align:center;color:#666;padding:2em;font-style:italic}.search-count{font-weight:600;color:#0066cc}.sticky-header{position:sticky;top:0;background:#fff;border-bottom:2px solid #0066cc;padding:.8em 0;margin:0 0 1em;z-index:100;box-shadow:0 2px 4px rgba(0,0,0,.1);display:none}.sticky-header h2{margin:0 0 .5em;font-size:1.1em;color:#0066cc;font-weight:700}.sticky-header input{margin:0;padding:.5em;font-size:.9em}.archive-content{margin:2em 0}.year-section{margin:0 0 2.5em}.month-section{margin:0 0 1.5em}.year-header{margin:0 0 1em}.month-header{margin:0 0 .8em;font-size:.95em;color:#666}'
+# Shared CSS for both main and archive pages (consistent styling with ultra-smooth hover)
+SHARED_CSS='body{max-width:50em;margin:2em auto;padding:0 1em;font-family:system-ui,sans-serif;line-height:1.5;color:#333;background:#fff;position:relative}a{color:#0066cc;text-decoration:none}a:hover{text-decoration:underline}h1{font-size:1.9em;margin:0 0 .5em;color:#1a1a1a;font-weight:700}h2{font-size:1.2em;margin:0 0 .3em;color:#333;font-weight:600}h3{font-size:1.1em;margin:0 0 .3em;color:#444;font-weight:600}p{margin:.4em 0}small{color:#666;display:block;margin:0 0 .3em;font-size:.9em}.post{margin:0 0 .6em;padding:.5em .7em;background:#fafafa;border-radius:4px;border:1px solid #e8e8e8;cursor:pointer;transition:all .3s cubic-bezier(0.4,0,0.2,1);transform:translateZ(0);backface-visibility:hidden}.post:hover{background:#f5f5f5;border-color:#ddd;transform:translateY(-2px) translateZ(0);box-shadow:0 4px 12px rgba(0,0,0,.15)}.post:active{transform:translateY(-1px) translateZ(0);transition:all .1s ease}input{width:100%;margin:0 0 1em;padding:.6em;border:1px solid #ddd;border-radius:4px;font-size:.95em;background:#fff;box-sizing:border-box;transition:border-color .2s ease,box-shadow .2s ease}input:focus{outline:0;border-color:#0066cc;box-shadow:0 0 0 3px rgba(0,102,204,.1)}nav{margin:1em 0;padding:.5em 0;border-bottom:1px solid #eee}.stats{background:#fff3cd;padding:.6em 1em;border-radius:4px;margin:1em 0;text-align:center;font-size:.95em;border:1px solid #ffeaa7}.search-highlight{background:#ffeb3b;padding:0 .2em;border-radius:2px}.excerpt{color:#666;margin:.3em 0 0;font-size:.9em;line-height:1.4}.search-results{background:#e8f4fd;padding:.8em;border-radius:4px;margin:1em 0;border-left:4px solid #0066cc}.no-results{text-align:center;color:#666;padding:2em;font-style:italic}.search-count{font-weight:600;color:#0066cc}.sticky-header{position:sticky;top:0;background:#fff;border-bottom:2px solid #0066cc;padding:.8em 0;margin:0 0 1em;z-index:100;box-shadow:0 2px 4px rgba(0,0,0,.1);display:none}.sticky-header h2{margin:0 0 .5em;font-size:1.1em;color:#0066cc;font-weight:700}.sticky-header input{margin:0;padding:.5em;font-size:.9em}.archive-content{margin:2em 0}.year-section{margin:0 0 2.5em}.month-section{margin:0 0 1.5em}.year-header{margin:0 0 1em}.month-header{margin:0 0 .8em;font-size:.95em;color:#666}'
 
 # Enhanced post page CSS with better typography (like Software Architecture post)
 POST_CSS='body{max-width:48em;margin:2em auto;padding:0 1em;font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;line-height:1.65;color:#2d3748;background:#fff}a{color:#0066cc;text-decoration:none;border-bottom:1px solid transparent;transition:border-color .2s}a:hover{border-bottom-color:#0066cc}h1{font-size:2.2em;margin:0 0 .4em;color:#1a202c;font-weight:700;line-height:1.2}h2{font-size:1.6em;margin:2.5em 0 1em;color:#2d3748;font-weight:600;line-height:1.3;border-bottom:2px solid #e2e8f0;padding-bottom:.3em}h3{font-size:1.3em;margin:2em 0 .8em;color:#4a5568;font-weight:600;line-height:1.3}p{margin:1.2em 0;font-size:1.05em;line-height:1.7}small{color:#718096;display:block;margin:0 0 2em;font-size:1em;font-weight:500}strong{font-weight:600;color:#2d3748}code{background:#f7fafc;color:#e53e3e;padding:.2em .4em;border-radius:4px;font-family:"SF Mono",Monaco,Consolas,"Liberation Mono","Courier New",monospace;font-size:.9em;border:1px solid #e2e8f0}pre{background:#f7fafc;padding:.8em 1em;margin:1.5em 0;border-radius:6px;overflow-x:auto;border:1px solid #e2e8f0;box-shadow:0 1px 3px rgba(0,0,0,.1)}pre code{background:0;padding:0;font-size:.9em;color:#2d3748;display:block;border:0}ul,ol{margin:1.5em 0;padding-left:2em}li{margin:.8em 0;line-height:1.6}nav{margin:2em 0;padding:.8em 0;border-bottom:1px solid #e2e8f0}blockquote{background:#f7fafc;border-left:4px solid #0066cc;margin:2em 0;padding:1.2em 1.8em;border-radius:0 6px 6px 0;color:#4a5568;font-style:italic;box-shadow:0 1px 3px rgba(0,0,0,.1)}blockquote p{margin:.8em 0}hr{border:0;height:1px;background:#e2e8f0;margin:2.5em 0}.post-meta{background:#f7fafc;padding:1em 1.2em;border-radius:6px;margin:1.5em 0;border-left:4px solid #0066cc}.post-meta p{margin:.3em 0;font-size:.95em;color:#4a5568}'
@@ -286,6 +286,45 @@ cat >> public/index.html << MAIN_END_EOF
         const searchCount = document.getElementById('search-count');
         
         function searchPosts() {
+            // Get current query value
+            const query = searchInput.value.toLowerCase().trim();
+            
+            // Store original content only once
+            if (originalPosts === null) {
+                originalPosts = postsContainer.innerHTML;
+            }
+            
+            // If empty query, restore original and hide search info
+            if (query === '' || query.length === 0) {
+                postsContainer.innerHTML = originalPosts;
+                searchInfo.style.display = 'none';
+                return;
+            }
+            
+            // Create fresh container to parse original posts
+            const tempDiv = document.createElement('div');
+            tempDiv.innerHTML = originalPosts;
+            const allPosts = Array.from(tempDiv.children);
+            
+            // Filter posts based on query
+            const filtered = allPosts.filter(post => {
+                const searchable = post.dataset.searchable || '';
+                return searchable.includes(query);
+            });
+            
+            // Update display based on results
+            if (filtered.length > 0) {
+                const highlightedResults = filtered.map(post => {
+                    let html = post.outerHTML;
+                    // Escape special regex characters in query
+                    const escapedQuery = query.replace(/[.*+?^${}()|[\\]\\\\]/g, '\\\\    <script>
+        let originalPosts = null;
+        const searchInput = document.getElementById('search');
+        const postsContainer = document.getElementById('posts');
+        const searchInfo = document.getElementById('search-info');
+        const searchCount = document.getElementById('search-count');
+        
+        function searchPosts() {
             const query = searchInput.value.toLowerCase().trim();
             
             // Store original content only once
@@ -326,6 +365,39 @@ cat >> public/index.html << MAIN_END_EOF
         
         // Use input event for real-time search including backspace
         searchInput.addEventListener('input', searchPosts);
+    </script>');
+                    const regex = new RegExp(\`(\${escapedQuery})\`, 'gi');
+                    html = html.replace(regex, '<span class="search-highlight">$1</span>');
+                    return html;
+                }).join('');
+                
+                postsContainer.innerHTML = highlightedResults;
+            } else {
+                postsContainer.innerHTML = '<div class="no-results">No posts found matching your search.</div>';
+            }
+            
+            // Update search info
+            searchCount.textContent = filtered.length;
+            searchInfo.style.display = 'block';
+        }
+        
+        // Handle all input changes including backspace, delete, paste, etc.
+        searchInput.addEventListener('input', function(e) {
+            searchPosts();
+        });
+        
+        // Handle edge case of clearing input programmatically
+        searchInput.addEventListener('change', function(e) {
+            searchPosts();
+        });
+        
+        // Ensure search clears when input is manually cleared
+        searchInput.addEventListener('keyup', function(e) {
+            if (e.key === 'Escape') {
+                searchInput.value = '';
+                searchPosts();
+            }
+        });
     </script>
 </body>
 </html>
@@ -488,6 +560,107 @@ cat >> public/archive/index.html << ARCHIVE_END_EOF
         }
         
         function searchArchive() {
+            // Get queries from both inputs
+            const mainQuery = searchMainInput.value.toLowerCase().trim();
+            const stickyQuery = searchStickyInput.value.toLowerCase().trim();
+            const query = mainQuery || stickyQuery;
+            
+            // Sync both inputs
+            if (mainQuery !== stickyQuery) {
+                if (searchMainInput === document.activeElement) {
+                    searchStickyInput.value = searchMainInput.value;
+                } else if (searchStickyInput === document.activeElement) {
+                    searchMainInput.value = searchStickyInput.value;
+                }
+            }
+            
+            // Store original content only once
+            if (originalArchive === null) {
+                originalArchive = archiveContainer.innerHTML;
+            }
+            
+            // If empty query, restore original and hide search info
+            if (query === '' || query.length === 0) {
+                archiveContainer.innerHTML = originalArchive;
+                searchInfo.style.display = 'none';
+                updateStickyHeader();
+                return;
+            }
+            
+            // Create fresh container to parse original posts
+            const tempDiv = document.createElement('div');
+            tempDiv.innerHTML = originalArchive;
+            const allPosts = Array.from(tempDiv.querySelectorAll('.post'));
+            
+            // Filter posts based on query
+            const filtered = allPosts.filter(post => {
+                const searchable = post.dataset.searchable || '';
+                return searchable.includes(query);
+            });
+            
+            // Update display based on results
+            if (filtered.length > 0) {
+                const highlightedResults = filtered.map(post => {
+                    let html = post.outerHTML;
+                    // Escape special regex characters in query
+                    const escapedQuery = query.replace(/[.*+?^${}()|[\\]\\\\]/g, '\\\\    <script>
+        let originalArchive = null;
+        const searchMainInput = document.getElementById('search-main');
+        const searchStickyInput = document.getElementById('search-sticky');
+        const archiveContainer = document.getElementById('archive');
+        const searchInfo = document.getElementById('search-info');
+        const searchCount = document.getElementById('search-count');
+        const stickyHeader = document.getElementById('sticky-header');
+        const stickyTitle = document.getElementById('sticky-title');
+        
+        function updateStickyHeader() {
+            const scrollTop = window.pageYOffset;
+            const searchMainRect = searchMainInput.getBoundingClientRect();
+            
+            if (searchMainRect.bottom < 0) {
+                stickyHeader.style.display = 'block';
+                if (searchStickyInput.value !== searchMainInput.value) {
+                    searchStickyInput.value = searchMainInput.value;
+                }
+            } else {
+                stickyHeader.style.display = 'none';
+            }
+            
+            if (stickyHeader.style.display === 'block') {
+                const sections = document.querySelectorAll('.year-section, .month-section');
+                let currentSection = null;
+                
+                for (let section of sections) {
+                    const rect = section.getBoundingClientRect();
+                    if (rect.top <= 150) {
+                        currentSection = section;
+                    }
+                }
+                
+                if (currentSection) {
+                    const yearSection = currentSection.closest('.year-section');
+                    const monthSection = currentSection.classList.contains('month-section') ? currentSection : null;
+                    
+                    let title = '';
+                    if (yearSection) {
+                        title = yearSection.dataset.year;
+                        if (monthSection && monthSection.dataset.yearMonth) {
+                            title = monthSection.dataset.yearMonth;
+                        }
+                    }
+                    
+                    if (title) {
+                        stickyTitle.textContent = title;
+                    } else {
+                        stickyTitle.textContent = 'Archive';
+                    }
+                } else {
+                    stickyTitle.textContent = 'Archive';
+                }
+            }
+        }
+        
+        function searchArchive() {
             const mainQuery = searchMainInput.value.toLowerCase().trim();
             const stickyQuery = searchStickyInput.value.toLowerCase().trim();
             const query = mainQuery || stickyQuery;
@@ -554,6 +727,69 @@ cat >> public/archive/index.html << ARCHIVE_END_EOF
         window.addEventListener('scroll', updateStickyHeader);
         window.addEventListener('resize', updateStickyHeader);
         
+        updateStickyHeader();
+    </script>');
+                    const regex = new RegExp(\`(\${escapedQuery})\`, 'gi');
+                    html = html.replace(regex, '<span class="search-highlight">$1</span>');
+                    return html;
+                }).join('');
+                
+                const searchResultsHTML = '<div class="year-section"><div class="year-header"><h2>Search Results</h2></div><div class="month-section">' + highlightedResults + '</div></div>';
+                archiveContainer.innerHTML = searchResultsHTML;
+                
+                if (stickyHeader.style.display === 'block') {
+                    stickyTitle.textContent = \`Search Results (\${filtered.length})\`;
+                }
+            } else {
+                archiveContainer.innerHTML = '<div class="no-results">No posts found matching your search.</div>';
+                if (stickyHeader.style.display === 'block') {
+                    stickyTitle.textContent = 'Search Results (0)';
+                }
+            }
+            
+            // Update search info
+            searchCount.textContent = filtered.length;
+            searchInfo.style.display = 'block';
+        }
+        
+        // Handle all input changes for both search inputs
+        searchMainInput.addEventListener('input', function(e) {
+            searchArchive();
+        });
+        
+        searchStickyInput.addEventListener('input', function(e) {
+            searchArchive();
+        });
+        
+        // Handle edge cases
+        searchMainInput.addEventListener('change', function(e) {
+            searchArchive();
+        });
+        
+        searchStickyInput.addEventListener('change', function(e) {
+            searchArchive();
+        });
+        
+        // Escape key to clear search
+        searchMainInput.addEventListener('keyup', function(e) {
+            if (e.key === 'Escape') {
+                searchMainInput.value = '';
+                searchStickyInput.value = '';
+                searchArchive();
+            }
+        });
+        
+        searchStickyInput.addEventListener('keyup', function(e) {
+            if (e.key === 'Escape') {
+                searchMainInput.value = '';
+                searchStickyInput.value = '';
+                searchArchive();
+            }
+        });
+        
+        // Initialize
+        window.addEventListener('scroll', updateStickyHeader);
+        window.addEventListener('resize', updateStickyHeader);
         updateStickyHeader();
     </script>
 </body>
