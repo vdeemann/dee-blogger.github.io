@@ -71,7 +71,7 @@ jobs:
         START_TIME=$(date)
         time timeout 180 bash -o pipefail -c '
         chmod +x build.sh
-        nice -n -20 ionice -c 1 -n 0 ./build.sh
+        nice -n -20 ionice -c 1 -n 0 ./build.sh || ./build.sh
         ' || { echo "⚠️ Build timeout - emergency completion"; ls -la public/ || mkdir -p public; }
         
         # COMPRESSION APOCALYPSE
