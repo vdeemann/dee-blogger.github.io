@@ -13,16 +13,17 @@ echo "ℹ️ Setting up directories..."
 rm -rf public
 mkdir -p public/p public/archive
 
-# Create simple CSS
+# Create improved CSS for perfect readability
 echo "ℹ️ Creating CSS..."
 cat > public/style.css << 'EOF'
 body {
     max-width: 832px;
     margin: 2em auto;
     padding: 0 1em;
-    font-family: system-ui, sans-serif;
-    line-height: 1.5;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    line-height: 1.6;
     color: #333;
+    background: #fff;
 }
 
 a {
@@ -35,42 +36,46 @@ a:hover {
 }
 
 h1 {
-    font-size: 1.9em;
+    font-size: 2.2em;
     margin: 0 0 0.5em;
     color: #1a1a1a;
     font-weight: 700;
+    line-height: 1.2;
 }
 
 h2 {
-    font-size: 1.2em;
-    margin: 0 0 0.3em;
+    font-size: 1.4em;
+    margin: 1.5em 0 0.5em;
     color: #333;
     font-weight: 600;
+    line-height: 1.3;
 }
 
 h3 {
-    font-size: 1.1em;
-    margin: 0 0 0.3em;
+    font-size: 1.2em;
+    margin: 1.3em 0 0.4em;
     color: #444;
     font-weight: 600;
+    line-height: 1.4;
 }
 
 p {
-    margin: 0.4em 0;
+    margin: 0.8em 0;
+    line-height: 1.6;
 }
 
 small {
     color: #666;
     display: block;
-    margin: 0 0 0.3em;
+    margin: 0 0 0.5em;
     font-size: 0.9em;
 }
 
 .post {
-    margin: 0 0 0.6em;
-    padding: 0.5em 0.7em;
+    margin: 0 0 1em;
+    padding: 1em 1.2em;
     background: #fafafa;
-    border-radius: 4px;
+    border-radius: 6px;
     border: 1px solid #e8e8e8;
     cursor: pointer;
     transition: all 0.2s ease;
@@ -80,17 +85,19 @@ small {
     background: #f0f0f0;
     border-color: #ddd;
     transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
 }
 
 input {
     width: 100%;
-    margin: 0 0 1em;
-    padding: 0.6em;
+    margin: 0 0 1.5em;
+    padding: 0.8em 1em;
     border: 1px solid #ddd;
-    border-radius: 4px;
-    font-size: 0.95em;
+    border-radius: 6px;
+    font-size: 1em;
     background: #fff;
     box-sizing: border-box;
+    font-family: inherit;
 }
 
 input:focus {
@@ -100,80 +107,81 @@ input:focus {
 }
 
 nav {
-    margin: 1em 0;
-    padding: 0.5em 0;
+    margin: 1.5em 0;
+    padding: 0.8em 0;
     border-bottom: 1px solid #eee;
 }
 
 .stats {
     background: #fff3cd;
-    padding: 0.6em 1em;
-    border-radius: 4px;
-    margin: 1em 0;
+    padding: 1em 1.5em;
+    border-radius: 6px;
+    margin: 1.5em 0;
     text-align: center;
-    font-size: 0.95em;
+    font-size: 1em;
     border: 1px solid #ffeaa7;
 }
 
 .excerpt {
     color: #666;
-    margin: 0.3em 0 0;
-    font-size: 0.9em;
-    line-height: 1.4;
+    margin: 0.6em 0 0;
+    font-size: 0.95em;
+    line-height: 1.5;
 }
 
 .search-results {
     background: #e8f4fd;
-    padding: 0.8em;
-    border-radius: 4px;
-    margin: 1em 0;
+    padding: 1em 1.5em;
+    border-radius: 6px;
+    margin: 1.5em 0;
     border-left: 4px solid #0066cc;
 }
 
 .no-results {
     text-align: center;
     color: #666;
-    padding: 2em;
+    padding: 3em;
     font-style: italic;
+    font-size: 1.1em;
 }
 
 .search-highlight {
     background: #ffeb3b;
-    padding: 0 0.2em;
-    border-radius: 2px;
+    padding: 0 0.3em;
+    border-radius: 3px;
 }
 
 .year-section {
-    margin: 0 0 2.5em;
+    margin: 0 0 3em;
 }
 
 .month-section {
-    margin: 0 0 1.5em;
+    margin: 0 0 2em;
 }
 
 .year-header {
-    margin: 0 0 1em;
+    margin: 0 0 1.5em;
 }
 
 .month-header {
-    margin: 0 0 0.8em;
-    font-size: 0.95em;
+    margin: 0 0 1em;
+    font-size: 1em;
     color: #666;
 }
 
 .post-meta {
     background: #f6f8fa;
-    padding: 0.8em 1em;
-    border-radius: 6px;
-    margin: 1.2em 0;
-    border-left: 3px solid #0969da;
+    padding: 1em 1.5em;
+    border-radius: 8px;
+    margin: 1.5em 0;
+    border-left: 4px solid #0969da;
 }
 
 .post-meta p {
-    margin: 0.2em 0;
-    font-size: 13px;
+    margin: 0.3em 0;
+    font-size: 0.9em;
     color: #656d76;
-    line-height: 1.4;
+    line-height: 1.5;
 }
 
 strong {
@@ -187,39 +195,64 @@ em {
 code {
     background: #f6f8fa;
     color: #cf222e;
-    padding: 0.1em 0.25em;
-    border-radius: 3px;
-    font-family: monospace;
-    font-size: 13px;
+    padding: 0.2em 0.4em;
+    border-radius: 4px;
+    font-family: "SF Mono", Monaco, "Cascadia Code", "Roboto Mono", Consolas, "Courier New", monospace;
+    font-size: 0.9em;
     border: 1px solid #d0d7de;
 }
 
 pre {
     background: #f6f8fa;
-    padding: 0.75em;
-    margin: 1.2em 0;
-    border-radius: 6px;
+    padding: 1em 1.5em;
+    margin: 1.5em 0;
+    border-radius: 8px;
     overflow-x: auto;
     border: 1px solid #d0d7de;
+    line-height: 1.4;
+}
+
+pre code {
+    background: none;
+    border: none;
+    padding: 0;
+    color: #24292f;
 }
 
 blockquote {
     background: #f6f8fa;
-    border-left: 3px solid #0969da;
-    margin: 1.2em 0;
-    padding: 0.8em 1.2em;
-    border-radius: 0 6px 6px 0;
+    border-left: 4px solid #0969da;
+    margin: 1.5em 0;
+    padding: 1em 1.5em;
+    border-radius: 0 8px 8px 0;
     color: #656d76;
     font-style: italic;
 }
 
 ul, ol {
-    margin: 1em 0;
-    padding-left: 1.8em;
+    margin: 1.2em 0;
+    padding-left: 2em;
 }
 
 li {
-    margin: 0.4em 0;
+    margin: 0.5em 0;
+    line-height: 1.6;
+}
+
+article {
+    line-height: 1.7;
+}
+
+article h1 {
+    margin-bottom: 0.3em;
+}
+
+article h2 {
+    margin-top: 2em;
+}
+
+article h3 {
+    margin-top: 1.8em;
 }
 EOF
 
@@ -292,20 +325,14 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 EOF
 
-# Helper functions - optimized to read files only once
-process_file() {
+# Helper functions
+extract_title_from_file() {
     local file="$1"
-    local filename=$(basename "$file" .md)
-    local post_num=$(echo "$filename" | cksum | cut -d' ' -f1)
-    
-    # Read entire file once
-    local content=$(cat "$file")
-    local first_line=$(echo "$content" | head -n1)
-    local body_content=$(echo "$content" | tail -n +2)
-    
-    # Extract title
+    local first_line=$(head -n1 "$file")
     local title=$(echo "$first_line" | sed 's/^# *//' | sed 's/^[[:space:]]*//' | sed 's/[[:space:]]*$//')
+    
     if [ -z "$title" ] || [ "$title" = "#" ]; then
+        local filename=$(basename "$file" .md)
         if echo "$filename" | grep -q "^[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]-"; then
             title=$(echo "$filename" | sed 's/^[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]-//' | sed 's/-/ /g')
         else
@@ -314,279 +341,60 @@ process_file() {
         title=$(echo "$title" | awk '{for(i=1;i<=NF;i++) $i=toupper(substr($i,1,1)) tolower(substr($i,2))}1')
     fi
     
-    # Extract date
-    local date_str
+    echo "$title"
+}
+
+extract_post_number() {
+    local file="$1"
+    local filename=$(basename "$file" .md)
+    echo "$filename" | cksum | cut -d' ' -f1
+}
+
+extract_date_from_filename() {
+    local file="$1"
+    local filename=$(basename "$file" .md)
+    
     if echo "$filename" | grep -q "^[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]-"; then
         local year=$(echo "$filename" | cut -d- -f1)
         local month=$(echo "$filename" | cut -d- -f2)
         local day=$(echo "$filename" | cut -d- -f3)
-        date_str="$year/$month/$day"
-        sort_date="$year$month$day"
+        echo "$year/$month/$day"
     else
-        date_str=$(date '+%Y/%m/%d')
-        sort_date=$(date '+%Y%m%d')
+        date '+%Y/%m/%d'
     fi
-    
-    # Extract excerpt
-    local excerpt=$(echo "$body_content" | grep -v '^#' | grep -v '^
-
-get_month_name() {
-    case "$1" in
-        01) echo "January" ;;
-        02) echo "February" ;;
-        03) echo "March" ;;
-        04) echo "April" ;;
-        05) echo "May" ;;
-        06) echo "June" ;;
-        07) echo "July" ;;
-        08) echo "August" ;;
-        09) echo "September" ;;
-        10) echo "October" ;;
-        11) echo "November" ;;
-        12) echo "December" ;;
-        *) echo "Month" ;;
-    esac
 }
 
-# Main processing - optimized for speed
-echo "ℹ️ Finding markdown files..."
-
-if [ ! -d "$CONTENT_DIR" ]; then
-    echo "❌ Content directory not found: $CONTENT_DIR"
-    exit 1
-fi
-
-files=$(find "$CONTENT_DIR" -name "*.md" -type f | sort)
-total=$(echo "$files" | wc -l)
-
-if [ $total -eq 0 ]; then
-    echo "❌ No markdown files found"
-    exit 1
-fi
-
-echo "✅ Found $total markdown files"
-
-# Process files in batches for speed
-echo "ℹ️ Processing files (optimized)..."
-
-post_data_file="/tmp/post_data.txt"
-> "$post_data_file"
-
-# Process files in parallel batches of 10
-batch_size=10
-count=0
-batch_count=0
-
-echo "$files" | while read file; do
-    if [ ! -f "$file" ] || [ ! -r "$file" ]; then
-        continue
+extract_sort_date() {
+    local file="$1"
+    local filename=$(basename "$file" .md)
+    
+    if echo "$filename" | grep -q "^[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]-"; then
+        local year=$(echo "$filename" | cut -d- -f1)
+        local month=$(echo "$filename" | cut -d- -f2)
+        local day=$(echo "$filename" | cut -d- -f3)
+        echo "$year$month$day"
+    else
+        date '+%Y%m%d'
     fi
+}
+
+extract_excerpt() {
+    local file="$1"
+    local body_content=$(tail -n +2 "$file")
+    local excerpt=$(echo "$body_content" | grep -v '^#' | grep -v '^$' | head -2 | tr '\n' ' ' | sed 's/[*`#\[\]()]/ /g' | sed 's/  */ /g' | cut -c1-150 | sed 's/[[:space:]]*$/.../')
     
-    count=$((count + 1))
-    batch_count=$((batch_count + 1))
-    
-    # Show progress every 50 files
-    if [ $((count % 50)) -eq 0 ]; then
-        printf "\r🔄 Processed: %d/%d files" "$count" "$total"
-    fi
-    
-    # Process file and append to data file
-    process_file "$file" >> "$post_data_file" &
-    
-    # Wait for batch to complete every batch_size files
-    if [ $batch_count -eq $batch_size ]; then
-        wait
-        batch_count=0
-    fi
-done
-
-# Wait for any remaining background jobs
-wait
-
-echo
-processed=$(wc -l < "$post_data_file")
-echo "✅ Processed $processed files in parallel"
-
-if [ $processed -eq 0 ]; then
-    echo "❌ No posts were processed successfully"
-    exit 1
-fi
-
-# Generate main page
-echo "ℹ️ Generating main page..."
-
-recent_posts=$(sort -rn "$post_list_file" | head -$MAX_POSTS_MAIN | cut -d' ' -f2)
-
-cat > public/index.html << EOF
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width,initial-scale=1">
-    <title>${SITE_TITLE}</title>
-    <meta name="description" content="A blog with ${processed} posts">
-    <link rel="stylesheet" href="style.css">
-    <script src="search.js"></script>
-</head>
-<body>
-    <h1>${SITE_TITLE}</h1>
-    <div class="stats">📊 ${processed} posts published</div>
-    
-    <input id="search" placeholder="Search posts..." autocomplete="off">
-    <div id="search-info" class="search-results" style="display:none">
-        <span id="search-count">0</span> posts found
-    </div>
-    
-    <div id="posts">
-EOF
-
-# Generate main page - optimized
-echo "ℹ️ Generating main page..."
-
-cat > public/index.html << EOF
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width,initial-scale=1">
-    <title>${SITE_TITLE}</title>
-    <meta name="description" content="A blog with ${processed} posts">
-    <link rel="stylesheet" href="style.css">
-    <script src="search.js"></script>
-</head>
-<body>
-    <h1>${SITE_TITLE}</h1>
-    <div class="stats">📊 ${processed} posts published</div>
-    
-    <input id="search" placeholder="Search posts..." autocomplete="off">
-    <div id="search-info" class="search-results" style="display:none">
-        <span id="search-count">0</span> posts found
-    </div>
-    
-    <div id="posts">
-EOF
-
-# Sort by date and get recent posts, add them directly
-sort -t'|' -k4 -rn "$post_data_file" | head -$MAX_POSTS_MAIN | while IFS='|' read post_num title date_str sort_date excerpt file word_count reading_time; do
-    cat >> public/index.html << EOF
-        <article class="post" data-title="${title,,}" data-excerpt="${excerpt,,}" data-searchable="${title,,} ${excerpt,,}" onclick="window.location.href='p/${post_num}.html'">
-            <small>${date_str}</small>
-            <h2><a href="p/${post_num}.html">${title}</a></h2>
-            <div class="excerpt">${excerpt}</div>
-        </article>
-EOF
-done
-
-cat >> public/index.html << EOF
-    </div>
-    
-    <nav style="margin-top:2em">
-        <p>📚 <a href="archive/">View all ${processed} posts in Archive →</a></p>
-    </nav>
-</body>
-</html>
-EOF
-
-# Generate archive page - optimized
-echo "ℹ️ Generating archive..."
-
-cat > public/archive/index.html << EOF
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width,initial-scale=1">
-    <title>Archive - ${SITE_TITLE}</title>
-    <meta name="description" content="Archive of all ${processed} posts">
-    <link rel="stylesheet" href="../style.css">
-    <script src="../search.js"></script>
-</head>
-<body>
-    <nav><a href="../">← Home</a></nav>
-    <h1>Archive</h1>
-    <div class="stats">📊 ${processed} posts chronologically ordered</div>
-    
-    <input id="search" placeholder="Search all posts..." autocomplete="off">
-    <div id="search-info" class="search-results" style="display:none">
-        <span id="search-count">0</span> of ${processed} posts found
-    </div>
-    
-    <div id="posts">
-EOF
-
-current_year=""
-current_month=""
-
-sort -t'|' -k4 -rn "$post_data_file" | while IFS='|' read post_num title date_str sort_date excerpt file word_count reading_time; do
-    year=$(echo "$date_str" | cut -d'/' -f1)
-    month=$(echo "$date_str" | cut -d'/' -f2)
-    month_name=$(get_month_name "$month")
-    
-    if [ "$year" != "$current_year" ]; then
-        if [ -n "$current_year" ]; then
-            echo "        </div>" >> public/archive/index.html
-            echo "    </div>" >> public/archive/index.html
-        fi
-        echo "    <div class=\"year-section\">" >> public/archive/index.html
-        echo "        <div class=\"year-header\"><h2>$year</h2></div>" >> public/archive/index.html
-        current_year="$year"
-        current_month=""
-    fi
-    
-    if [ "$month" != "$current_month" ]; then
-        if [ -n "$current_month" ]; then
-            echo "        </div>" >> public/archive/index.html
-        fi
-        echo "        <div class=\"month-section\">" >> public/archive/index.html
-        echo "            <div class=\"month-header\"><h3>$month_name</h3></div>" >> public/archive/index.html
-        current_month="$month"
-    fi
-    
-    cat >> public/archive/index.html << EOF
-            <article class="post" data-title="${title,,}" data-excerpt="${excerpt,,}" data-searchable="${title,,} ${excerpt,,}" onclick="window.location.href='../p/${post_num}.html'">
-                <small>${date_str}</small>
-                <h3><a href="../p/${post_num}.html">${title}</a></h3>
-                <div class="excerpt">${excerpt}</div>
-            </article>
-EOF
-done
-
-if [ -n "$current_month" ]; then
-    echo "        </div>" >> public/archive/index.html
-fi
-if [ -n "$current_year" ]; then
-    echo "    </div>" >> public/archive/index.html
-fi
-
-cat >> public/archive/index.html << EOF
-    </div>
-</body>
-</html>
-EOF
-
-# Cleanup
-rm -f "$post_data_file"
-
-echo "✅ Build completed successfully!"
-echo
-echo "📊 STATISTICS:"
-echo "  ✅ Total files processed: $processed (in parallel)"
-echo "  ✅ Main page generated with recent posts" 
-echo "  ✅ Archive generated with chronological organization"
-echo "  ✅ Individual post pages created"
-echo
-echo "🌐 Your blog is ready!"
-echo "⚡ Processing time: ~10x faster with parallel optimization" | head -2 | tr '\n' ' ' | sed 's/[*`#\[\]()]/ /g' | sed 's/  */ /g' | cut -c1-150 | sed 's/[[:space:]]*$/.../')
     if [ -z "$excerpt" ]; then
         excerpt="Read more..."
     fi
     
-    # Count words
-    local word_count=$(echo "$body_content" | wc -w)
-    local reading_time=$(echo "$word_count / 200 + 1" | bc 2>/dev/null || echo "1")
+    echo "$excerpt"
+}
+
+process_markdown_simple() {
+    local file="$1"
+    local content=$(tail -n +2 "$file")
     
-    # Process markdown (simplified for speed)
-    local html_content=$(echo "$body_content" | sed '
+    echo "$content" | sed '
         s/^#### \(.*\)/<h4>\1<\/h4>/
         s/^### \(.*\)/<h3>\1<\/h3>/
         s/^## \(.*\)/<h2>\1<\/h2>/
@@ -598,39 +406,7 @@ echo "⚡ Processing time: ~10x faster with parallel optimization" | head -2 | t
         /^[[:space:]]*$/d
         /^[^<]/s/^/<p>/
         /^<p>/s/$/<\/p>/
-    ')
-    
-    # Generate post page
-    cat > "public/p/${post_num}.html" << EOF
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width,initial-scale=1">
-    <title>${title} - ${SITE_TITLE}</title>
-    <meta name="description" content="${excerpt}">
-    <link rel="stylesheet" href="../style.css">
-</head>
-<body>
-    <nav><a href="../">← Blog</a> | <a href="../archive/">Archive</a></nav>
-    <article>
-        <h1>${title}</h1>
-        <small>${date_str}</small>
-        <div class="post-meta">
-            <p><strong>Published:</strong> ${date_str}</p>
-            <p><strong>Reading time:</strong> ~${reading_time} min (${word_count} words)</p>
-        </div>
-        ${html_content}
-    </article>
-    <nav style="border-top:1px solid #e2e8f0;margin-top:3em;padding-top:1.5em">
-        <a href="../">← Back to Blog</a> | <a href="../archive/">Archive</a>
-    </nav>
-</body>
-</html>
-EOF
-    
-    # Return data for main processing
-    echo "$post_num|$title|$date_str|$sort_date|$excerpt|$file|$word_count|$reading_time"
+    '
 }
 
 get_month_name() {
