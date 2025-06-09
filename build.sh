@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e
 
-echo "🚀 Building chronological timeline blog with sticky scroll..."
+echo "🚀 Building final improved blog with consistent UI and fixed search..."
 
 SITE_TITLE="${SITE_TITLE:-dee-blogger}"
 BASE_URL="${BASE_URL:-https://vdeemann.github.io/dee-blogger.github.io}"
@@ -10,21 +10,18 @@ BASE_URL="${BASE_URL:-https://vdeemann.github.io/dee-blogger.github.io}"
 rm -rf public
 mkdir -p public/p public/archive
 
-# Main page CSS (no hover effects)
-MAIN_CSS='body{max-width:45em;margin:2em auto;padding:0 1em;font-family:system-ui,sans-serif;line-height:1.5;color:#333;background:#fff}a{color:#0066cc;text-decoration:none}a:hover{text-decoration:underline}h1{font-size:1.9em;margin:0 0 .5em;color:#1a1a1a;font-weight:700}h2{font-size:1.2em;margin:0 0 .3em;color:#333;font-weight:600}h3{font-size:1.1em;margin:1.5em 0 .5em;color:#444;font-weight:600}p{margin:.4em 0}small{color:#666;display:block;margin:0 0 .5em;font-size:.9em}.post{margin:0 0 .8em;padding:.6em .8em;background:#fafafa;border-radius:4px;border:1px solid #e8e8e8}input{width:100%;margin:0 0 1em;padding:.6em;border:1px solid #ddd;border-radius:4px;font-size:.95em;background:#fff;box-sizing:border-box}nav{margin:1em 0;padding:.5em 0;border-bottom:1px solid #eee}.stats{background:#fff3cd;padding:.6em 1em;border-radius:4px;margin:1em 0;text-align:center;font-size:.95em;border:1px solid #ffeaa7}.search-highlight{background:#ffeb3b;padding:0 .2em;border-radius:2px}.excerpt{color:#666;margin:.3em 0 0;font-size:.9em;line-height:1.4}.search-results{background:#e8f4fd;padding:.8em;border-radius:4px;margin:1em 0;border-left:4px solid #0066cc}.no-results{text-align:center;color:#666;padding:2em;font-style:italic}.search-count{font-weight:600;color:#0066cc}'
+# Shared CSS for both main and archive pages (consistent styling)
+SHARED_CSS='body{max-width:50em;margin:2em auto;padding:0 1em;font-family:system-ui,sans-serif;line-height:1.5;color:#333;background:#fff;position:relative}a{color:#0066cc;text-decoration:none}a:hover{text-decoration:underline}h1{font-size:1.9em;margin:0 0 .5em;color:#1a1a1a;font-weight:700}h2{font-size:1.2em;margin:0 0 .3em;color:#333;font-weight:600}h3{font-size:1.1em;margin:0 0 .3em;color:#444;font-weight:600}p{margin:.4em 0}small{color:#666;display:block;margin:0 0 .3em;font-size:.9em}.post{margin:0 0 .6em;padding:.5em .7em;background:#fafafa;border-radius:4px;border:1px solid #e8e8e8;cursor:pointer}.post:hover{background:#f5f5f5;border-color:#ddd;transform:translateY(-1px);box-shadow:0 2px 4px rgba(0,0,0,.1);transition:all .2s ease}input{width:100%;margin:0 0 1em;padding:.6em;border:1px solid #ddd;border-radius:4px;font-size:.95em;background:#fff;box-sizing:border-box}nav{margin:1em 0;padding:.5em 0;border-bottom:1px solid #eee}.stats{background:#fff3cd;padding:.6em 1em;border-radius:4px;margin:1em 0;text-align:center;font-size:.95em;border:1px solid #ffeaa7}.search-highlight{background:#ffeb3b;padding:0 .2em;border-radius:2px}.excerpt{color:#666;margin:.3em 0 0;font-size:.9em;line-height:1.4}.search-results{background:#e8f4fd;padding:.8em;border-radius:4px;margin:1em 0;border-left:4px solid #0066cc}.no-results{text-align:center;color:#666;padding:2em;font-style:italic}.search-count{font-weight:600;color:#0066cc}.sticky-header{position:sticky;top:0;background:#fff;border-bottom:2px solid #0066cc;padding:.8em 0;margin:0 0 1em;z-index:100;box-shadow:0 2px 4px rgba(0,0,0,.1);display:none}.sticky-header h2{margin:0 0 .5em;font-size:1.1em;color:#0066cc;font-weight:700}.sticky-header input{margin:0;padding:.5em;font-size:.9em}.archive-content{margin:2em 0}.year-section{margin:0 0 2.5em}.month-section{margin:0 0 1.5em}.year-header{margin:0 0 1em}.month-header{margin:0 0 .8em;font-size:.95em;color:#666}'
 
-# Archive page CSS (with hover effects, no timeline visuals)
-ARCHIVE_CSS='body{max-width:50em;margin:2em auto;padding:0 1em;font-family:system-ui,sans-serif;line-height:1.5;color:#333;background:#fff;position:relative}a{color:#0066cc;text-decoration:none}a:hover{text-decoration:underline}h1{font-size:1.9em;margin:0 0 .5em;color:#1a1a1a;font-weight:700}h2{font-size:1.2em;margin:0 0 .3em;color:#333;font-weight:600}h3{font-size:1.1em;margin:0 0 .3em;color:#444;font-weight:600}p{margin:.4em 0}small{color:#666;display:block;margin:0 0 .3em;font-size:.9em}.post{margin:0 0 .6em;padding:.5em .7em;background:#fafafa;border-radius:4px;border:1px solid #e8e8e8;transition:all .2s ease;cursor:pointer}.post:hover{background:#f5f5f5;border-color:#ddd;transform:translateY(-1px);box-shadow:0 2px 4px rgba(0,0,0,.1)}input{width:100%;margin:0 0 1em;padding:.6em;border:1px solid #ddd;border-radius:4px;font-size:.95em;background:#fff;box-sizing:border-box}nav{margin:1em 0;padding:.5em 0;border-bottom:1px solid #eee}.stats{background:#fff3cd;padding:.6em 1em;border-radius:4px;margin:1em 0;text-align:center;font-size:.95em;border:1px solid #ffeaa7}.search-highlight{background:#ffeb3b;padding:0 .2em;border-radius:2px}.excerpt{color:#666;margin:.3em 0 0;font-size:.9em;line-height:1.4}.search-results{background:#e8f4fd;padding:.8em;border-radius:4px;margin:1em 0;border-left:4px solid #0066cc}.no-results{text-align:center;color:#666;padding:2em;font-style:italic}.search-count{font-weight:600;color:#0066cc}.sticky-header{position:sticky;top:0;background:#fff;border-bottom:2px solid #0066cc;padding:.8em 0;margin:0 0 1em;z-index:100;box-shadow:0 2px 4px rgba(0,0,0,.1);display:none}.sticky-header h2{margin:0 0 .3em;font-size:1em;color:#0066cc}.sticky-header .date-info{font-size:.85em;color:#666;margin:0 0 .5em}.sticky-header input{margin:0;padding:.5em;font-size:.9em}.archive-content{margin:2em 0}.year-section{margin:0 0 2.5em}.month-section{margin:0 0 1.5em}.year-header{margin:0 0 1em}.month-header{margin:0 0 .8em;font-size:.95em;color:#666}'
+# Enhanced post page CSS with better typography (like Software Architecture post)
+POST_CSS='body{max-width:48em;margin:2em auto;padding:0 1em;font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;line-height:1.65;color:#2d3748;background:#fff}a{color:#0066cc;text-decoration:none;border-bottom:1px solid transparent;transition:border-color .2s}a:hover{border-bottom-color:#0066cc}h1{font-size:2.2em;margin:0 0 .4em;color:#1a202c;font-weight:700;line-height:1.2}h2{font-size:1.6em;margin:2.5em 0 1em;color:#2d3748;font-weight:600;line-height:1.3;border-bottom:2px solid #e2e8f0;padding-bottom:.3em}h3{font-size:1.3em;margin:2em 0 .8em;color:#4a5568;font-weight:600;line-height:1.3}p{margin:1.2em 0;font-size:1.05em;line-height:1.7}small{color:#718096;display:block;margin:0 0 2em;font-size:1em;font-weight:500}strong{font-weight:600;color:#2d3748}code{background:#f7fafc;color:#e53e3e;padding:.2em .4em;border-radius:4px;font-family:"SF Mono",Monaco,Consolas,"Liberation Mono","Courier New",monospace;font-size:.9em;border:1px solid #e2e8f0}pre{background:#f7fafc;padding:.8em 1em;margin:1.5em 0;border-radius:6px;overflow-x:auto;border:1px solid #e2e8f0;box-shadow:0 1px 3px rgba(0,0,0,.1)}pre code{background:0;padding:0;font-size:.9em;color:#2d3748;display:block;border:0}ul,ol{margin:1.5em 0;padding-left:2em}li{margin:.8em 0;line-height:1.6}nav{margin:2em 0;padding:.8em 0;border-bottom:1px solid #e2e8f0}blockquote{background:#f7fafc;border-left:4px solid #0066cc;margin:2em 0;padding:1.2em 1.8em;border-radius:0 6px 6px 0;color:#4a5568;font-style:italic;box-shadow:0 1px 3px rgba(0,0,0,.1)}blockquote p{margin:.8em 0}hr{border:0;height:1px;background:#e2e8f0;margin:2.5em 0}.post-meta{background:#f7fafc;padding:1em 1.2em;border-radius:6px;margin:1.5em 0;border-left:4px solid #0066cc}.post-meta p{margin:.3em 0;font-size:.95em;color:#4a5568}'
 
-# Post page CSS
-POST_CSS='body{max-width:45em;margin:2em auto;padding:0 1em;font-family:system-ui,sans-serif;line-height:1.6;color:#333}a{color:#0066cc;text-decoration:none}a:hover{text-decoration:underline}h1{font-size:1.9em;margin:0 0 .4em;color:#1a1a1a;font-weight:700}h2{font-size:1.4em;margin:2em 0 1em;color:#333;font-weight:600}h3{font-size:1.2em;margin:1.5em 0 .6em;color:#444;font-weight:600}p{margin:1em 0}small{color:#666;display:block;margin:0 0 1.5em;font-size:.95em}strong{font-weight:600}code{background:#f6f8fa;color:#24292e;padding:.15em .4em;border-radius:3px;font-family:Monaco,Consolas,monospace;font-size:.9em}pre{background:#f6f8fa;padding:.5em .7em;margin:1em 0;border-radius:5px;overflow-x:auto;border:1px solid #e1e4e8}pre code{background:0;padding:0;font-size:.85em;color:#24292e;display:block}ul,ol{margin:1em 0;padding-left:1.8em}li{margin:.4em 0}nav{margin:1.6em 0;padding:.6em 0;border-bottom:1px solid #eee}blockquote{background:#f6f8fa;border-left:4px solid #0066cc;margin:1.6em 0;padding:1em 1.6em;border-radius:0 6px 6px 0;color:#586069;font-style:italic}'
-
-# Enhanced markdown processor
+# Enhanced markdown processor with better formatting
 process_markdown() {
     local file="$1"
     
     tail -n +2 "$file" | awk '
-    BEGIN { in_code = 0; in_list = 0 }
+    BEGIN { in_code = 0; in_list = 0; in_blockquote = 0 }
     
     /^```/ {
         if (in_code) {
@@ -38,6 +35,21 @@ process_markdown() {
     }
     
     in_code { print; next }
+    
+    /^> / {
+        if (!in_blockquote) {
+            print "<blockquote>"
+            in_blockquote = 1
+        }
+        gsub(/^> /, "")
+        print "<p>" $0 "</p>"
+        next
+    }
+    
+    in_blockquote && !/^> / && !/^$/ {
+        print "</blockquote>"
+        in_blockquote = 0
+    }
     
     /^### / { gsub(/^### /, ""); print "<h3>" $0 "</h3>"; next }
     /^## / { gsub(/^## /, ""); print "<h2>" $0 "</h2>"; next }
@@ -63,6 +75,10 @@ process_markdown() {
             print "</ul>"
             in_list = 0
         }
+        if (in_blockquote) {
+            print "</blockquote>"
+            in_blockquote = 0
+        }
         next 
     }
     
@@ -70,6 +86,10 @@ process_markdown() {
         if (in_list) {
             print "</ul>"
             in_list = 0
+        }
+        if (in_blockquote) {
+            print "</blockquote>"
+            in_blockquote = 0
         }
         
         gsub(/\*\*([^*]+)\*\*/, "<strong>\\1</strong>")
@@ -82,6 +102,7 @@ process_markdown() {
     END {
         if (in_code) print "</code></pre>"
         if (in_list) print "</ul>"
+        if (in_blockquote) print "</blockquote>"
     }'
 }
 
@@ -160,7 +181,7 @@ for i in "${!files[@]}"; do
     
     excerpt=$(extract_excerpt "$file")
     if [ -z "$excerpt" ]; then
-        excerpt="No excerpt available"
+        excerpt="No excerpt available..."
     fi
     
     echo "  Title: $title"
@@ -189,12 +210,16 @@ for i in "${!files[@]}"; do
     <style>${POST_CSS}</style>
 </head>
 <body>
-    <nav><a href="../">← Home</a> | <a href="../archive/">Archive</a></nav>
+    <nav><a href="../">← Blog</a> | <a href="../archive/">Archive</a></nav>
     <h1>${title}</h1>
     <small>${date}</small>
+    <div class="post-meta">
+        <p><strong>Published:</strong> ${date}</p>
+        <p><strong>Reading time:</strong> ~$(echo "$content" | wc -w | awk '{print int($1/200)+1}') min</p>
+    </div>
     ${content}
-    <nav style="border-top:1px solid #eee;margin-top:2em;padding-top:1em">
-        <a href="../">← Back to Home</a> | <a href="../archive/">Archive</a>
+    <nav style="border-top:1px solid #e2e8f0;margin-top:3em;padding-top:1.5em">
+        <a href="../">← Back to Blog</a> | <a href="../archive/">Archive</a>
     </nav>
 </body>
 </html>
@@ -203,8 +228,8 @@ HTML_EOF
     echo "✅ Processed: $num - $title"
 done
 
-# Generate main page (recent 20 posts)
-echo "🏠 Generating main page..."
+# Generate main page with archive-style consistency
+echo "🏠 Generating main page with consistent styling..."
 
 cat > public/index.html << MAIN_EOF
 <!DOCTYPE html>
@@ -214,12 +239,12 @@ cat > public/index.html << MAIN_EOF
     <meta name="viewport" content="width=device-width,initial-scale=1">
     <title>${SITE_TITLE}</title>
     <meta name="description" content="A blog with ${total} posts">
-    <style>${MAIN_CSS}</style>
+    <style>${SHARED_CSS}</style>
 </head>
 <body>
     <h1>${SITE_TITLE}</h1>
     <div class="stats">📊 ${total} posts published</div>
-    <input id="search" placeholder="Search posts..." onkeyup="searchPosts()" autocomplete="off">
+    <input id="search" placeholder="Search posts..." autocomplete="off">
     <div id="search-info" class="search-results" style="display:none">
         <span id="search-count">0</span> posts found
     </div>
@@ -239,7 +264,7 @@ for num in "${recent_nums[@]}"; do
     excerpt="${post_data["$num,excerpt"]}"
     
     cat >> public/index.html << POST_EOF
-        <div class="post" data-title="${title,,}" data-excerpt="${excerpt,,}" data-searchable="${title,,} ${excerpt,,}">
+        <div class="post" data-title="${title,,}" data-excerpt="${excerpt,,}" data-searchable="${title,,} ${excerpt,,}" onclick="window.location.href='p/${num}.html'">
             <small>${date}</small>
             <h2><a href="p/${num}.html">${title}</a></h2>
             <div class="excerpt">${excerpt}</div>
@@ -254,7 +279,7 @@ cat >> public/index.html << MAIN_END_EOF
     </nav>
 
     <script>
-        let originalPosts = '';
+        let originalPosts = null;
         const searchInput = document.getElementById('search');
         const postsContainer = document.getElementById('posts');
         const searchInfo = document.getElementById('search-info');
@@ -263,7 +288,10 @@ cat >> public/index.html << MAIN_END_EOF
         function searchPosts() {
             const query = searchInput.value.toLowerCase().trim();
             
-            if (!originalPosts) originalPosts = postsContainer.innerHTML;
+            // Store original content only once
+            if (originalPosts === null) {
+                originalPosts = postsContainer.innerHTML;
+            }
             
             if (!query) {
                 postsContainer.innerHTML = originalPosts;
@@ -271,7 +299,11 @@ cat >> public/index.html << MAIN_END_EOF
                 return;
             }
             
-            const posts = Array.from(postsContainer.children);
+            // Get all posts from original content
+            const tempDiv = document.createElement('div');
+            tempDiv.innerHTML = originalPosts;
+            const posts = Array.from(tempDiv.children);
+            
             const filtered = posts.filter(post => {
                 const searchable = post.dataset.searchable || '';
                 return searchable.includes(query);
@@ -292,14 +324,15 @@ cat >> public/index.html << MAIN_END_EOF
             searchInfo.style.display = 'block';
         }
         
+        // Use input event for real-time search including backspace
         searchInput.addEventListener('input', searchPosts);
     </script>
 </body>
 </html>
 MAIN_END_EOF
 
-# Generate archive page with chronological timeline
-echo "📚 Generating chronological timeline archive..."
+# Generate archive page with fixed sticky header and search
+echo "📚 Generating archive with fixed search and sticky header..."
 
 cat > public/archive/index.html << ARCHIVE_START_EOF
 <!DOCTYPE html>
@@ -309,21 +342,20 @@ cat > public/archive/index.html << ARCHIVE_START_EOF
     <meta name="viewport" content="width=device-width,initial-scale=1">
     <title>Archive - ${SITE_TITLE}</title>
     <meta name="description" content="Chronological archive of all ${total} posts">
-    <style>${ARCHIVE_CSS}</style>
+    <style>${SHARED_CSS}</style>
 </head>
 <body>
     <nav><a href="../">← Home</a></nav>
     <h1>Archive</h1>
     <div class="stats">📊 ${total} posts chronologically ordered</div>
-    <input id="search-main" placeholder="Search all posts..." onkeyup="searchArchive()" autocomplete="off">
+    <input id="search-main" placeholder="Search all posts..." autocomplete="off">
     <div id="search-info" class="search-results" style="display:none">
         <span id="search-count">0</span> of ${total} posts found
     </div>
     
     <div id="sticky-header" class="sticky-header">
         <h2 id="sticky-title">Timeline</h2>
-        <div id="sticky-date" class="date-info"></div>
-        <input id="search-sticky" placeholder="Search all posts..." onkeyup="searchArchive()" autocomplete="off">
+        <input id="search-sticky" placeholder="Search all posts..." autocomplete="off">
     </div>
     
     <div class="archive-content" id="archive">
@@ -399,7 +431,7 @@ cat >> public/archive/index.html << ARCHIVE_END_EOF
     </div>
 
     <script>
-        let originalArchive = '';
+        let originalArchive = null;
         const searchMainInput = document.getElementById('search-main');
         const searchStickyInput = document.getElementById('search-sticky');
         const archiveContainer = document.getElementById('archive');
@@ -407,7 +439,6 @@ cat >> public/archive/index.html << ARCHIVE_END_EOF
         const searchCount = document.getElementById('search-count');
         const stickyHeader = document.getElementById('sticky-header');
         const stickyTitle = document.getElementById('sticky-title');
-        const stickyDate = document.getElementById('sticky-date');
         
         function updateStickyHeader() {
             const scrollTop = window.pageYOffset;
@@ -438,29 +469,20 @@ cat >> public/archive/index.html << ARCHIVE_END_EOF
                     const monthSection = currentSection.classList.contains('month-section') ? currentSection : null;
                     
                     let title = '';
-                    let dateInfo = '';
                     if (yearSection) {
                         title = yearSection.dataset.year;
-                        dateInfo = \`Year \${yearSection.dataset.year}\`;
                         if (monthSection && monthSection.dataset.yearMonth) {
                             title = monthSection.dataset.yearMonth;
-                            const parts = monthSection.dataset.yearMonth.split(' ');
-                            if (parts.length >= 2) {
-                                dateInfo = \`\${parts[1]} \${parts[0]}\`;
-                            }
                         }
                     }
                     
                     if (title) {
                         stickyTitle.textContent = title;
-                        stickyDate.textContent = dateInfo;
                     } else {
                         stickyTitle.textContent = 'Archive';
-                        stickyDate.textContent = '';
                     }
                 } else {
                     stickyTitle.textContent = 'Archive';
-                    stickyDate.textContent = '';
                 }
             }
         }
@@ -470,6 +492,7 @@ cat >> public/archive/index.html << ARCHIVE_END_EOF
             const stickyQuery = searchStickyInput.value.toLowerCase().trim();
             const query = mainQuery || stickyQuery;
             
+            // Sync both inputs
             if (mainQuery !== stickyQuery) {
                 if (mainQuery) {
                     searchStickyInput.value = searchMainInput.value;
@@ -478,7 +501,10 @@ cat >> public/archive/index.html << ARCHIVE_END_EOF
                 }
             }
             
-            if (!originalArchive) originalArchive = archiveContainer.innerHTML;
+            // Store original content only once
+            if (originalArchive === null) {
+                originalArchive = archiveContainer.innerHTML;
+            }
             
             if (!query) {
                 archiveContainer.innerHTML = originalArchive;
@@ -487,7 +513,11 @@ cat >> public/archive/index.html << ARCHIVE_END_EOF
                 return;
             }
             
-            const posts = Array.from(archiveContainer.querySelectorAll('.post'));
+            // Get all posts from original content
+            const tempDiv = document.createElement('div');
+            tempDiv.innerHTML = originalArchive;
+            const posts = Array.from(tempDiv.querySelectorAll('.post'));
+            
             const filtered = posts.filter(post => {
                 const searchable = post.dataset.searchable || '';
                 return searchable.includes(query);
@@ -505,14 +535,12 @@ cat >> public/archive/index.html << ARCHIVE_END_EOF
                 archiveContainer.innerHTML = html;
                 
                 if (stickyHeader.style.display === 'block') {
-                    stickyTitle.textContent = 'Search Results';
-                    stickyDate.textContent = \`\${filtered.length} posts found\`;
+                    stickyTitle.textContent = \`Search Results (\${filtered.length})\`;
                 }
             } else {
                 archiveContainer.innerHTML = '<div class="no-results">No posts found matching your search.</div>';
                 if (stickyHeader.style.display === 'block') {
-                    stickyTitle.textContent = 'Search Results';
-                    stickyDate.textContent = 'No posts found';
+                    stickyTitle.textContent = 'Search Results (0)';
                 }
             }
             
@@ -520,6 +548,7 @@ cat >> public/archive/index.html << ARCHIVE_END_EOF
             searchInfo.style.display = 'block';
         }
         
+        // Use input event for real-time search including backspace
         searchMainInput.addEventListener('input', searchArchive);
         searchStickyInput.addEventListener('input', searchArchive);
         window.addEventListener('scroll', updateStickyHeader);
@@ -531,13 +560,12 @@ cat >> public/archive/index.html << ARCHIVE_END_EOF
 </html>
 ARCHIVE_END_EOF
 
-echo "✅ Fixed archive blog build completed!"
+echo "✅ Final improved blog build completed!"
 echo "📊 Generated:"
-echo "  - Main page with ${#recent_nums[@]} recent posts (no hover effects, no search icons)"
-echo "  - Clean archive with all $total posts chronologically ordered"
-echo "  - Sticky scroll with search bar and year/date context display"
-echo "  - Fixed duplicate content issue - each post now shows unique content"
+echo "  - Main page with consistent archive-style UI and hover effects"
+echo "  - Fixed search functionality with proper backspace handling"
+echo "  - Clean sticky header with single year/month display"
+echo "  - Enhanced blog post typography matching Software Architecture style"
 echo "  - Removed search icons from all input placeholders"
-echo "  - Enhanced debugging for content extraction"
-echo "  - $total individual post pages"
-echo "  - Improved search functionality with dual search inputs"
+echo "  - $total individual post pages with improved styling"
+echo "  - Real-time search with proper state management"
