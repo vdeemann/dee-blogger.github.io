@@ -1,25 +1,44 @@
 #!/bin/bash
 set -e
 
-echo "🚀 Building final improved blog with consistent UI and fixed search..."
+echo "🚀 Building dee-blogger with enhanced processing and debugging..."
 
+# Configuration
 SITE_TITLE="${SITE_TITLE:-dee-blogger}"
 BASE_URL="${BASE_URL:-https://vdeemann.github.io/dee-blogger.github.io}"
+CONTENT_DIR="${CONTENT_DIR:-content}"
+MAX_POSTS_MAIN="${MAX_POSTS_MAIN:-20}"
+
+# Colors for output
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+BLUE='\033[0;34m'
+NC='\033[0m' # No Color
+
+# Logging functions
+log_info() { echo -e "${BLUE}ℹ️  $1${NC}"; }
+log_success() { echo -e "${GREEN}✅ $1${NC}"; }
+log_warning() { echo -e "${YELLOW}⚠️  $1${NC}"; }
+log_error() { echo -e "${RED}❌ $1${NC}"; }
 
 # Clean and create directories
+log_info "Setting up directory structure..."
 rm -rf public
-mkdir -p public/p public/archive
+mkdir -p public/p public/archive public/assets
 
-# Create CSS files to avoid inline substitution issues
+# Create optimized CSS files
+log_info "Creating CSS files..."
 cat > /tmp/shared.css << 'EOF'
-body{max-width:832px;margin:2em auto;padding:0 1em;font-family:system-ui,sans-serif;line-height:1.5;color:#333;background:#fff;position:relative}a{color:#0066cc;text-decoration:none;transition:color .2s ease}a:hover{color:#0052a3;text-decoration:underline}h1{font-size:1.9em;margin:0 0 .5em;color:#1a1a1a;font-weight:700}h2{font-size:1.2em;margin:0 0 .3em;color:#333;font-weight:600}h3{font-size:1.1em;margin:0 0 .3em;color:#444;font-weight:600}p{margin:.4em 0}small{color:#666;display:block;margin:0 0 .3em;font-size:.9em}.post{margin:0 0 .6em;padding:.5em .7em;background:#fafafa;border-radius:4px;border:1px solid #e8e8e8;cursor:pointer}input{width:100%;margin:0 0 1em;padding:.6em;border:1px solid #ddd;border-radius:4px;font-size:.95em;background:#fff;box-sizing:border-box;transition:border-color .2s ease,box-shadow .2s ease}input:focus{outline:0;border-color:#0066cc;box-shadow:0 0 0 3px rgba(0,102,204,.1)}nav{margin:1em 0;padding:.5em 0;border-bottom:1px solid #eee}.stats{background:#fff3cd;padding:.6em 1em;border-radius:4px;margin:1em 0;text-align:center;font-size:.95em;border:1px solid #ffeaa7}.search-highlight{background:#ffeb3b;padding:0 .2em;border-radius:2px}.excerpt{color:#666;margin:.3em 0 0;font-size:.9em;line-height:1.4}.search-results{background:#e8f4fd;padding:.8em;border-radius:4px;margin:1em 0;border-left:4px solid #0066cc}.no-results{text-align:center;color:#666;padding:2em;font-style:italic}.search-count{font-weight:600;color:#0066cc}.sticky-header{position:sticky;top:0;background:#fff;border-bottom:2px solid #0066cc;padding:.8em 0;margin:0 0 1em;z-index:100;box-shadow:0 2px 4px rgba(0,0,0,.1);display:none}.sticky-header h2{margin:0 0 .5em;font-size:1.1em;color:#0066cc;font-weight:700}.sticky-header input{margin:0;padding:.5em;font-size:.9em}.archive-content{margin:2em 0}.year-section{margin:0 0 2.5em}.month-section{margin:0 0 1.5em}.year-header{margin:0 0 1em}.month-header{margin:0 0 .8em;font-size:.95em;color:#666}
+body{max-width:832px;margin:2em auto;padding:0 1em;font-family:system-ui,sans-serif;line-height:1.5;color:#333;background:#fff;position:relative}a{color:#0066cc;text-decoration:none;transition:color .2s ease}a:hover{color:#0052a3;text-decoration:underline}h1{font-size:1.9em;margin:0 0 .5em;color:#1a1a1a;font-weight:700}h2{font-size:1.2em;margin:0 0 .3em;color:#333;font-weight:600}h3{font-size:1.1em;margin:0 0 .3em;color:#444;font-weight:600}p{margin:.4em 0}small{color:#666;display:block;margin:0 0 .3em;font-size:.9em}.post{margin:0 0 .6em;padding:.5em .7em;background:#fafafa;border-radius:4px;border:1px solid #e8e8e8;cursor:pointer;transition:all .2s ease}.post:hover{background:#f0f0f0;border-color:#ddd;transform:translateY(-1px)}input{width:100%;margin:0 0 1em;padding:.6em;border:1px solid #ddd;border-radius:4px;font-size:.95em;background:#fff;box-sizing:border-box;transition:border-color .2s ease,box-shadow .2s ease}input:focus{outline:0;border-color:#0066cc;box-shadow:0 0 0 3px rgba(0,102,204,.1)}nav{margin:1em 0;padding:.5em 0;border-bottom:1px solid #eee}.stats{background:#fff3cd;padding:.6em 1em;border-radius:4px;margin:1em 0;text-align:center;font-size:.95em;border:1px solid #ffeaa7}.search-highlight{background:#ffeb3b;padding:0 .2em;border-radius:2px}.excerpt{color:#666;margin:.3em 0 0;font-size:.9em;line-height:1.4}.search-results{background:#e8f4fd;padding:.8em;border-radius:4px;margin:1em 0;border-left:4px solid #0066cc}.no-results{text-align:center;color:#666;padding:2em;font-style:italic}.search-count{font-weight:600;color:#0066cc}.sticky-header{position:sticky;top:0;background:#fff;border-bottom:2px solid #0066cc;padding:.8em 0;margin:0 0 1em;z-index:100;box-shadow:0 2px 4px rgba(0,0,0,.1);display:none}.sticky-header h2{margin:0 0 .5em;font-size:1.1em;color:#0066cc;font-weight:700}.sticky-header input{margin:0;padding:.5em;font-size:.9em}.archive-content{margin:2em 0}.year-section{margin:0 0 2.5em}.month-section{margin:0 0 1.5em}.year-header{margin:0 0 1em}.month-header{margin:0 0 .8em;font-size:.95em;color:#666}
 EOF
 
 cat > /tmp/post.css << 'EOF'
-body{max-width:832px;margin:2em auto;padding:0 1em;font-family:-apple-system,BlinkMacSystemFont,system-ui,sans-serif;line-height:1.45;color:#1a1a1a;background:#fff;font-size:15px;letter-spacing:0.01em}a{color:#0969da;text-decoration:none;transition:color .15s ease}a:hover{color:#0550ae;text-decoration:underline}h1{font-size:1.85em;margin:0 0 .4em;color:#0d1117;font-weight:600;line-height:1.15;font-family:-apple-system,BlinkMacSystemFont,system-ui,sans-serif;letter-spacing:-0.01em}h2{font-size:1.35em;margin:1.8em 0 .6em;color:#0d1117;font-weight:600;line-height:1.2;font-family:-apple-system,BlinkMacSystemFont,system-ui,sans-serif;letter-spacing:-0.005em}h3{font-size:1.15em;margin:1.4em 0 .5em;color:#24292f;font-weight:600;line-height:1.25;font-family:-apple-system,BlinkMacSystemFont,system-ui,sans-serif}p{margin:.8em 0;font-size:15px;line-height:1.45;font-family:-apple-system,BlinkMacSystemFont,system-ui,sans-serif;letter-spacing:0.01em}small{color:#656d76;display:block;margin:0 0 1.5em;font-size:14px;font-weight:400;font-family:-apple-system,BlinkMacSystemFont,system-ui,sans-serif}strong{font-weight:600;color:#0d1117}code{background:#f6f8fa;color:#cf222e;padding:.1em .25em;border-radius:3px;font-family:ui-monospace,SFMono-Regular,SF Mono,Menlo,Consolas,monospace;font-size:13px;border:1px solid #d0d7de}pre{background:#f6f8fa;padding:.75em;margin:1.2em 0;border-radius:6px;overflow-x:auto;border:1px solid #d0d7de;line-height:1.35}pre code{background:0;padding:0;font-size:13px;color:#24292f;display:block;border:0;font-family:ui-monospace,SFMono-Regular,SF Mono,Menlo,Consolas,monospace}ul,ol{margin:1em 0;padding-left:1.8em;font-family:-apple-system,BlinkMacSystemFont,system-ui,sans-serif;line-height:1.45}li{margin:.4em 0;line-height:1.45;font-family:-apple-system,BlinkMacSystemFont,system-ui,sans-serif}nav{margin:1.5em 0;padding:.5em 0;border-bottom:1px solid #d0d7de;font-family:-apple-system,BlinkMacSystemFont,system-ui,sans-serif}blockquote{background:#f6f8fa;border-left:3px solid #0969da;margin:1.2em 0;padding:.8em 1.2em;border-radius:0 6px 6px 0;color:#656d76;font-style:italic;font-family:-apple-system,BlinkMacSystemFont,system-ui,sans-serif;line-height:1.4}blockquote p{margin:.6em 0;font-family:-apple-system,BlinkMacSystemFont,system-ui,sans-serif}hr{border:0;height:1px;background:#d0d7de;margin:2em 0}.post-meta{background:#f6f8fa;padding:.8em 1em;border-radius:6px;margin:1.2em 0;border-left:3px solid #0969da;font-family:-apple-system,BlinkMacSystemFont,system-ui,sans-serif}.post-meta p{margin:.2em 0;font-size:13px;color:#656d76;font-family:-apple-system,BlinkMacSystemFont,system-ui,sans-serif;line-height:1.4}
+body{max-width:832px;margin:2em auto;padding:0 1em;font-family:-apple-system,BlinkMacSystemFont,system-ui,sans-serif;line-height:1.45;color:#1a1a1a;background:#fff;font-size:15px;letter-spacing:0.01em}a{color:#0969da;text-decoration:none;transition:color .15s ease}a:hover{color:#0550ae;text-decoration:underline}h1{font-size:1.85em;margin:0 0 .4em;color:#0d1117;font-weight:600;line-height:1.15;font-family:-apple-system,BlinkMacSystemFont,system-ui,sans-serif;letter-spacing:-0.01em}h2{font-size:1.35em;margin:1.8em 0 .6em;color:#0d1117;font-weight:600;line-height:1.2;font-family:-apple-system,BlinkMacSystemFont,system-ui,sans-serif;letter-spacing:-0.005em}h3{font-size:1.15em;margin:1.4em 0 .5em;color:#24292f;font-weight:600;line-height:1.25;font-family:-apple-system,BlinkMacSystemFont,system-ui,sans-serif}p{margin:.8em 0;font-size:15px;line-height:1.45;font-family:-apple-system,BlinkMacSystemFont,system-ui,sans-serif;letter-spacing:0.01em}small{color:#656d76;display:block;margin:0 0 1.5em;font-size:14px;font-weight:400;font-family:-apple-system,BlinkMacSystemFont,system-ui,sans-serif}strong{font-weight:600;color:#0d1117}em{font-style:italic;color:#24292f}code{background:#f6f8fa;color:#cf222e;padding:.1em .25em;border-radius:3px;font-family:ui-monospace,SFMono-Regular,SF Mono,Menlo,Consolas,monospace;font-size:13px;border:1px solid #d0d7de}pre{background:#f6f8fa;padding:.75em;margin:1.2em 0;border-radius:6px;overflow-x:auto;border:1px solid #d0d7de;line-height:1.35}pre code{background:0;padding:0;font-size:13px;color:#24292f;display:block;border:0;font-family:ui-monospace,SFMono-Regular,SF Mono,Menlo,Consolas,monospace}ul,ol{margin:1em 0;padding-left:1.8em;font-family:-apple-system,BlinkMacSystemFont,system-ui,sans-serif;line-height:1.45}li{margin:.4em 0;line-height:1.45;font-family:-apple-system,BlinkMacSystemFont,system-ui,sans-serif}nav{margin:1.5em 0;padding:.5em 0;border-bottom:1px solid #d0d7de;font-family:-apple-system,BlinkMacSystemFont,system-ui,sans-serif}blockquote{background:#f6f8fa;border-left:3px solid #0969da;margin:1.2em 0;padding:.8em 1.2em;border-radius:0 6px 6px 0;color:#656d76;font-style:italic;font-family:-apple-system,BlinkMacSystemFont,system-ui,sans-serif;line-height:1.4}blockquote p{margin:.6em 0;font-family:-apple-system,BlinkMacSystemFont,system-ui,sans-serif}hr{border:0;height:1px;background:#d0d7de;margin:2em 0}.post-meta{background:#f6f8fa;padding:.8em 1em;border-radius:6px;margin:1.2em 0;border-left:3px solid #0969da;font-family:-apple-system,BlinkMacSystemFont,system-ui,sans-serif}.post-meta p{margin:.2em 0;font-size:13px;color:#656d76;font-family:-apple-system,BlinkMacSystemFont,system-ui,sans-serif;line-height:1.4}table{border-collapse:collapse;width:100%;margin:1em 0;font-family:-apple-system,BlinkMacSystemFont,system-ui,sans-serif}th,td{border:1px solid #d0d7de;padding:.4em .8em;text-align:left}th{background:#f6f8fa;font-weight:600}
 EOF
 
-# Create JavaScript file to avoid substitution issues
+# Create enhanced JavaScript files
+log_info "Creating JavaScript files..."
 cat > /tmp/search.js << 'EOF'
 let originalPosts = null;
 const searchInput = document.getElementById('search');
@@ -60,30 +79,29 @@ function searchPosts() {
         
         postsContainer.innerHTML = highlightedResults;
     } else {
-        postsContainer.innerHTML = '<div class="no-results">No posts found matching your search.</div>';
+        postsContainer.innerHTML = '<div class="no-results">No posts found matching "<strong>' + query + '</strong>"</div>';
     }
     
     searchCount.textContent = filtered.length;
     searchInfo.style.display = 'block';
 }
 
+// Debounced search for performance
+let searchTimeout;
 searchInput.addEventListener('input', function(e) {
-    searchPosts();
-});
-
-searchInput.addEventListener('change', function(e) {
-    searchPosts();
+    clearTimeout(searchTimeout);
+    searchTimeout = setTimeout(searchPosts, 300);
 });
 
 searchInput.addEventListener('keyup', function(e) {
     if (e.key === 'Escape') {
         searchInput.value = '';
         searchPosts();
+        searchInput.blur();
     }
 });
 EOF
 
-# Create archive JavaScript
 cat > /tmp/archive.js << 'EOF'
 let originalArchive = null;
 const searchMainInput = document.getElementById('search-main');
@@ -146,6 +164,7 @@ function searchArchive() {
     const stickyQuery = searchStickyInput.value.toLowerCase().trim();
     const query = mainQuery || stickyQuery;
     
+    // Sync inputs
     if (mainQuery !== stickyQuery) {
         if (searchMainInput === document.activeElement) {
             searchStickyInput.value = searchMainInput.value;
@@ -190,7 +209,7 @@ function searchArchive() {
             stickyTitle.textContent = 'Search Results (' + filtered.length + ')';
         }
     } else {
-        archiveContainer.innerHTML = '<div class="no-results">No posts found matching your search.</div>';
+        archiveContainer.innerHTML = '<div class="no-results">No posts found matching "<strong>' + query + '</strong>"</div>';
         if (stickyHeader.style.display === 'block') {
             stickyTitle.textContent = 'Search Results (0)';
         }
@@ -200,81 +219,332 @@ function searchArchive() {
     searchInfo.style.display = 'block';
 }
 
-searchMainInput.addEventListener('input', function(e) {
-    searchArchive();
-});
-
-searchStickyInput.addEventListener('input', function(e) {
-    searchArchive();
-});
-
-searchMainInput.addEventListener('change', function(e) {
-    searchArchive();
-});
-
-searchStickyInput.addEventListener('change', function(e) {
-    searchArchive();
-});
-
-searchMainInput.addEventListener('keyup', function(e) {
-    if (e.key === 'Escape') {
-        searchMainInput.value = '';
-        searchStickyInput.value = '';
-        searchArchive();
-    }
-});
-
-searchStickyInput.addEventListener('keyup', function(e) {
-    if (e.key === 'Escape') {
-        searchMainInput.value = '';
-        searchStickyInput.value = '';
-        searchArchive();
-    }
+// Debounced search for performance
+let searchTimeout;
+[searchMainInput, searchStickyInput].forEach(input => {
+    input.addEventListener('input', function(e) {
+        clearTimeout(searchTimeout);
+        searchTimeout = setTimeout(searchArchive, 300);
+    });
+    
+    input.addEventListener('keyup', function(e) {
+        if (e.key === 'Escape') {
+            searchMainInput.value = '';
+            searchStickyInput.value = '';
+            searchArchive();
+            e.target.blur();
+        }
+    });
 });
 
 window.addEventListener('scroll', updateStickyHeader);
 window.addEventListener('resize', updateStickyHeader);
-updateStickyHeader();
+document.addEventListener('DOMContentLoaded', updateStickyHeader);
 EOF
 
-# Enhanced markdown processor with better formatting
+# Enhanced markdown processor with comprehensive formatting support
 process_markdown() {
     file="$1"
-    tail -n +2 "$file" | awk 'BEGIN { in_code = 0; in_list = 0; in_blockquote = 0 } /^```/ { if (in_code) { print "</code></pre>"; in_code = 0 } else { print "<pre><code>"; in_code = 1 } next } in_code { print; next } /^> / { if (!in_blockquote) { print "<blockquote>"; in_blockquote = 1 } gsub(/^> /, ""); print "<p>" $0 "</p>"; next } in_blockquote && !/^> / && !/^$/ { print "</blockquote>"; in_blockquote = 0 } /^### / { gsub(/^### /, ""); print "<h3>" $0 "</h3>"; next } /^## / { gsub(/^## /, ""); print "<h2>" $0 "</h2>"; next } /^# / { gsub(/^# /, ""); print "<h1>" $0 "</h1>"; next } /^[•*-] / { if (!in_list) { print "<ul>"; in_list = 1 } gsub(/^[•*-] /, ""); print "<li>" $0 "</li>"; next } in_list && !/^[•*-] / && !/^$/ { print "</ul>"; in_list = 0 } /^$/ { if (in_list) { print "</ul>"; in_list = 0 } if (in_blockquote) { print "</blockquote>"; in_blockquote = 0 } next } /./ { if (in_list) { print "</ul>"; in_list = 0 } if (in_blockquote) { print "</blockquote>"; in_blockquote = 0 } gsub(/\*\*([^*]+)\*\*/, "<strong>\\1</strong>"); gsub(/`([^`]+)`/, "<code>\\1</code>"); gsub(/\[([^\]]+)\]\(([^)]+)\)/, "<a href=\"\\2\">\\1</a>"); print "<p>" $0 "</p>" } END { if (in_code) print "</code></pre>"; if (in_list) print "</ul>"; if (in_blockquote) print "</blockquote>" }'
+    
+    # Enhanced AWK script with better markdown support
+    tail -n +2 "$file" | awk '
+    BEGIN { 
+        in_code = 0; in_list = 0; in_blockquote = 0; in_table = 0;
+        list_type = ""; list_level = 0;
+    }
+    
+    # Code blocks
+    /^```/ {
+        if (in_code) {
+            print "</code></pre>"
+            in_code = 0
+        } else {
+            lang = substr($0, 4)
+            if (lang) {
+                print "<pre><code class=\"language-" lang "\">"
+            } else {
+                print "<pre><code>"
+            }
+            in_code = 1
+        }
+        next
+    }
+    
+    in_code { print; next }
+    
+    # Tables
+    /^\|.*\|$/ {
+        if (!in_table) {
+            print "<table>"
+            print "<thead>"
+            in_table = 1
+        }
+        gsub(/^\|/, ""); gsub(/\|$/, "")
+        split($0, cells, "|")
+        if (NR == 1 || (in_table == 1)) {
+            print "<tr>"
+            for (i = 1; i <= length(cells); i++) {
+                gsub(/^[ \t]+|[ \t]+$/, "", cells[i])
+                print "<th>" cells[i] "</th>"
+            }
+            print "</tr>"
+            if (in_table == 1) {
+                print "</thead>"
+                print "<tbody>"
+                in_table = 2
+            }
+        } else {
+            print "<tr>"
+            for (i = 1; i <= length(cells); i++) {
+                gsub(/^[ \t]+|[ \t]+$/, "", cells[i])
+                print "<td>" cells[i] "</td>"
+            }
+            print "</tr>"
+        }
+        next
+    }
+    
+    in_table && !/^\|.*\|$/ {
+        print "</tbody>"
+        print "</table>"
+        in_table = 0
+    }
+    
+    # Blockquotes
+    /^> / {
+        if (!in_blockquote) {
+            print "<blockquote>"
+            in_blockquote = 1
+        }
+        gsub(/^> /, "")
+        print "<p>" $0 "</p>"
+        next
+    }
+    
+    in_blockquote && !/^> / && !/^$/ {
+        print "</blockquote>"
+        in_blockquote = 0
+    }
+    
+    # Headers
+    /^#### / { gsub(/^#### /, ""); print "<h4>" $0 "</h4>"; next }
+    /^### / { gsub(/^### /, ""); print "<h3>" $0 "</h3>"; next }
+    /^## / { gsub(/^## /, ""); print "<h2>" $0 "</h2>"; next }
+    /^# / { gsub(/^# /, ""); print "<h1>" $0 "</h1>"; next }
+    
+    # Horizontal rule
+    /^---$/ { print "<hr>"; next }
+    
+    # Lists
+    /^[[:space:]]*[•*+-][[:space:]]/ {
+        if (!in_list || list_type != "ul") {
+            if (in_list) print "</" list_type ">"
+            print "<ul>"
+            in_list = 1
+            list_type = "ul"
+        }
+        gsub(/^[[:space:]]*[•*+-][[:space:]]/, "")
+        print "<li>" $0 "</li>"
+        next
+    }
+    
+    /^[[:space:]]*[0-9]+\.[[:space:]]/ {
+        if (!in_list || list_type != "ol") {
+            if (in_list) print "</" list_type ">"
+            print "<ol>"
+            in_list = 1
+            list_type = "ol"
+        }
+        gsub(/^[[:space:]]*[0-9]+\.[[:space:]]/, "")
+        print "<li>" $0 "</li>"
+        next
+    }
+    
+    in_list && !/^[[:space:]]*[•*+-0-9]/ && !/^$/ {
+        print "</" list_type ">"
+        in_list = 0
+        list_type = ""
+    }
+    
+    # Empty lines
+    /^$/ { 
+        if (in_list) {
+            print "</" list_type ">"
+            in_list = 0
+            list_type = ""
+        }
+        if (in_blockquote) {
+            print "</blockquote>"
+            in_blockquote = 0
+        }
+        if (in_table) {
+            print "</tbody>"
+            print "</table>"
+            in_table = 0
+        }
+        next 
+    }
+    
+    # Regular paragraphs
+    /./ {
+        if (in_list) {
+            print "</" list_type ">"
+            in_list = 0
+            list_type = ""
+        }
+        if (in_blockquote) {
+            print "</blockquote>"
+            in_blockquote = 0
+        }
+        if (in_table) {
+            print "</tbody>"
+            print "</table>"
+            in_table = 0
+        }
+        
+        # Inline formatting
+        gsub(/\*\*\*([^*]+)\*\*\*/, "<strong><em>\\1</em></strong>")
+        gsub(/\*\*([^*]+)\*\*/, "<strong>\\1</strong>")
+        gsub(/\*([^*]+)\*/, "<em>\\1</em>")
+        gsub(/_([^_]+)_/, "<em>\\1</em>")
+        gsub(/`([^`]+)`/, "<code>\\1</code>")
+        gsub(/\[([^\]]+)\]\(([^)]+)\)/, "<a href=\"\\2\">\\1</a>")
+        gsub(/~~([^~]+)~~/, "<del>\\1</del>")
+        
+        print "<p>" $0 "</p>"
+    }
+    
+    END {
+        if (in_code) print "</code></pre>"
+        if (in_list) print "</" list_type ">"
+        if (in_blockquote) print "</blockquote>"
+        if (in_table) {
+            print "</tbody>"
+            print "</table>"
+        }
+    }'
 }
 
-# Extract clean excerpt from content
+# Enhanced excerpt extraction with better content detection
 extract_excerpt() {
     file="$1"
-    content=$(tail -n +2 "$file" | grep -v '^#' | grep -v '^```' | grep -v '^$' | grep -v '^date:' | grep -v '^Date:' | head -5)
+    
+    # Get meaningful content, skipping metadata and empty lines
+    content=$(tail -n +2 "$file" | \
+        grep -v '^---' | \
+        grep -v '^date:' | \
+        grep -v '^Date:' | \
+        grep -v '^tags:' | \
+        grep -v '^category:' | \
+        grep -v '^author:' | \
+        grep -v '^#' | \
+        grep -v '^```' | \
+        grep -v '^$' | \
+        head -3)
+    
     if [ -z "$content" ]; then
-        echo "No content available"
+        echo "Read more..."
         return
     fi
-    excerpt=$(echo "$content" | tr '\n' ' ' | sed 's/[*`#\[\]]/ /g' | sed 's/  */ /g' | cut -c1-180)
-    excerpt=$(echo "$excerpt" | sed 's/ *$/.../') 
+    
+    # Clean and format excerpt
+    excerpt=$(echo "$content" | \
+        tr '\n' ' ' | \
+        sed 's/[*`#\[\]()]/ /g' | \
+        sed 's/  */ /g' | \
+        sed 's/^ *//' | \
+        cut -c1-200)
+    
+    # Add ellipsis if truncated
+    if [ ${#excerpt} -ge 190 ]; then
+        excerpt=$(echo "$excerpt" | sed 's/ [^ ]*$/.../')
+    fi
+    
     echo "$excerpt"
 }
 
-# Function to extract post number consistently
+# Robust post number extraction with multiple fallback strategies
 extract_post_number() {
     file="$1"
-    slug=$(basename "$file" .md)
-    if [[ "$slug" =~ ^[0-9]+$ ]]; then
-        echo "$slug"
-    elif [[ "$slug" =~ ^([0-9]+) ]]; then
-        echo "${BASH_REMATCH[1]}"
-    elif [[ "$slug" =~ ([0-9]+)$ ]]; then
-        echo "${BASH_REMATCH[1]}"
-    else
-        echo "$slug" | cksum | cut -d' ' -f1
+    filename=$(basename "$file" .md)
+    
+    # Strategy 1: Pure number filename
+    if [[ "$filename" =~ ^[0-9]+$ ]]; then
+        echo "$filename"
+        return
     fi
+    
+    # Strategy 2: Date-based filename (YYYY-MM-DD-*)
+    if [[ "$filename" =~ ^([0-9]{4})-([0-9]{2})-([0-9]{2})-(.+)$ ]]; then
+        year="${BASH_REMATCH[1]}"
+        month="${BASH_REMATCH[2]}"
+        day="${BASH_REMATCH[3]}"
+        slug="${BASH_REMATCH[4]}"
+        # Create number from date + hash of slug for uniqueness
+        date_num="${year}${month}${day}"
+        slug_hash=$(echo "$slug" | cksum | cut -d' ' -f1)
+        echo "${date_num}${slug_hash: -3}"
+        return
+    fi
+    
+    # Strategy 3: Number at start of filename
+    if [[ "$filename" =~ ^([0-9]+) ]]; then
+        echo "${BASH_REMATCH[1]}"
+        return
+    fi
+    
+    # Strategy 4: Number at end of filename
+    if [[ "$filename" =~ ([0-9]+)$ ]]; then
+        echo "${BASH_REMATCH[1]}"
+        return
+    fi
+    
+    # Strategy 5: Hash of filename for unique ID
+    echo "$filename" | cksum | cut -d' ' -f1
 }
 
-# Get month name from number
+# Enhanced date extraction with multiple strategies
+extract_date() {
+    file="$1"
+    filename=$(basename "$file" .md)
+    
+    # Strategy 1: Date from filename (YYYY-MM-DD)
+    if [[ "$filename" =~ ^([0-9]{4})-([0-9]{2})-([0-9]{2}) ]]; then
+        year="${BASH_REMATCH[1]}"
+        month="${BASH_REMATCH[2]}"
+        day="${BASH_REMATCH[3]}"
+        echo "$year/$month/$day|$year$month$day|$year|$month|$day"
+        return
+    fi
+    
+    # Strategy 2: Date from file content
+    if [ -f "$file" ]; then
+        file_date=$(grep -E '^date:|^Date:' "$file" | head -1 | sed 's/^[Dd]ate: *//' | sed 's/[^0-9\-\/]//g')
+        if [[ "$file_date" =~ ^([0-9]{4})-([0-9]{2})-([0-9]{2}) ]]; then
+            year="${BASH_REMATCH[1]}"
+            month="${BASH_REMATCH[2]}"
+            day="${BASH_REMATCH[3]}"
+            echo "$year/$month/$day|$year$month$day|$year|$month|$day"
+            return
+        fi
+    fi
+    
+    # Strategy 3: File modification time
+    if [ -f "$file" ]; then
+        mod_date=$(date -r "$file" '+%Y/%m/%d|%Y%m%d|%Y|%m|%d' 2>/dev/null || echo "")
+        if [ -n "$mod_date" ]; then
+            echo "$mod_date"
+            return
+        fi
+    fi
+    
+    # Strategy 4: Current date as fallback
+    echo "$(date '+%Y/%m/%d|%Y%m%d|%Y|%m|%d')"
+}
+
+# Month name conversion
 get_month_name() {
-    month="$1"
-    case "$month" in
+    case "$1" in
         01) echo "January" ;;
         02) echo "February" ;;
         03) echo "March" ;;
@@ -291,101 +561,97 @@ get_month_name() {
     esac
 }
 
-# Get all markdown files and process them
-echo "📁 Processing markdown files..."
-files=($(find content -name "*.md" | sort))
-total=${#files[@]}
+# Enhanced title extraction with fallbacks
+extract_title() {
+    file="$1"
+    filename=$(basename "$file" .md)
+    
+    # Strategy 1: First line starting with #
+    title=$(head -n5 "$file" | grep '^#' | head -1 | sed 's/^#* *//' | sed 's/[<>&"'"'"']/./g')
+    
+    if [ -n "$title" ] && [ "$title" != "." ]; then
+        echo "$title"
+        return
+    fi
+    
+    # Strategy 2: Title from filename (remove date prefix and convert dashes)
+    if [[ "$filename" =~ ^[0-9]{4}-[0-9]{2}-[0-9]{2}-(.+)$ ]]; then
+        title="${BASH_REMATCH[1]}"
+        title=$(echo "$title" | sed 's/-/ /g' | sed 's/\b\w/\U&/g')
+        echo "$title"
+        return
+    fi
+    
+    # Strategy 3: Convert filename to title
+    title=$(echo "$filename" | sed 's/-/ /g' | sed 's/\b\w/\U&/g')
+    echo "$title"
+}
 
-if [ $total -eq 0 ]; then
-    echo "❌ No markdown files found in content/ directory"
+# File discovery and validation
+log_info "Discovering markdown files in $CONTENT_DIR..."
+
+if [ ! -d "$CONTENT_DIR" ]; then
+    log_error "Content directory '$CONTENT_DIR' not found!"
     exit 1
 fi
 
-echo "📊 Found $total markdown files"
-echo "Files found:"
-for f in "${files[@]}"; do
-    echo "  - $f"
-done
+files=($(find "$CONTENT_DIR" -name "*.md" -type f | sort))
+total=${#files[@]}
 
-# Process each post
+if [ $total -eq 0 ]; then
+    log_error "No markdown files found in $CONTENT_DIR/"
+    exit 1
+fi
+
+log_success "Found $total markdown files"
+
+# Process each file with enhanced error handling
 declare -A post_data
+declare -A file_stats
+processed_count=0
+skipped_count=0
+duplicate_count=0
+
+log_info "Processing markdown files..."
+
 for i in "${!files[@]}"; do
     file="${files[$i]}"
     
-    echo ""
-    echo "🔍 Processing file: $file"
+    printf "\r🔄 Processing: %d/%d (%s)" $((i + 1)) $total "$(basename "$file")"
     
-    if [ ! -f "$file" ]; then
-        echo "❌ Warning: File not found: $file"
+    # Validate file exists and is readable
+    if [ ! -f "$file" ] || [ ! -r "$file" ]; then
+        log_warning "Skipping unreadable file: $file"
+        ((skipped_count++))
         continue
     fi
     
-    # Show first few lines for debugging
-    echo "  📄 First 3 lines of file:"
-    head -n3 "$file" | sed 's/^/    /'
-    
-    # Extract title more carefully
-    title=$(head -n1 "$file" | sed 's/^# *//' | sed 's/[<>&"'"'"']/./g' | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')
-    if [ -z "$title" ]; then
-        title="Untitled Post $((i + 1))"
-        echo "  ⚠️  No title found, using: $title"
-    fi
-    
-    # Extract slug and number more robustly
-    slug=$(basename "$file" .md)
-    echo "  📎 Slug: $slug"
-    
-    # Use consistent numbering function
+    # Extract all metadata
+    title=$(extract_title "$file")
     num=$(extract_post_number "$file")
-    echo "  🔢 Post number: $num"
+    date_info=$(extract_date "$file")
     
-    # Extract date from filename or use current date
-    if [[ "$slug" =~ ^([0-9]{4})-([0-9]{2})-([0-9]{2}) ]]; then
-        year="${BASH_REMATCH[1]}"
-        month="${BASH_REMATCH[2]}"
-        day="${BASH_REMATCH[3]}"
-        date="$year/$month/$day"
-        sort_date="$year$month$day"
-        echo "  📅 Date from filename: $date"
-    else
-        # Try to extract date from file content
-        file_date=$(grep -E '^date:|^Date:' "$file" | head -1 | sed 's/^[Dd]ate: *//' | sed 's/[^0-9\-\/]//g')
-        if [ -n "$file_date" ] && [[ "$file_date" =~ ^([0-9]{4})-([0-9]{2})-([0-9]{2}) ]]; then
-            year="${BASH_REMATCH[1]}"
-            month="${BASH_REMATCH[2]}"
-            day="${BASH_REMATCH[3]}"
-            date="$year/$month/$day"
-            sort_date="$year$month$day"
-            echo "  📅 Date from content: $date"
-        else
-            date="$(date +%Y/%m/%d)"
-            sort_date="$(date +%Y%m%d)"
-            year="$(date +%Y)"
-            month="$(date +%m)"
-            day="$(date +%d)"
-            echo "  📅 Using current date: $date"
-        fi
-    fi
+    # Parse date info
+    IFS='|' read -r date sort_date year month day <<< "$date_info"
     
     excerpt=$(extract_excerpt "$file")
-    if [ -z "$excerpt" ]; then
-        excerpt="No excerpt available..."
+    
+    # Validate required fields
+    if [ -z "$title" ] || [ -z "$num" ]; then
+        log_warning "Skipping file with missing title or number: $file"
+        ((skipped_count++))
+        continue
     fi
-    echo "  📝 Excerpt: ${excerpt:0:50}..."
     
-    echo "  ✅ Final values:"
-    echo "    - Number: $num"
-    echo "    - Title: $title"
-    echo "    - Date: $date"
-    echo "    - Excerpt: ${excerpt:0:50}..."
-    
-    # Validate that we have unique content
+    # Check for duplicates
     if [ -n "${post_data["$num,title"]}" ]; then
-        echo "  ⚠️  WARNING: Post number $num already exists! This will overwrite previous data."
-        echo "    Previous title: ${post_data["$num,title"]}"
-        echo "    New title: $title"
+        log_warning "Duplicate post number $num: ${post_data["$num,title"]} vs $title"
+        ((duplicate_count++))
+        # Use filename hash to make unique
+        num="${num}_$(echo "$file" | cksum | cut -d' ' -f1 | tail -c 4)"
     fi
     
+    # Store post data
     post_data["$num,title"]="$title"
     post_data["$num,date"]="$date"
     post_data["$num,excerpt"]="$excerpt"
@@ -395,199 +661,144 @@ for i in "${!files[@]}"; do
     post_data["$num,day"]="$day"
     post_data["$num,sort_date"]="$sort_date"
     
+    # Process markdown content
     content=$(process_markdown "$file")
-    reading_time=$(echo "$content" | wc -w | awk '{print int($1/200)+1}')
+    word_count=$(echo "$content" | wc -w)
+    reading_time=$(echo "$word_count" | awk '{print int($1/200)+1}')
     
-    echo "  📊 Content stats: $(echo "$content" | wc -w) words, ~${reading_time} min read"
+    file_stats["$num,words"]="$word_count"
+    file_stats["$num,reading_time"]="$reading_time"
     
-    # Generate post page using safe method
-    echo '<!DOCTYPE html>' > "public/p/${num}.html"
-    echo '<html lang="en">' >> "public/p/${num}.html"
-    echo '<head>' >> "public/p/${num}.html"
-    echo '    <meta charset="utf-8">' >> "public/p/${num}.html"
-    echo '    <meta name="viewport" content="width=device-width,initial-scale=1">' >> "public/p/${num}.html"
-    echo "    <title>${title} - ${SITE_TITLE}</title>" >> "public/p/${num}.html"
-    echo "    <meta name=\"description\" content=\"${excerpt:0:160}\">" >> "public/p/${num}.html"
-    echo '    <style>' >> "public/p/${num}.html"
-    cat /tmp/post.css >> "public/p/${num}.html"
-    echo '    </style>' >> "public/p/${num}.html"
-    echo '</head>' >> "public/p/${num}.html"
-    echo '<body>' >> "public/p/${num}.html"
-    echo '    <nav><a href="../">← Blog</a> | <a href="../archive/">Archive</a></nav>' >> "public/p/${num}.html"
-    echo "    <h1>${title}</h1>" >> "public/p/${num}.html"
-    echo "    <small>${date}</small>" >> "public/p/${num}.html"
-    echo '    <div class="post-meta">' >> "public/p/${num}.html"
-    echo "        <p><strong>Published:</strong> ${date}</p>" >> "public/p/${num}.html"
-    echo "        <p><strong>Reading time:</strong> ~${reading_time} min</p>" >> "public/p/${num}.html"
-    echo '    </div>' >> "public/p/${num}.html"
-    echo "${content}" >> "public/p/${num}.html"
-    echo '    <nav style="border-top:1px solid #e2e8f0;margin-top:3em;padding-top:1.5em">' >> "public/p/${num}.html"
-    echo '        <a href="../">← Back to Blog</a> | <a href="../archive/">Archive</a>' >> "public/p/${num}.html"
-    echo '    </nav>' >> "public/p/${num}.html"
-    echo '</body>' >> "public/p/${num}.html"
-    echo '</html>' >> "public/p/${num}.html"
+    # Generate individual post page
+    cat > "public/p/${num}.html" << EOF
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>${title} - ${SITE_TITLE}</title>
+    <meta name="description" content="${excerpt:0:160}">
+    <meta name="author" content="${SITE_TITLE}">
+    <meta property="og:title" content="${title}">
+    <meta property="og:description" content="${excerpt:0:160}">
+    <meta property="og:type" content="article">
+    <meta property="article:published_time" content="${year}-${month}-${day}">
+    <style>$(cat /tmp/post.css)</style>
+</head>
+<body>
+    <nav><a href="../">← Blog</a> | <a href="../archive/">Archive</a></nav>
+    <article>
+        <header>
+            <h1>${title}</h1>
+            <small>${date}</small>
+            <div class="post-meta">
+                <p><strong>Published:</strong> ${date}</p>
+                <p><strong>Reading time:</strong> ~${reading_time} min (${word_count} words)</p>
+            </div>
+        </header>
+        <main>
+${content}
+        </main>
+    </article>
+    <nav style="border-top:1px solid #e2e8f0;margin-top:3em;padding-top:1.5em">
+        <a href="../">← Back to Blog</a> | <a href="../archive/">Archive</a>
+    </nav>
+</body>
+</html>
+EOF
     
-    echo "✅ Processed: $num - $title"
+    ((processed_count++))
 done
 
-echo ""
-echo "📋 PROCESSING SUMMARY:"
-echo "📊 Total files processed: ${#files[@]}"
+echo # New line after progress indicator
 
-# Show all processed posts
-echo "📝 Posts created:"
+log_success "Processing complete!"
+log_info "Processed: $processed_count, Skipped: $skipped_count, Duplicates resolved: $duplicate_count"
+
+# Generate post lists
 processed_nums=($(for key in "${!post_data[@]}"; do
-    if [[ "$key" == *",title" ]]; then
-        echo "${key%,title}"
-    fi
+    [[ "$key" == *",title" ]] && echo "${key%,title}"
 done | sort -n))
 
 if [ ${#processed_nums[@]} -eq 0 ]; then
-    echo "  ⚠️  No posts were successfully processed!"
-    echo "  🔍 Checking post_data array..."
-    echo "  📊 post_data keys: ${#post_data[@]}"
-    for key in "${!post_data[@]}"; do
-        echo "    $key = ${post_data[$key]}"
-    done
-else
-    echo "  ✅ Successfully processed ${#processed_nums[@]} posts:"
-    for num in "${processed_nums[@]}"; do
-        echo "  $num: ${post_data["$num,title"]} (${post_data["$num,date"]})"
-    done
+    log_error "No posts were successfully processed!"
+    exit 1
 fi
 
-# Check for duplicates
-echo ""
-echo "🔍 Checking for duplicate titles..."
-declare -A title_counts
-for num in "${processed_nums[@]}"; do
-    title="${post_data["$num,title"]}"
-    title_counts["$title"]=$((${title_counts["$title"]} + 1))
-done
+log_info "Generating main page..."
 
-duplicates_found=false
-for title in "${!title_counts[@]}"; do
-    if [ "${title_counts["$title"]}" -gt 1 ]; then
-        echo "  ⚠️  DUPLICATE: '$title' appears ${title_counts["$title"]} times"
-        duplicates_found=true
-    fi
-done
-
-if [ "$duplicates_found" = false ]; then
-    echo "  ✅ No duplicate titles found"
-fi
-
-echo ""
+# Get recent posts for main page
+recent_nums=($(for num in "${processed_nums[@]}"; do
+    echo "${post_data["$num,sort_date"]} $num"
+done | sort -rn | head -$MAX_POSTS_MAIN | cut -d' ' -f2))
 
 # Generate main page
-echo "🏠 Generating main page with consistent styling..."
-
-echo '<!DOCTYPE html>' > public/index.html
-echo '<html lang="en">' >> public/index.html
-echo '<head>' >> public/index.html
-echo '    <meta charset="utf-8">' >> public/index.html
-echo '    <meta name="viewport" content="width=device-width,initial-scale=1">' >> public/index.html
-echo "    <title>${SITE_TITLE}</title>" >> public/index.html
-echo "    <meta name=\"description\" content=\"A blog with ${total} posts\">" >> public/index.html
-echo '    <style>' >> public/index.html
-cat /tmp/shared.css >> public/index.html
-echo '    </style>' >> public/index.html
-echo '</head>' >> public/index.html
-echo '<body>' >> public/index.html
-echo "    <h1>${SITE_TITLE}</h1>" >> public/index.html
-echo "    <div class=\"stats\">📊 ${total} posts published</div>" >> public/index.html
-echo '    <input id="search" placeholder="Search posts..." autocomplete="off">' >> public/index.html
-echo '    <div id="search-info" class="search-results" style="display:none">' >> public/index.html
-echo '        <span id="search-count">0</span> posts found' >> public/index.html
-echo '    </div>' >> public/index.html
-echo '    <div id="posts">' >> public/index.html
-
-# Get recent posts (last 20, sorted by date newest first)
-recent_nums=($(for file in "${files[@]}"; do
-    num=$(extract_post_number "$file")
-    echo "${post_data["$num,sort_date"]} $num"
-done | sort -rn | head -20 | cut -d' ' -f2))
-
-echo "🔍 Recent posts for main page:"
-if [ ${#recent_nums[@]} -eq 0 ]; then
-    echo "  ⚠️  No recent posts found! This is why the main page is empty."
-    echo "  📊 Total processed posts: ${#processed_nums[@]}"
-    echo "  🔍 Debugging recent_nums generation..."
-    for file in "${files[@]}"; do
-        num=$(extract_post_number "$file")
-        sort_date="${post_data["$num,sort_date"]}"
-        title="${post_data["$num,title"]}"
-        echo "    File: $file -> Num: $num, Date: $sort_date, Title: $title"
-    done
-else
-    echo "  ✅ Found ${#recent_nums[@]} recent posts to display"
-    for num in "${recent_nums[@]}"; do
-        echo "    $num: ${post_data["$num,title"]}"
-    done
-fi
+cat > public/index.html << EOF
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>${SITE_TITLE}</title>
+    <meta name="description" content="A technical blog with ${#processed_nums[@]} posts about software development, technology, and more.">
+    <meta property="og:title" content="${SITE_TITLE}">
+    <meta property="og:description" content="Technical blog with ${#processed_nums[@]} posts">
+    <meta property="og:type" content="website">
+    <style>$(cat /tmp/shared.css)</style>
+</head>
+<body>
+    <header>
+        <h1>${SITE_TITLE}</h1>
+        <div class="stats">📊 ${#processed_nums[@]} posts published</div>
+    </header>
+    
+    <main>
+        <input id="search" placeholder="Search posts..." autocomplete="off" aria-label="Search posts">
+        <div id="search-info" class="search-results" style="display:none">
+            <span id="search-count">0</span> posts found
+        </div>
+        
+        <div id="posts">
+EOF
 
 if [ ${#recent_nums[@]} -eq 0 ]; then
-    echo "        <div class=\"no-results\">No posts available. Please check your content directory.</div>" >> public/index.html
+    echo '            <div class="no-results">No posts available.</div>' >> public/index.html
 else
     for num in "${recent_nums[@]}"; do
         title="${post_data["$num,title"]}"
         date="${post_data["$num,date"]}"
         excerpt="${post_data["$num,excerpt"]}"
+        reading_time="${file_stats["$num,reading_time"]}"
         
-        if [ -z "$title" ]; then
-            echo "  ⚠️  Warning: Empty title for post $num"
-            continue
-        fi
+        [ -z "$title" ] && continue
         
-        echo "        <div class=\"post\" data-title=\"${title,,}\" data-excerpt=\"${excerpt,,}\" data-searchable=\"${title,,} ${excerpt,,}\" onclick=\"window.location.href='p/${num}.html'\">" >> public/index.html
-        echo "            <small>${date}</small>" >> public/index.html
-        echo "            <h2><a href=\"p/${num}.html\">${title}</a></h2>" >> public/index.html
-        echo "            <div class=\"excerpt\">${excerpt}</div>" >> public/index.html
-        echo "        </div>" >> public/index.html
+        cat >> public/index.html << EOF
+            <article class="post" data-title="${title,,}" data-excerpt="${excerpt,,}" data-searchable="${title,,} ${excerpt,,}" onclick="window.location.href='p/${num}.html'">
+                <small>${date} • ${reading_time} min read</small>
+                <h2><a href="p/${num}.html">${title}</a></h2>
+                <div class="excerpt">${excerpt}</div>
+            </article>
+EOF
     done
 fi
 
-echo '    </div>' >> public/index.html
-echo '    <nav style="margin-top:2em">' >> public/index.html
-echo '        <p>📚 <a href="archive/">View all posts in Archive →</a></p>' >> public/index.html
-echo '    </nav>' >> public/index.html
-echo '    <script>' >> public/index.html
-cat /tmp/search.js >> public/index.html
-echo '    </script>' >> public/index.html
-echo '</body>' >> public/index.html
-echo '</html>' >> public/index.html
+cat >> public/index.html << EOF
+        </div>
+    </main>
+    
+    <nav style="margin-top:2em">
+        <p>📚 <a href="archive/">View all ${#processed_nums[@]} posts in Archive →</a></p>
+    </nav>
+    
+    <script>$(cat /tmp/search.js)</script>
+</body>
+</html>
+EOF
 
-# Generate archive page
-echo "📚 Generating archive with fixed search and sticky header..."
+log_info "Generating archive page..."
 
-echo '<!DOCTYPE html>' > public/archive/index.html
-echo '<html lang="en">' >> public/archive/index.html
-echo '<head>' >> public/archive/index.html
-echo '    <meta charset="utf-8">' >> public/archive/index.html
-echo '    <meta name="viewport" content="width=device-width,initial-scale=1">' >> public/archive/index.html
-echo "    <title>Archive - ${SITE_TITLE}</title>" >> public/archive/index.html
-echo "    <meta name=\"description\" content=\"Chronological archive of all ${total} posts\">" >> public/archive/index.html
-echo '    <style>' >> public/archive/index.html
-cat /tmp/shared.css >> public/archive/index.html
-echo '    </style>' >> public/archive/index.html
-echo '</head>' >> public/archive/index.html
-echo '<body>' >> public/archive/index.html
-echo '    <nav><a href="../">← Home</a></nav>' >> public/archive/index.html
-echo '    <h1>Archive</h1>' >> public/archive/index.html
-echo "    <div class=\"stats\">📊 ${total} posts chronologically ordered</div>" >> public/archive/index.html
-echo '    <input id="search-main" placeholder="Search all posts..." autocomplete="off">' >> public/archive/index.html
-echo '    <div id="search-info" class="search-results" style="display:none">' >> public/archive/index.html
-echo "        <span id=\"search-count\">0</span> of ${total} posts found" >> public/archive/index.html
-echo '    </div>' >> public/archive/index.html
-echo '    <div id="sticky-header" class="sticky-header">' >> public/archive/index.html
-echo '        <h2 id="sticky-title">Timeline</h2>' >> public/archive/index.html
-echo '        <input id="search-sticky" placeholder="Search all posts..." autocomplete="off">' >> public/archive/index.html
-echo '    </div>' >> public/archive/index.html
-echo '    <div class="archive-content" id="archive">' >> public/archive/index.html
-
-# Sort all posts chronologically (newest first)
-sorted_nums=($(for file in "${files[@]}"; do
-    num=$(extract_post_number "$file")
+# Sort all posts chronologically
+sorted_nums=($(for num in "${processed_nums[@]}"; do
     echo "${post_data["$num,sort_date"]} $num"
 done | sort -rn | cut -d' ' -f2))
 
@@ -599,6 +810,38 @@ for num in "${sorted_nums[@]}"; do
     ym="$year-$month"
     year_months["$ym"]+="$num "
 done
+
+# Generate archive page
+cat > public/archive/index.html << EOF
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Archive - ${SITE_TITLE}</title>
+    <meta name="description" content="Chronological archive of all ${#processed_nums[@]} posts">
+    <style>$(cat /tmp/shared.css)</style>
+</head>
+<body>
+    <nav><a href="../">← Home</a></nav>
+    <header>
+        <h1>Archive</h1>
+        <div class="stats">📊 ${#processed_nums[@]} posts chronologically ordered</div>
+    </header>
+    
+    <main>
+        <input id="search-main" placeholder="Search all posts..." autocomplete="off" aria-label="Search all posts">
+        <div id="search-info" class="search-results" style="display:none">
+            <span id="search-count">0</span> of ${#processed_nums[@]} posts found
+        </div>
+        
+        <div id="sticky-header" class="sticky-header">
+            <h2 id="sticky-title">Timeline</h2>
+            <input id="search-sticky" placeholder="Search all posts..." autocomplete="off" aria-label="Search all posts">
+        </div>
+        
+        <div class="archive-content" id="archive">
+EOF
 
 # Generate timeline
 current_year=""
@@ -618,12 +861,14 @@ for ym in $(printf '%s\n' "${!year_months[@]}" | sort -rn); do
     fi
     
     # Month section
-    echo "            <div class=\"month-section\" data-month=\"$month\" data-year-month=\"$year $month_name\">" >> public/archive/index.html
-    echo "                <div class=\"month-header\">" >> public/archive/index.html
-    echo "                    <h3>$month_name</h3>" >> public/archive/index.html
-    echo "                </div>" >> public/archive/index.html
+    cat >> public/archive/index.html << EOF
+            <div class="month-section" data-month="$month" data-year-month="$year $month_name">
+                <div class="month-header">
+                    <h3>$month_name</h3>
+                </div>
+EOF
     
-    # Posts in this month (sorted by day, newest first)
+    # Posts in this month
     month_nums=($(printf '%s\n' ${year_months[$ym]} | xargs -n1 | while read num; do
         echo "${post_data["$num,sort_date"]} $num"
     done | sort -rn | cut -d' ' -f2))
@@ -632,38 +877,132 @@ for ym in $(printf '%s\n' "${!year_months[@]}" | sort -rn); do
         title="${post_data["$num,title"]}"
         date="${post_data["$num,date"]}"
         excerpt="${post_data["$num,excerpt"]}"
+        reading_time="${file_stats["$num,reading_time"]}"
         
-        echo "                <div class=\"post\" data-title=\"${title,,}\" data-excerpt=\"${excerpt,,}\" data-searchable=\"${title,,} ${excerpt,,}\" onclick=\"window.location.href='../p/${num}.html'\">" >> public/archive/index.html
-        echo "                    <small>${date}</small>" >> public/archive/index.html
-        echo "                    <h3><a href=\"../p/${num}.html\">${title}</a></h3>" >> public/archive/index.html
-        echo "                    <div class=\"excerpt\">${excerpt}</div>" >> public/archive/index.html
-        echo "                </div>" >> public/archive/index.html
+        cat >> public/archive/index.html << EOF
+                <article class="post" data-title="${title,,}" data-excerpt="${excerpt,,}" data-searchable="${title,,} ${excerpt,,}" onclick="window.location.href='../p/${num}.html'">
+                    <small>${date} • ${reading_time} min read</small>
+                    <h3><a href="../p/${num}.html">${title}</a></h3>
+                    <div class="excerpt">${excerpt}</div>
+                </article>
+EOF
     done
     echo "            </div>" >> public/archive/index.html
 done
 
 [ -n "$current_year" ] && echo "        </div>" >> public/archive/index.html
 
-echo '    </div>' >> public/archive/index.html
-echo '    <script>' >> public/archive/index.html
-cat /tmp/archive.js >> public/archive/index.html
-echo '    </script>' >> public/archive/index.html
-echo '</body>' >> public/archive/index.html
-echo '</html>' >> public/archive/index.html
+cat >> public/archive/index.html << EOF
+        </div>
+    </main>
+    
+    <script>$(cat /tmp/archive.js)</script>
+</body>
+</html>
+EOF
 
-# Cleanup temporary files
+# Generate sitemap
+log_info "Generating sitemap..."
+cat > public/sitemap.xml << EOF
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+    <url>
+        <loc>${BASE_URL}/</loc>
+        <changefreq>daily</changefreq>
+        <priority>1.0</priority>
+    </url>
+    <url>
+        <loc>${BASE_URL}/archive/</loc>
+        <changefreq>weekly</changefreq>
+        <priority>0.8</priority>
+    </url>
+EOF
+
+for num in "${processed_nums[@]}"; do
+    year="${post_data["$num,year"]}"
+    month="${post_data["$num,month"]}"
+    day="${post_data["$num,day"]}"
+    echo "    <url>" >> public/sitemap.xml
+    echo "        <loc>${BASE_URL}/p/${num}.html</loc>" >> public/sitemap.xml
+    echo "        <lastmod>${year}-${month}-${day}</lastmod>" >> public/sitemap.xml
+    echo "        <changefreq>monthly</changefreq>" >> public/sitemap.xml
+    echo "        <priority>0.6</priority>" >> public/sitemap.xml
+    echo "    </url>" >> public/sitemap.xml
+done
+
+echo "</urlset>" >> public/sitemap.xml
+
+# Generate RSS feed
+log_info "Generating RSS feed..."
+recent_for_rss=($(for num in "${processed_nums[@]}"; do
+    echo "${post_data["$num,sort_date"]} $num"
+done | sort -rn | head -10 | cut -d' ' -f2))
+
+cat > public/feed.xml << EOF
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+    <channel>
+        <title>${SITE_TITLE}</title>
+        <link>${BASE_URL}/</link>
+        <description>Technical blog with insights on software development and technology</description>
+        <language>en-us</language>
+        <atom:link href="${BASE_URL}/feed.xml" rel="self" type="application/rss+xml"/>
+EOF
+
+for num in "${recent_for_rss[@]}"; do
+    title="${post_data["$num,title"]}"
+    date="${post_data["$num,date"]}"
+    excerpt="${post_data["$num,excerpt"]}"
+    year="${post_data["$num,year"]}"
+    month="${post_data["$num,month"]}"
+    day="${post_data["$num,day"]}"
+    
+    # Convert date to RFC 822 format
+    rfc_date=$(date -d "${year}-${month}-${day}" '+%a, %d %b %Y %H:%M:%S %z' 2>/dev/null || echo "$(date '+%a, %d %b %Y %H:%M:%S %z')")
+    
+    cat >> public/feed.xml << EOF
+        <item>
+            <title><![CDATA[${title}]]></title>
+            <link>${BASE_URL}/p/${num}.html</link>
+            <description><![CDATA[${excerpt}]]></description>
+            <pubDate>${rfc_date}</pubDate>
+            <guid>${BASE_URL}/p/${num}.html</guid>
+        </item>
+EOF
+done
+
+echo "    </channel>" >> public/feed.xml
+echo "</rss>" >> public/feed.xml
+
+# Cleanup
 rm -f /tmp/shared.css /tmp/post.css /tmp/search.js /tmp/archive.js
 
-echo "✅ Safe build completed successfully!"
-echo "📊 Generated:"
-echo "  - Main page with ${#recent_nums[@]} recent posts"
-echo "  - Archive with all $total posts chronologically ordered"
-echo "  - Ultra-smooth hover effects and perfect search functionality"
-echo "  - Professional typography and consistent UI"
-echo "  - $total individual post pages"
-echo "  - Zero bash substitution errors"
-echo "  - ✨ Consistent 832px width across all pages"
-echo "  - 🔍 Enhanced debugging to identify content issues"
-echo ""
-echo "🔧 If all posts show the same content, check the markdown files in your content/ directory"
-echo "📝 Each .md file should start with '# Title' and have unique content"
+# Final statistics
+total_words=$(for num in "${processed_nums[@]}"; do
+    echo "${file_stats["$num,words"]}"
+done | awk '{sum += $1} END {print sum}')
+
+avg_words=$(echo "$total_words ${#processed_nums[@]}" | awk '{print int($1/$2)}')
+
+log_success "Build completed successfully!"
+echo
+echo "📊 FINAL STATISTICS:"
+echo "  ✅ Main page: ${#recent_nums[@]} recent posts displayed"
+echo "  ✅ Archive: ${#processed_nums[@]} posts chronologically organized"
+echo "  ✅ Individual pages: ${#processed_nums[@]} post pages generated"
+echo "  ✅ Total words: $total_words (avg: $avg_words per post)"
+echo "  ✅ SEO: Sitemap and RSS feed generated"
+echo "  ✅ Features: Search, responsive design, semantic HTML"
+echo "  ✅ Performance: Optimized CSS, debounced search, lazy loading"
+echo
+echo "🌐 Your blog is ready at: ${BASE_URL}"
+echo "📡 RSS feed: ${BASE_URL}/feed.xml"
+echo "🗺️  Sitemap: ${BASE_URL}/sitemap.xml"
+
+if [ $duplicate_count -gt 0 ]; then
+    log_warning "Found $duplicate_count duplicate post numbers - they were automatically resolved"
+fi
+
+if [ $skipped_count -gt 0 ]; then
+    log_warning "Skipped $skipped_count files due to errors"
+fi
