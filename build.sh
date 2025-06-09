@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e
 
-echo "🚀 Building improved blog with consistent UI and better search..."
+echo "🚀 Building chronological timeline blog with sticky scroll..."
 
 SITE_TITLE="${SITE_TITLE:-dee-blogger}"
 BASE_URL="${BASE_URL:-https://vdeemann.github.io/dee-blogger.github.io}"
@@ -10,9 +10,14 @@ BASE_URL="${BASE_URL:-https://vdeemann.github.io/dee-blogger.github.io}"
 rm -rf public
 mkdir -p public/p public/archive
 
-# Consistent CSS for both main and archive pages
-read -r -d '' SHARED_CSS << 'EOF' || true
-body{max-width:45em;margin:2em auto;padding:0 1em;font-family:system-ui,sans-serif;line-height:1.5;color:#333;background:#fff}a{color:#0066cc;text-decoration:none}a:hover{text-decoration:underline}h1{font-size:1.9em;margin:0 0 .5em;color:#1a1a1a;font-weight:700}h2{font-size:1.2em;margin:0 0 .3em;color:#333;font-weight:600}h3{font-size:1.1em;margin:1.5em 0 .5em;color:#444;font-weight:600}p{margin:.4em 0}small{color:#666;display:block;margin:0 0 .5em;font-size:.9em}.post{margin:0 0 .8em;padding:.6em .8em;background:#fafafa;border-radius:4px;border:1px solid #e8e8e8;transition:all .2s ease}.post:hover{background:#f5f5f5;border-color:#ddd;transform:translateY(-1px);box-shadow:0 2px 4px rgba(0,0,0,.1)}input{width:100%;margin:0 0 1em;padding:.6em;border:1px solid #ddd;border-radius:4px;font-size:.95em;background:#fff;box-sizing:border-box}nav{margin:1em 0;padding:.5em 0;border-bottom:1px solid #eee}.stats{background:#fff3cd;padding:.6em 1em;border-radius:4px;margin:1em 0;text-align:center;font-size:.95em;border:1px solid #ffeaa7}.search-highlight{background:#ffeb3b;padding:0 .2em;border-radius:2px}.excerpt{color:#666;margin:.3em 0 0;font-size:.9em;line-height:1.4}.search-results{background:#e8f4fd;padding:.8em;border-radius:4px;margin:1em 0;border-left:4px solid #0066cc}.no-results{text-align:center;color:#666;padding:2em;font-style:italic}.search-count{font-weight:600;color:#0066cc}
+# Main page CSS (no hover effects)
+read -r -d '' MAIN_CSS << 'EOF' || true
+body{max-width:45em;margin:2em auto;padding:0 1em;font-family:system-ui,sans-serif;line-height:1.5;color:#333;background:#fff}a{color:#0066cc;text-decoration:none}a:hover{text-decoration:underline}h1{font-size:1.9em;margin:0 0 .5em;color:#1a1a1a;font-weight:700}h2{font-size:1.2em;margin:0 0 .3em;color:#333;font-weight:600}h3{font-size:1.1em;margin:1.5em 0 .5em;color:#444;font-weight:600}p{margin:.4em 0}small{color:#666;display:block;margin:0 0 .5em;font-size:.9em}.post{margin:0 0 .8em;padding:.6em .8em;background:#fafafa;border-radius:4px;border:1px solid #e8e8e8}input{width:100%;margin:0 0 1em;padding:.6em;border:1px solid #ddd;border-radius:4px;font-size:.95em;background:#fff;box-sizing:border-box}nav{margin:1em 0;padding:.5em 0;border-bottom:1px solid #eee}.stats{background:#fff3cd;padding:.6em 1em;border-radius:4px;margin:1em 0;text-align:center;font-size:.95em;border:1px solid #ffeaa7}.search-highlight{background:#ffeb3b;padding:0 .2em;border-radius:2px}.excerpt{color:#666;margin:.3em 0 0;font-size:.9em;line-height:1.4}.search-results{background:#e8f4fd;padding:.8em;border-radius:4px;margin:1em 0;border-left:4px solid #0066cc}.no-results{text-align:center;color:#666;padding:2em;font-style:italic}.search-count{font-weight:600;color:#0066cc}
+EOF
+
+# Archive page CSS (with hover effects and timeline styling)
+read -r -d '' ARCHIVE_CSS << 'EOF' || true
+body{max-width:50em;margin:2em auto;padding:0 1em;font-family:system-ui,sans-serif;line-height:1.5;color:#333;background:#fff;position:relative}a{color:#0066cc;text-decoration:none}a:hover{text-decoration:underline}h1{font-size:1.9em;margin:0 0 .5em;color:#1a1a1a;font-weight:700}h2{font-size:1.2em;margin:0 0 .3em;color:#333;font-weight:600}h3{font-size:1.1em;margin:0 0 .3em;color:#444;font-weight:600}p{margin:.4em 0}small{color:#666;display:block;margin:0 0 .3em;font-size:.9em}.post{margin:0 0 .6em;padding:.5em .7em;background:#fafafa;border-radius:4px;border:1px solid #e8e8e8;transition:all .2s ease;cursor:pointer}.post:hover{background:#f5f5f5;border-color:#ddd;transform:translateY(-1px);box-shadow:0 2px 4px rgba(0,0,0,.1)}input{width:100%;margin:0 0 1em;padding:.6em;border:1px solid #ddd;border-radius:4px;font-size:.95em;background:#fff;box-sizing:border-box}nav{margin:1em 0;padding:.5em 0;border-bottom:1px solid #eee}.stats{background:#fff3cd;padding:.6em 1em;border-radius:4px;margin:1em 0;text-align:center;font-size:.95em;border:1px solid #ffeaa7}.search-highlight{background:#ffeb3b;padding:0 .2em;border-radius:2px}.excerpt{color:#666;margin:.3em 0 0;font-size:.9em;line-height:1.4}.search-results{background:#e8f4fd;padding:.8em;border-radius:4px;margin:1em 0;border-left:4px solid #0066cc}.no-results{text-align:center;color:#666;padding:2em;font-style:italic}.search-count{font-weight:600;color:#0066cc}.sticky-header{position:sticky;top:0;background:#fff;border-bottom:2px solid #0066cc;padding:.5em 0;margin:0 0 1em;z-index:100;box-shadow:0 2px 4px rgba(0,0,0,.1)}.sticky-header h2{margin:0;font-size:1.1em;color:#0066cc}.timeline{position:relative;padding-left:2.5em;margin:2em 0}.timeline::before{content:'';position:absolute;left:20px;top:0;bottom:0;width:2px;background:linear-gradient(180deg,#0066cc 0%,#ccc 100%)}.year-section{margin:0 0 3em;position:relative}.month-section{margin:0 0 1.5em;position:relative}.year-marker{position:absolute;left:-15px;top:0;width:30px;height:30px;background:#0066cc;border:4px solid #fff;border-radius:50%;box-shadow:0 0 0 2px #0066cc;z-index:10}.month-marker{position:absolute;left:-10px;top:0;width:20px;height:20px;background:#fff;border:3px solid #0066cc;border-radius:50%;z-index:5}.post-marker{position:absolute;left:-6px;top:50%;transform:translateY(-50%);width:12px;height:12px;background:#0066cc;border:2px solid #fff;border-radius:50%;z-index:3}.year-header{margin:0 0 1em;position:relative}.month-header{margin:0 0 .8em;position:relative;font-size:.95em;color:#666}.post{position:relative}
 EOF
 
 # Post page CSS
@@ -103,6 +108,26 @@ extract_excerpt() {
     echo "$excerpt" | sed 's/\.\.\.*/.../'
 }
 
+# Get month name from number
+get_month_name() {
+    local month="$1"
+    case "$month" in
+        01) echo "January" ;;
+        02) echo "February" ;;
+        03) echo "March" ;;
+        04) echo "April" ;;
+        05) echo "May" ;;
+        06) echo "June" ;;
+        07) echo "July" ;;
+        08) echo "August" ;;
+        09) echo "September" ;;
+        10) echo "October" ;;
+        11) echo "November" ;;
+        12) echo "December" ;;
+        *) echo "Unknown" ;;
+    esac
+}
+
 # Get all markdown files and process them
 echo "📁 Processing markdown files..."
 files=($(find content -name "*.md" | sort))
@@ -124,7 +149,22 @@ for i in "${!files[@]}"; do
     title=$(head -n1 "$file" | sed 's/^# *//')
     slug=$(basename "$file" .md)
     num=$(echo "$slug" | grep -o '[0-9]\+$' || echo "$((i + 1))")
-    date=$(echo "$slug" | grep -o '^[0-9]\{4\}-[0-9]\{2\}-[0-9]\{2\}' | tr - / || echo "$(date +%Y/%m/%d)")
+    
+    # Extract date from filename (YYYY-MM-DD format)
+    if [[ "$slug" =~ ^([0-9]{4})-([0-9]{2})-([0-9]{2}) ]]; then
+        year="${BASH_REMATCH[1]}"
+        month="${BASH_REMATCH[2]}"
+        day="${BASH_REMATCH[3]}"
+        date="$year/$month/$day"
+        sort_date="$year$month$day"
+    else
+        date="$(date +%Y/%m/%d)"
+        sort_date="$(date +%Y%m%d)"
+        year="$(date +%Y)"
+        month="$(date +%m)"
+        day="$(date +%d)"
+    fi
+    
     excerpt=$(extract_excerpt "$file")
     
     # Store data for later use
@@ -132,6 +172,10 @@ for i in "${!files[@]}"; do
     post_data["$num,date"]="$date"
     post_data["$num,excerpt"]="$excerpt"
     post_data["$num,file"]="$file"
+    post_data["$num,year"]="$year"
+    post_data["$num,month"]="$month"
+    post_data["$num,day"]="$day"
+    post_data["$num,sort_date"]="$sort_date"
     
     # Generate individual post page
     content=$(process_markdown "$file")
@@ -172,7 +216,7 @@ echo "🏠 Generating main page..."
     <meta name="viewport" content="width=device-width,initial-scale=1">
     <title>${SITE_TITLE}</title>
     <meta name="description" content="A blog with ${total} posts">
-    <style>${SHARED_CSS}</style>
+    <style>${MAIN_CSS}</style>
 </head>
 <body>
     <h1>${SITE_TITLE}</h1>
@@ -184,12 +228,14 @@ echo "🏠 Generating main page..."
     <div id="posts">
 EOF
 
-    # Get recent posts (last 20, sorted by filename which includes date)
-    recent_posts=($(printf '%s\n' "${files[@]}" | sort -r | head -20))
-    
-    for file in "${recent_posts[@]}"; do
+    # Get recent posts (last 20, sorted by date newest first)
+    recent_nums=($(for file in "${files[@]}"; do
         slug=$(basename "$file" .md)
         num=$(echo "$slug" | grep -o '[0-9]\+$' || echo "1")
+        echo "${post_data["$num,sort_date"]} $num"
+    done | sort -rn | head -20 | cut -d' ' -f2))
+    
+    for num in "${recent_nums[@]}"; do
         title="${post_data["$num,title"]}"
         date="${post_data["$num,date"]}"
         excerpt="${post_data["$num,excerpt"]}"
@@ -236,7 +282,6 @@ EOF
             if (filtered.length > 0) {
                 postsContainer.innerHTML = filtered.map(post => {
                     let html = post.outerHTML;
-                    // Simple highlight
                     const regex = new RegExp(`(${query})`, 'gi');
                     html = html.replace(regex, '<span class="search-highlight">$1</span>');
                     return html;
@@ -249,7 +294,6 @@ EOF
             searchInfo.style.display = 'block';
         }
         
-        // Real-time search
         searchInput.addEventListener('input', searchPosts);
     </script>
 </body>
@@ -257,8 +301,8 @@ EOF
 EOF
 } > public/index.html
 
-# Generate archive page (ALL posts, no pagination)
-echo "📚 Generating archive page with all posts..."
+# Generate archive page with chronological timeline
+echo "📚 Generating chronological timeline archive..."
 {
     cat << EOF
 <!DOCTYPE html>
@@ -267,112 +311,194 @@ echo "📚 Generating archive page with all posts..."
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width,initial-scale=1">
     <title>Archive - ${SITE_TITLE}</title>
-    <meta name="description" content="Archive of all ${total} posts">
-    <style>${SHARED_CSS}</style>
+    <meta name="description" content="Chronological archive of all ${total} posts">
+    <style>${ARCHIVE_CSS}</style>
 </head>
 <body>
     <nav><a href="../">← Home</a></nav>
     <h1>Archive</h1>
-    <div class="stats">📊 ${total} posts total</div>
+    <div class="stats">📊 ${total} posts chronologically ordered</div>
     <input id="search" placeholder="🔍 Search all posts..." onkeyup="searchArchive()" autocomplete="off">
     <div id="search-info" class="search-results" style="display:none">
         <span id="search-count">0</span> of ${total} posts found
     </div>
-    <div id="archive">
+    
+    <div id="sticky-header" class="sticky-header" style="display:none">
+        <h2 id="sticky-title">Timeline</h2>
+    </div>
+    
+    <div class="timeline" id="timeline">
 EOF
 
-    # Group posts by year
-    declare -A years
-    for file in "${files[@]}"; do
+    # Sort all posts chronologically (newest first)
+    sorted_nums=($(for file in "${files[@]}"; do
         slug=$(basename "$file" .md)
-        year=$(echo "$slug" | cut -d- -f1)
-        years["$year"]+="$file "
+        num=$(echo "$slug" | grep -o '[0-9]\+$' || echo "1")
+        echo "${post_data["$num,sort_date"]} $num"
+    done | sort -rn | cut -d' ' -f2))
+
+    # Group by year and month
+    declare -A year_months
+    for num in "${sorted_nums[@]}"; do
+        year="${post_data["$num,year"]}"
+        month="${post_data["$num,month"]}"
+        ym="$year-$month"
+        year_months["$ym"]+="$num "
     done
 
-    # Display all posts grouped by year
-    for year in $(printf '%s\n' "${!years[@]}" | sort -nr); do
-        echo "        <div class=\"year-section\">"
-        echo "            <h2>$year</h2>"
+    # Generate timeline
+    current_year=""
+    for ym in $(printf '%s\n' "${!year_months[@]}" | sort -rn); do
+        year=$(echo "$ym" | cut -d- -f1)
+        month=$(echo "$ym" | cut -d- -f2)
+        month_name=$(get_month_name "$month")
         
-        # Get files for this year and sort them by date (newest first)
-        year_files=($(printf '%s\n' ${years[$year]} | sort -r))
+        # Year section
+        if [ "$year" != "$current_year" ]; then
+            [ -n "$current_year" ] && echo "        </div>"
+            echo "        <div class=\"year-section\" data-year=\"$year\">"
+            echo "            <div class=\"year-header\">"
+            echo "                <div class=\"year-marker\"></div>"
+            echo "                <h2>$year</h2>"
+            echo "            </div>"
+            current_year="$year"
+        fi
         
-        for file in "${year_files[@]}"; do
-            slug=$(basename "$file" .md)
-            num=$(echo "$slug" | grep -o '[0-9]\+$' || echo "1")
+        # Month section
+        echo "            <div class=\"month-section\" data-month=\"$month\" data-year-month=\"$year $month_name\">"
+        echo "                <div class=\"month-header\">"
+        echo "                    <div class=\"month-marker\"></div>"
+        echo "                    <h3>$month_name</h3>"
+        echo "                </div>"
+        
+        # Posts in this month (sorted by day, newest first)
+        month_nums=($(printf '%s\n' ${year_months[$ym]} | xargs -n1 | while read num; do
+            echo "${post_data["$num,sort_date"]} $num"
+        done | sort -rn | cut -d' ' -f2))
+        
+        for num in "${month_nums[@]}"; do
             title="${post_data["$num,title"]}"
             date="${post_data["$num,date"]}"
             excerpt="${post_data["$num,excerpt"]}"
             
             cat << EOF
-            <div class="post" data-title="${title,,}" data-excerpt="${excerpt,,}" data-searchable="${title,,} ${excerpt,,}">
-                <small>${date}</small>
-                <h3><a href="../p/${num}.html">${title}</a></h3>
-                <div class="excerpt">${excerpt}...</div>
-            </div>
+                <div class="post" data-title="${title,,}" data-excerpt="${excerpt,,}" data-searchable="${title,,} ${excerpt,,}" onclick="window.location.href='../p/${num}.html'">
+                    <div class="post-marker"></div>
+                    <small>${date}</small>
+                    <h3><a href="../p/${num}.html">${title}</a></h3>
+                    <div class="excerpt">${excerpt}...</div>
+                </div>
 EOF
         done
-        echo "        </div>"
+        echo "            </div>"
     done
+    
+    [ -n "$current_year" ] && echo "        </div>"
 
     cat << 'EOF'
     </div>
 
     <script>
-        let originalArchive = '';
+        let originalTimeline = '';
         const searchInput = document.getElementById('search');
-        const archiveContainer = document.getElementById('archive');
+        const timelineContainer = document.getElementById('timeline');
         const searchInfo = document.getElementById('search-info');
         const searchCount = document.getElementById('search-count');
+        const stickyHeader = document.getElementById('sticky-header');
+        const stickyTitle = document.getElementById('sticky-title');
         
+        // Sticky scroll functionality
+        function updateStickyHeader() {
+            const sections = document.querySelectorAll('.year-section, .month-section');
+            const scrollTop = window.pageYOffset;
+            
+            let currentSection = null;
+            for (let section of sections) {
+                const rect = section.getBoundingClientRect();
+                if (rect.top <= 100) {
+                    currentSection = section;
+                }
+            }
+            
+            if (currentSection) {
+                const yearSection = currentSection.closest('.year-section');
+                const monthSection = currentSection.classList.contains('month-section') ? currentSection : null;
+                
+                let title = '';
+                if (yearSection) {
+                    title = yearSection.dataset.year;
+                    if (monthSection && monthSection.dataset.yearMonth) {
+                        title = monthSection.dataset.yearMonth;
+                    }
+                }
+                
+                if (title) {
+                    stickyTitle.textContent = title;
+                    stickyHeader.style.display = 'block';
+                } else {
+                    stickyHeader.style.display = 'none';
+                }
+            } else {
+                stickyHeader.style.display = 'none';
+            }
+        }
+        
+        // Search functionality
         function searchArchive() {
             const query = searchInput.value.toLowerCase().trim();
             
-            if (!originalArchive) originalArchive = archiveContainer.innerHTML;
+            if (!originalTimeline) originalTimeline = timelineContainer.innerHTML;
             
             if (!query) {
-                archiveContainer.innerHTML = originalArchive;
+                timelineContainer.innerHTML = originalTimeline;
                 searchInfo.style.display = 'none';
+                updateStickyHeader();
                 return;
             }
             
-            const posts = Array.from(archiveContainer.querySelectorAll('.post'));
+            const posts = Array.from(timelineContainer.querySelectorAll('.post'));
             const filtered = posts.filter(post => {
                 const searchable = post.dataset.searchable || '';
                 return searchable.includes(query);
             });
             
             if (filtered.length > 0) {
-                let html = '<div class="year-section"><h2>Search Results</h2>';
+                let html = '<div class="year-section"><div class="year-header"><div class="year-marker"></div><h2>Search Results</h2></div><div class="month-section">';
                 html += filtered.map(post => {
                     let postHtml = post.outerHTML;
-                    // Simple highlight
                     const regex = new RegExp(`(${query})`, 'gi');
                     postHtml = postHtml.replace(regex, '<span class="search-highlight">$1</span>');
                     return postHtml;
                 }).join('');
-                html += '</div>';
-                archiveContainer.innerHTML = html;
+                html += '</div></div>';
+                timelineContainer.innerHTML = html;
             } else {
-                archiveContainer.innerHTML = '<div class="no-results">No posts found matching your search.</div>';
+                timelineContainer.innerHTML = '<div class="no-results">No posts found matching your search.</div>';
             }
             
             searchCount.textContent = filtered.length;
             searchInfo.style.display = 'block';
+            stickyHeader.style.display = 'none';
         }
         
-        // Real-time search
+        // Event listeners
         searchInput.addEventListener('input', searchArchive);
+        window.addEventListener('scroll', updateStickyHeader);
+        window.addEventListener('resize', updateStickyHeader);
+        
+        // Initialize
+        updateStickyHeader();
     </script>
 </body>
 </html>
 EOF
 } > public/archive/index.html
 
-echo "✅ Blog build completed successfully!"
+echo "✅ Chronological timeline blog build completed!"
 echo "📊 Generated:"
-echo "  - Main page with ${#recent_posts[@]} recent posts"
-echo "  - Archive page with all $total posts"
+echo "  - Main page with ${#recent_nums[@]} recent posts (no hover effects)"
+echo "  - Timeline archive with all $total posts chronologically ordered"
+echo "  - Sticky scroll functionality showing current year/month"
+echo "  - Visual timeline with markers and efficient minimal design"
 echo "  - $total individual post pages"
 echo "  - Enhanced search functionality"
-echo "  - Consistent UI styling"
