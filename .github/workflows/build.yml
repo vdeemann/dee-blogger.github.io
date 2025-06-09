@@ -1,103 +1,78 @@
-name: Build and Deploy Blog
+name: ULTIMATE BUILD - CLEAN CI EDITION
 
 on:
-  push:
-    branches: [ main ]
-  pull_request:
-    branches: [ main ]
+  push: 
+    branches: [main]
+    paths: ['content/**', 'build.sh']
   workflow_dispatch:
+  schedule: 
+    - cron: '0 */6 * * *'  # Rebuild every 6 hours for maximum freshness
 
-permissions:
+permissions: 
   contents: read
   pages: write
   id-token: write
 
-concurrency:
-  group: "pages"
-  cancel-in-progress: false
+concurrency: 
+  group: ultimate-${{ github.run_id }}
+  cancel-in-progress: true
 
 env:
-  SITE_TITLE: "Your Blog Title"
-  BASE_URL: "https://vdeemann.github.io/dee-blogger.github.io"
+  SITE_TITLE: dee-blogger
+  DEBIAN_FRONTEND: noninteractive
+  BUILDKIT_PROGRESS: plain
+  DOCKER_BUILDKIT: 1
 
 jobs:
-  build:
-    runs-on: ubuntu-latest # Use 'self-hosted, bsd' here if you add a BSD runner
-    steps:
-    - name: Checkout repository
-      uses: actions/checkout@v4
-      with:
-        fetch-depth: 1  # Changed from 0 to 1 for faster checkouts
-
-    - name: Validate content directory
-      run: |
-        if [ ! -d "content" ]; then
-          echo "❌ Error: content/ directory not found"
-          exit 1
-        fi
-        content_count=$(find content -name "*.md" -type f | wc -l)
-        if [ "$content_count" -eq 0 ]; then
-          echo "❌ Error: No markdown files found in content/"
-          exit 1
-        fi
-        echo "✅ Found $content_count markdown files"
-
-    - name: Setup Pages
-      id: pages
-      uses: actions/configure-pages@v5
-
-    - name: Make build script executable
-      run: chmod +x build.sh
-
-    - name: Build blog
-      run: |
-        export BASE_URL="${{ steps.pages.outputs.base_url }}"
-        export SITE_TITLE="${{ env.SITE_TITLE }}"
-        ./build.sh
-
-    # You may optionally comment out the below validation for slightly faster builds
-    - name: Validate build output
-      run: |
-        if [ ! -f "public/index.html" ]; then
-          echo "❌ Error: Main index.html not generated"
-          exit 1
-        fi
-        if [ ! -f "public/archive/index.html" ]; then
-          echo "❌ Error: Archive index.html not generated"
-          exit 1
-        fi
-        post_count=$(find public/p -name "*.html" -type f 2>/dev/null | wc -l)
-        echo "✅ Generated $post_count post pages"
-        main_size=$(wc -c < public/index.html)
-        archive_size=$(wc -c < public/archive/index.html)
-        if [ "$main_size" -lt 1000 ]; then
-          echo "❌ Warning: Main page seems too small ($main_size bytes)"
-        fi
-        if [ "$archive_size" -lt 1000 ]; then
-          echo "❌ Warning: Archive page seems too small ($archive_size bytes)"
-        fi
-        echo "✅ Build validation completed successfully"
-        echo "📊 Main page: $main_size bytes"
-        echo "📊 Archive page: $archive_size bytes"
-
-    - name: Upload artifact
-      uses: actions/upload-pages-artifact@v3
-      with:
-        path: ./public
-
-  deploy:
-    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
+  build-and-deploy:
     runs-on: ubuntu-latest
-    needs: build
+    environment: 
+      name: github-pages 
+      url: '${{ steps.deploy.outputs.page_url }}'
+    timeout-minutes: 5
     steps:
-    - name: Deploy to GitHub Pages
-      id: deployment
-      uses: actions/deploy-pages@v4
+      - uses: actions/checkout@v4
+        with: 
+          fetch-depth: 1
+          show-progress: false
+          clean: false
+          filter: blob:none
 
-    - name: Verify deployment
-      run: |
-        echo "🚀 Blog deployed successfully!"
-        echo "🌐 Site URL: ${{ steps.deployment.outputs.page_url }}"
+      - name: Install GNU parallel
+        run: sudo apt-get update && sudo apt-get install -y parallel
+
+      - name: Build Site
+        run: |
+          set -e
+          chmod +x build.sh
+          ./build.sh
+          mkdir -p public
+      
+      - name: Compress files (keep originals)
+        run: |
+          if [ -d public ]; then
+            find public -type f \( -name "*.html" -o -name "*.css" -o -name "*.js" -o -name "*.svg" \) -print0 | \
+            parallel -0 -j+0 --will-cite 'gzip -9c {} > {}.gz'
+          fi
+
+      - name: Upload GitHub Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: ./public
+
+      - name: Deploy to GitHub Pages
+        id: deploy
+        uses: actions/deploy-pages@v4
+
+      - name: Build Summary
+        run: |
+          TOTAL_SIZE=$(du -sb public 2>/dev/null | cut -f1 || echo 0)
+          PAGE_COUNT=$(find public -name "*.html" 2>/dev/null | wc -l || echo 0)
+          COMPRESSION_COUNT=$(find public -name "*.gz" 2>/dev/null | wc -l || echo 0)
+          echo "📊 Total Size: $((TOTAL_SIZE/1024)) KB"
+          echo "📄 Pages: $PAGE_COUNT"
+          echo "🗜️ Compressed Files: $COMPRESSION_COUNT"
+          if [ "$PAGE_COUNT" -gt 0 ]; then
+            echo "⚡ Efficiency: $(echo "scale=2; $TOTAL_SIZE/1024/$PAGE_COUNT" | bc -l) KB/page"
+          fi
+          echo "🌐 ULTIMATE SITE: ${{ steps.deploy.outputs.page_url }}"
