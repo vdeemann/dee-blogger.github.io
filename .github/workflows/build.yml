@@ -44,6 +44,7 @@ jobs:
       build_type: ${{ steps.analyze.outputs.build_type }}
       changed_files: ${{ steps.analyze.outputs.changed_files }}
       max_jobs: ${{ steps.analyze.outputs.max_jobs }}
+      chunk_matrix: ${{ steps.analyze.outputs.chunk_matrix }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -100,12 +101,25 @@ jobs:
           echo "  Max jobs: $max_jobs"
           echo "  Chunk size: $chunk_size"
           
+          # Generate matrix array for chunks
+          if [ "$chunks_needed" -gt 0 ]; then
+            chunk_array="["
+            for ((i=0; i<chunks_needed; i++)); do
+              [ $i -gt 0 ] && chunk_array+=","
+              chunk_array+="$i"
+            done
+            chunk_array+="]"
+          else
+            chunk_array="[0]"  # Fallback for edge cases
+          fi
+          
           # Output for matrix
           echo "total_posts=$total_posts" >> $GITHUB_OUTPUT
           echo "chunks_needed=$chunks_needed" >> $GITHUB_OUTPUT
           echo "build_type=$build_type" >> $GITHUB_OUTPUT
           echo "changed_files=$changed_files" >> $GITHUB_OUTPUT
           echo "max_jobs=$max_jobs" >> $GITHUB_OUTPUT
+          echo "chunk_matrix=$chunk_array" >> $GITHUB_OUTPUT
           
           # Create build metadata
           echo "{\"total_posts\":$total_posts,\"build_type\":\"$build_type\",\"timestamp\":\"$(date -u +%Y-%m-%dT%H:%M:%SZ)\"}" > build_metadata.json
@@ -120,12 +134,12 @@ jobs:
   # Phase 2: Parallel post processing
   build-posts:
     needs: analyze
-    if: needs.analyze.outputs.chunks_needed > 0
+    if: fromJson(needs.analyze.outputs.chunks_needed) > 0
     runs-on: ubuntu-latest
     strategy:
       max-parallel: ${{ fromJson(needs.analyze.outputs.max_jobs) }}
       matrix:
-        chunk: ${{ fromJson(format('[{0}]', join(fromJson(format('[{0}]', range(0, fromJson(needs.analyze.outputs.chunks_needed)))), ','))) }}
+        chunk: ${{ fromJson(needs.analyze.outputs.chunk_matrix) }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -219,6 +233,7 @@ jobs:
   # Phase 3: Generate index and archive pages
   build-pages:
     needs: [analyze, build-posts]
+    if: always() && needs.analyze.result == 'success'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -231,6 +246,7 @@ jobs:
           mkdir -p public/p public/archive temp
           
       - name: Download all post chunks
+        if: fromJson(needs.analyze.outputs.chunks_needed) > 0
         uses: actions/download-artifact@v4
         with:
           pattern: posts-chunk-*
@@ -242,24 +258,33 @@ jobs:
           name: build-metadata
           
       - name: Combine all post chunks
+        if: fromJson(needs.analyze.outputs.chunks_needed) > 0
         run: |
-          echo "🔄 Combining ${{ needs.analyze.outputs.chunks_needed }} chunks..."
-          
-          # Extract all chunks in parallel
-          ls chunk_*_posts.tar.gz | parallel -j+0 'cd public && pigz -dc ../{}| tar -xf -'
-          
-          # Combine statistics
-          echo "chunk,posts,size" > combined_stats.csv
-          cat chunk_*_stats.csv >> combined_stats.csv
-          
-          # Calculate totals
-          total_posts=$(awk -F, 'NR>1 {sum+=$2} END {print sum}' combined_stats.csv)
-          total_size=$(awk -F, 'NR>1 {sum+=$3} END {print sum}' combined_stats.csv)
+          if [ "${{ needs.analyze.outputs.chunks_needed }}" -gt 0 ]; then
+            echo "🔄 Combining ${{ needs.analyze.outputs.chunks_needed }} chunks..."
+            
+            # Extract all chunks in parallel
+            ls chunk_*_posts.tar.gz 2>/dev/null | parallel -j+0 'cd public && pigz -dc ../{}| tar -xf -' || true
+            
+            # Combine statistics
+            echo "chunk,posts,size" > combined_stats.csv
+            cat chunk_*_stats.csv >> combined_stats.csv 2>/dev/null || echo "0,0,0" >> combined_stats.csv
+            
+            # Calculate totals
+            total_posts=$(awk -F, 'NR>1 {sum+=$2} END {print sum+0}' combined_stats.csv)
+            total_size=$(awk -F, 'NR>1 {sum+=$3} END {print sum+0}' combined_stats.csv)
+          else
+            echo "🔄 No post chunks to combine - building index/archive only"
+            total_posts=0
+            total_size=0
+          fi
           
           echo "📊 Combined stats:"
           echo "  Total posts: $total_posts"
           echo "  Total size: $(( total_size / 1024 )) KB"
-          echo "  Average per post: $(( total_size / total_posts / 1024 )) KB"
+          if [ "$total_posts" -gt 0 ]; then
+            echo "  Average per post: $(( total_size / total_posts / 1024 )) KB"
+          fi
           
       - name: Generate optimized index page
         run: |
@@ -306,6 +331,7 @@ jobs:
   # Phase 4: Deploy to GitHub Pages
   deploy:
     needs: [analyze, build-pages]
+    if: always() && needs.build-pages.result == 'success'
     runs-on: ubuntu-latest
     environment:
       name: github-pages
