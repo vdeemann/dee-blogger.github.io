@@ -456,6 +456,7 @@ for i in "${!files[@]}"; do
     if [ -z "$excerpt" ]; then
         excerpt="No excerpt available..."
     fi
+    echo "  📝 Excerpt: ${excerpt:0:50}..."
     
     echo "  ✅ Final values:"
     echo "    - Number: $num"
