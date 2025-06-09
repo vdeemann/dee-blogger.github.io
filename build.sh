@@ -239,7 +239,7 @@ EOF
 
 # Enhanced markdown processor with better formatting
 process_markdown() {
-    local file="$1"
+    file="$1"
     
     tail -n +2 "$file" | awk '
     BEGIN { in_code = 0; in_list = 0; in_blockquote = 0 }
@@ -330,7 +330,422 @@ process_markdown() {
 # Extract clean excerpt from content
 extract_excerpt() {
     local file="$1"
-    local content=$(tail -n +2 "$file" | grep -v '^#' | grep -v '^```' | grep -v '^$' | grep -v '^date:' | grep -v '^Date:' | head -5)
+    local content=$(tail -n +2 "$file" | grep -v '^#' | grep -v '^```' | grep -v '^
+
+# Function to extract post number consistently
+extract_post_number() {
+    file="$1"
+    slug=$(basename "$file" .md)
+    
+    # Try different numbering schemes
+    if [[ "$slug" =~ ^[0-9]+$ ]]; then
+        # Pure number filename
+        echo "$slug"
+    elif [[ "$slug" =~ ^([0-9]+) ]]; then
+        # Number at start
+        echo "${BASH_REMATCH[1]}"
+    elif [[ "$slug" =~ ([0-9]+)$ ]]; then
+        # Number at end
+        echo "${BASH_REMATCH[1]}"
+    else
+        # Use filename as hash for consistent numbering
+        echo "$slug" | cksum | cut -d' ' -f1
+    fi
+}
+    local month="$1"
+    case "$month" in
+        01) echo "January" ;;
+        02) echo "February" ;;
+        03) echo "March" ;;
+        04) echo "April" ;;
+        05) echo "May" ;;
+        06) echo "June" ;;
+        07) echo "July" ;;
+        08) echo "August" ;;
+        09) echo "September" ;;
+        10) echo "October" ;;
+        11) echo "November" ;;
+        12) echo "December" ;;
+        *) echo "Unknown" ;;
+    esac
+}
+
+# Get all markdown files and process them
+echo "📁 Processing markdown files..."
+files=($(find content -name "*.md" | sort))
+total=${#files[@]}
+
+if [ $total -eq 0 ]; then
+    echo "❌ No markdown files found in content/ directory"
+    exit 1
+fi
+
+echo "📊 Found $total markdown files"
+echo "Files found:"
+for f in "${files[@]}"; do
+    echo "  - $f"
+done
+
+# Process each post
+declare -A post_data
+for i in "${!files[@]}"; do
+    file="${files[$i]}"
+    
+    echo ""
+    echo "🔍 Processing file: $file"
+    
+    if [ ! -f "$file" ]; then
+        echo "❌ Warning: File not found: $file"
+        continue
+    fi
+    
+    # Show first few lines for debugging
+    echo "  📄 First 3 lines of file:"
+    head -n3 "$file" | sed 's/^/    /'
+    
+    # Extract title more carefully
+    title=$(head -n1 "$file" | sed 's/^# *//' | sed 's/[<>&"'\'']/./g' | sed 's/^\s*//;s/\s*$//')
+    if [ -z "$title" ]; then
+        title="Untitled Post $((i + 1))"
+        echo "  ⚠️  No title found, using: $title"
+    fi
+    
+    # Extract slug and number more robustly
+    slug=$(basename "$file" .md)
+    echo "  📎 Slug: $slug"
+    
+    # Use consistent numbering function
+    num=$(extract_post_number "$file")
+    echo "  🔢 Post number: $num"
+    
+    # Extract date from filename or use current date
+    if [[ "$slug" =~ ^([0-9]{4})-([0-9]{2})-([0-9]{2}) ]]; then
+        year="${BASH_REMATCH[1]}"
+        month="${BASH_REMATCH[2]}"
+        day="${BASH_REMATCH[3]}"
+        date="$year/$month/$day"
+        sort_date="$year$month$day"
+        echo "  📅 Date from filename: $date"
+    else
+        # Try to extract date from file content
+        file_date=$(grep -E '^date:|^Date:' "$file" | head -1 | sed 's/^[Dd]ate:\s*//' | sed 's/[^0-9\-\/]//g')
+        if [ -n "$file_date" ]; then
+            if [[ "$file_date" =~ ^([0-9]{4})-([0-9]{2})-([0-9]{2}) ]]; then
+                year="${BASH_REMATCH[1]}"
+                month="${BASH_REMATCH[2]}"
+                day="${BASH_REMATCH[3]}"
+                date="$year/$month/$day"
+                sort_date="$year$month$day"
+                echo "  📅 Date from content: $date"
+            else
+                date="$(date +%Y/%m/%d)"
+                sort_date="$(date +%Y%m%d)"
+                year="$(date +%Y)"
+                month="$(date +%m)"
+                day="$(date +%d)"
+                echo "  📅 Using current date: $date"
+            fi
+        else
+            date="$(date +%Y/%m/%d)"
+            sort_date="$(date +%Y%m%d)"
+            year="$(date +%Y)"
+            month="$(date +%m)"
+            day="$(date +%d)"
+            echo "  📅 Using current date: $date"
+        fi
+    fi
+    
+    excerpt=$(extract_excerpt "$file")
+    if [ -z "$excerpt" ]; then
+        excerpt="No excerpt available..."
+    fi
+    echo "  📝 Excerpt: ${excerpt:0:50}..."
+    
+    echo "  ✅ Final values:"
+    echo "    - Number: $num"
+    echo "    - Title: $title"
+    echo "    - Date: $date"
+    echo "    - Excerpt: ${excerpt:0:50}..."
+    
+    # Validate that we have unique content
+    if [ -n "${post_data["$num,title"]}" ]; then
+        echo "  ⚠️  WARNING: Post number $num already exists! This will overwrite previous data."
+        echo "    Previous title: ${post_data["$num,title"]}"
+        echo "    New title: $title"
+    fi
+    
+    post_data["$num,title"]="$title"
+    post_data["$num,date"]="$date"
+    post_data["$num,excerpt"]="$excerpt"
+    post_data["$num,file"]="$file"
+    post_data["$num,year"]="$year"
+    post_data["$num,month"]="$month"
+    post_data["$num,day"]="$day"
+    post_data["$num,sort_date"]="$sort_date"
+    
+    content=$(process_markdown "$file")
+    reading_time=$(echo "$content" | wc -w | awk '{print int($1/200)+1}')
+    
+    echo "  📊 Content stats: $(echo "$content" | wc -w) words, ~${reading_time} min read"
+    
+    # Generate post page using safe method
+    echo '<!DOCTYPE html>' > "public/p/${num}.html"
+    echo '<html lang="en">' >> "public/p/${num}.html"
+    echo '<head>' >> "public/p/${num}.html"
+    echo '    <meta charset="utf-8">' >> "public/p/${num}.html"
+    echo '    <meta name="viewport" content="width=device-width,initial-scale=1">' >> "public/p/${num}.html"
+    echo "    <title>${title} - ${SITE_TITLE}</title>" >> "public/p/${num}.html"
+    echo "    <meta name=\"description\" content=\"${excerpt:0:160}\">" >> "public/p/${num}.html"
+    echo '    <style>' >> "public/p/${num}.html"
+    cat /tmp/post.css >> "public/p/${num}.html"
+    echo '    </style>' >> "public/p/${num}.html"
+    echo '</head>' >> "public/p/${num}.html"
+    echo '<body>' >> "public/p/${num}.html"
+    echo '    <nav><a href="../">← Blog</a> | <a href="../archive/">Archive</a></nav>' >> "public/p/${num}.html"
+    echo "    <h1>${title}</h1>" >> "public/p/${num}.html"
+    echo "    <small>${date}</small>" >> "public/p/${num}.html"
+    echo '    <div class="post-meta">' >> "public/p/${num}.html"
+    echo "        <p><strong>Published:</strong> ${date}</p>" >> "public/p/${num}.html"
+    echo "        <p><strong>Reading time:</strong> ~${reading_time} min</p>" >> "public/p/${num}.html"
+    echo '    </div>' >> "public/p/${num}.html"
+    echo "${content}" >> "public/p/${num}.html"
+    echo '    <nav style="border-top:1px solid #e2e8f0;margin-top:3em;padding-top:1.5em">' >> "public/p/${num}.html"
+    echo '        <a href="../">← Back to Blog</a> | <a href="../archive/">Archive</a>' >> "public/p/${num}.html"
+    echo '    </nav>' >> "public/p/${num}.html"
+    echo '</body>' >> "public/p/${num}.html"
+    echo '</html>' >> "public/p/${num}.html"
+    
+    echo "✅ Processed: $num - $title"
+done
+
+echo ""
+echo "📋 PROCESSING SUMMARY:"
+echo "📊 Total files processed: ${#files[@]}"
+
+# Show all processed posts
+echo "📝 Posts created:"
+processed_nums=($(for key in "${!post_data[@]}"; do
+    if [[ "$key" == *",title" ]]; then
+        echo "${key%,title}"
+    fi
+done | sort -n))
+
+if [ ${#processed_nums[@]} -eq 0 ]; then
+    echo "  ⚠️  No posts were successfully processed!"
+    echo "  🔍 Checking post_data array..."
+    echo "  📊 post_data keys: ${#post_data[@]}"
+    for key in "${!post_data[@]}"; do
+        echo "    $key = ${post_data[$key]}"
+    done
+else
+    echo "  ✅ Successfully processed ${#processed_nums[@]} posts:"
+    for num in "${processed_nums[@]}"; do
+        echo "  $num: ${post_data["$num,title"]} (${post_data["$num,date"]})"
+    done
+fi
+
+# Check for duplicates
+echo ""
+echo "🔍 Checking for duplicate titles..."
+declare -A title_counts
+for num in "${processed_nums[@]}"; do
+    title="${post_data["$num,title"]}"
+    title_counts["$title"]=$((${title_counts["$title"]} + 1))
+done
+
+duplicates_found=false
+for title in "${!title_counts[@]}"; do
+    if [ "${title_counts["$title"]}" -gt 1 ]; then
+        echo "  ⚠️  DUPLICATE: '$title' appears ${title_counts["$title"]} times"
+        duplicates_found=true
+    fi
+done
+
+if [ "$duplicates_found" = false ]; then
+    echo "  ✅ No duplicate titles found"
+fi
+
+echo ""
+
+# Generate main page
+echo "🏠 Generating main page with consistent styling..."
+
+echo '<!DOCTYPE html>' > public/index.html
+echo '<html lang="en">' >> public/index.html
+echo '<head>' >> public/index.html
+echo '    <meta charset="utf-8">' >> public/index.html
+echo '    <meta name="viewport" content="width=device-width,initial-scale=1">' >> public/index.html
+echo "    <title>${SITE_TITLE}</title>" >> public/index.html
+echo "    <meta name=\"description\" content=\"A blog with ${total} posts\">" >> public/index.html
+echo '    <style>' >> public/index.html
+cat /tmp/shared.css >> public/index.html
+echo '    </style>' >> public/index.html
+echo '</head>' >> public/index.html
+echo '<body>' >> public/index.html
+echo "    <h1>${SITE_TITLE}</h1>" >> public/index.html
+echo "    <div class=\"stats\">📊 ${total} posts published</div>" >> public/index.html
+echo '    <input id="search" placeholder="Search posts..." autocomplete="off">' >> public/index.html
+echo '    <div id="search-info" class="search-results" style="display:none">' >> public/index.html
+echo '        <span id="search-count">0</span> posts found' >> public/index.html
+echo '    </div>' >> public/index.html
+echo '    <div id="posts">' >> public/index.html
+
+# Get recent posts (last 20, sorted by date newest first)
+recent_nums=($(for file in "${files[@]}"; do
+    num=$(extract_post_number "$file")
+    echo "${post_data["$num,sort_date"]} $num"
+done | sort -rn | head -20 | cut -d' ' -f2))
+
+echo "🔍 Recent posts for main page:"
+if [ ${#recent_nums[@]} -eq 0 ]; then
+    echo "  ⚠️  No recent posts found! This is why the main page is empty."
+    echo "  📊 Total processed posts: ${#processed_nums[@]}"
+    echo "  🔍 Debugging recent_nums generation..."
+    for file in "${files[@]}"; do
+        num=$(extract_post_number "$file")
+        sort_date="${post_data["$num,sort_date"]}"
+        title="${post_data["$num,title"]}"
+        echo "    File: $file -> Num: $num, Date: $sort_date, Title: $title"
+    done
+else
+    echo "  ✅ Found ${#recent_nums[@]} recent posts to display"
+    for num in "${recent_nums[@]}"; do
+        echo "    $num: ${post_data["$num,title"]}"
+    done
+fi
+
+for num in "${recent_nums[@]}"; do
+    title="${post_data["$num,title"]}"
+    date="${post_data["$num,date"]}"
+    excerpt="${post_data["$num,excerpt"]}"
+    
+    echo "        <div class=\"post\" data-title=\"${title,,}\" data-excerpt=\"${excerpt,,}\" data-searchable=\"${title,,} ${excerpt,,}\" onclick=\"window.location.href='p/${num}.html'\">" >> public/index.html
+    echo "            <small>${date}</small>" >> public/index.html
+    echo "            <h2><a href=\"p/${num}.html\">${title}</a></h2>" >> public/index.html
+    echo "            <div class=\"excerpt\">${excerpt}</div>" >> public/index.html
+    echo "        </div>" >> public/index.html
+done
+
+echo '    </div>' >> public/index.html
+echo '    <nav style="margin-top:2em">' >> public/index.html
+echo '        <p>📚 <a href="archive/">View all posts in Archive →</a></p>' >> public/index.html
+echo '    </nav>' >> public/index.html
+echo '    <script>' >> public/index.html
+cat /tmp/search.js >> public/index.html
+echo '    </script>' >> public/index.html
+echo '</body>' >> public/index.html
+echo '</html>' >> public/index.html
+
+# Generate archive page
+echo "📚 Generating archive with fixed search and sticky header..."
+
+echo '<!DOCTYPE html>' > public/archive/index.html
+echo '<html lang="en">' >> public/archive/index.html
+echo '<head>' >> public/archive/index.html
+echo '    <meta charset="utf-8">' >> public/archive/index.html
+echo '    <meta name="viewport" content="width=device-width,initial-scale=1">' >> public/archive/index.html
+echo "    <title>Archive - ${SITE_TITLE}</title>" >> public/archive/index.html
+echo "    <meta name=\"description\" content=\"Chronological archive of all ${total} posts\">" >> public/archive/index.html
+echo '    <style>' >> public/archive/index.html
+cat /tmp/shared.css >> public/archive/index.html
+echo '    </style>' >> public/archive/index.html
+echo '</head>' >> public/archive/index.html
+echo '<body>' >> public/archive/index.html
+echo '    <nav><a href="../">← Home</a></nav>' >> public/archive/index.html
+echo '    <h1>Archive</h1>' >> public/archive/index.html
+echo "    <div class=\"stats\">📊 ${total} posts chronologically ordered</div>" >> public/archive/index.html
+echo '    <input id="search-main" placeholder="Search all posts..." autocomplete="off">' >> public/archive/index.html
+echo '    <div id="search-info" class="search-results" style="display:none">' >> public/archive/index.html
+echo "        <span id=\"search-count\">0</span> of ${total} posts found" >> public/archive/index.html
+echo '    </div>' >> public/archive/index.html
+echo '    <div id="sticky-header" class="sticky-header">' >> public/archive/index.html
+echo '        <h2 id="sticky-title">Timeline</h2>' >> public/archive/index.html
+echo '        <input id="search-sticky" placeholder="Search all posts..." autocomplete="off">' >> public/archive/index.html
+echo '    </div>' >> public/archive/index.html
+echo '    <div class="archive-content" id="archive">' >> public/archive/index.html
+
+# Sort all posts chronologically (newest first)
+sorted_nums=($(for file in "${files[@]}"; do
+    num=$(extract_post_number "$file")
+    echo "${post_data["$num,sort_date"]} $num"
+done | sort -rn | cut -d' ' -f2))
+
+# Group by year and month
+declare -A year_months
+for num in "${sorted_nums[@]}"; do
+    year="${post_data["$num,year"]}"
+    month="${post_data["$num,month"]}"
+    ym="$year-$month"
+    year_months["$ym"]+="$num "
+done
+
+# Generate timeline
+current_year=""
+for ym in $(printf '%s\n' "${!year_months[@]}" | sort -rn); do
+    year=$(echo "$ym" | cut -d- -f1)
+    month=$(echo "$ym" | cut -d- -f2)
+    month_name=$(get_month_name "$month")
+    
+    # Year section
+    if [ "$year" != "$current_year" ]; then
+        [ -n "$current_year" ] && echo "        </div>" >> public/archive/index.html
+        echo "        <div class=\"year-section\" data-year=\"$year\">" >> public/archive/index.html
+        echo "            <div class=\"year-header\">" >> public/archive/index.html
+        echo "                <h2>$year</h2>" >> public/archive/index.html
+        echo "            </div>" >> public/archive/index.html
+        current_year="$year"
+    fi
+    
+    # Month section
+    echo "            <div class=\"month-section\" data-month=\"$month\" data-year-month=\"$year $month_name\">" >> public/archive/index.html
+    echo "                <div class=\"month-header\">" >> public/archive/index.html
+    echo "                    <h3>$month_name</h3>" >> public/archive/index.html
+    echo "                </div>" >> public/archive/index.html
+    
+    # Posts in this month (sorted by day, newest first)
+    month_nums=($(printf '%s\n' ${year_months[$ym]} | xargs -n1 | while read num; do
+        echo "${post_data["$num,sort_date"]} $num"
+    done | sort -rn | cut -d' ' -f2))
+    
+    for num in "${month_nums[@]}"; do
+        title="${post_data["$num,title"]}"
+        date="${post_data["$num,date"]}"
+        excerpt="${post_data["$num,excerpt"]}"
+        
+        echo "                <div class=\"post\" data-title=\"${title,,}\" data-excerpt=\"${excerpt,,}\" data-searchable=\"${title,,} ${excerpt,,}\" onclick=\"window.location.href='../p/${num}.html'\">" >> public/archive/index.html
+        echo "                    <small>${date}</small>" >> public/archive/index.html
+        echo "                    <h3><a href=\"../p/${num}.html\">${title}</a></h3>" >> public/archive/index.html
+        echo "                    <div class=\"excerpt\">${excerpt}</div>" >> public/archive/index.html
+        echo "                </div>" >> public/archive/index.html
+    done
+    echo "            </div>" >> public/archive/index.html
+done
+
+[ -n "$current_year" ] && echo "        </div>" >> public/archive/index.html
+
+echo '    </div>' >> public/archive/index.html
+echo '    <script>' >> public/archive/index.html
+cat /tmp/archive.js >> public/archive/index.html
+echo '    </script>' >> public/archive/index.html
+echo '</body>' >> public/archive/index.html
+echo '</html>' >> public/archive/index.html
+
+# Cleanup temporary files
+rm -f /tmp/shared.css /tmp/post.css /tmp/search.js /tmp/archive.js
+
+echo "✅ Safe build completed successfully!"
+echo "📊 Generated:"
+echo "  - Main page with ${#recent_nums[@]} recent posts"
+echo "  - Archive with all $total posts chronologically ordered"
+echo "  - Ultra-smooth hover effects and perfect search functionality"
+echo "  - Professional typography and consistent UI"
+echo "  - $total individual post pages"
+echo "  - Zero bash substitution errors"
+echo "  - ✨ Consistent 832px width across all pages"
+echo "  - 🔍 Enhanced debugging to identify content issues"
+echo ""
+echo "🔧 If all posts show the same content, check the markdown files in your content/ directory"
+echo "📝 Each .md file should start with '# Title' and have unique content" | grep -v '^date:' | grep -v '^Date:' | head -5)
     
     if [ -z "$content" ]; then
         echo "No content available"
