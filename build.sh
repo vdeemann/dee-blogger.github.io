@@ -246,11 +246,11 @@ EOF
 process_markdown() {
     file="$1"
     
-    # Enhanced AWK script with better markdown support
+    # Simple, robust AWK script that avoids character class issues
     tail -n +2 "$file" | awk '
     BEGIN { 
-        in_code = 0; in_list = 0; in_blockquote = 0; in_table = 0;
-        list_type = ""; list_level = 0;
+        in_code = 0; in_list = 0; in_blockquote = 0;
+        list_type = "";
     }
     
     # Code blocks
@@ -259,56 +259,13 @@ process_markdown() {
             print "</code></pre>"
             in_code = 0
         } else {
-            lang = substr($0, 4)
-            if (lang) {
-                print "<pre><code class=\"language-" lang "\">"
-            } else {
-                print "<pre><code>"
-            }
+            print "<pre><code>"
             in_code = 1
         }
         next
     }
     
     in_code { print; next }
-    
-    # Tables
-    /^\|.*\|$/ {
-        if (!in_table) {
-            print "<table>"
-            print "<thead>"
-            in_table = 1
-        }
-        gsub(/^\|/, ""); gsub(/\|$/, "")
-        split($0, cells, "|")
-        if (NR == 1 || (in_table == 1)) {
-            print "<tr>"
-            for (i = 1; i <= length(cells); i++) {
-                gsub(/^[ \t]+|[ \t]+$/, "", cells[i])
-                print "<th>" cells[i] "</th>"
-            }
-            print "</tr>"
-            if (in_table == 1) {
-                print "</thead>"
-                print "<tbody>"
-                in_table = 2
-            }
-        } else {
-            print "<tr>"
-            for (i = 1; i <= length(cells); i++) {
-                gsub(/^[ \t]+|[ \t]+$/, "", cells[i])
-                print "<td>" cells[i] "</td>"
-            }
-            print "</tr>"
-        }
-        next
-    }
-    
-    in_table && !/^\|.*\|$/ {
-        print "</tbody>"
-        print "</table>"
-        in_table = 0
-    }
     
     # Blockquotes
     /^> / {
@@ -335,35 +292,33 @@ process_markdown() {
     # Horizontal rule
     /^---$/ { print "<hr>"; next }
     
-    # Lists
-    /^[[:space:]]*[•*+-][[:space:]]/ {
+    # Lists - simplified approach
+    /^[ \t]*\* / || /^[ \t]*- / || /^[ \t]*\+ / {
         if (!in_list || list_type != "ul") {
             if (in_list) print "</" list_type ">"
             print "<ul>"
             in_list = 1
             list_type = "ul"
         }
-        gsub(/^[[:space:]]*[•*+-][[:space:]]/, "")
+        # Remove the list marker
+        if (/^[ \t]*\* /) gsub(/^[ \t]*\* /, "")
+        else if (/^[ \t]*- /) gsub(/^[ \t]*- /, "")
+        else if (/^[ \t]*\+ /) gsub(/^[ \t]*\+ /, "")
         print "<li>" $0 "</li>"
         next
     }
     
-    /^[[:space:]]*[0-9]+\.[[:space:]]/ {
+    # Ordered lists
+    /^[ \t]*[0-9]+\. / {
         if (!in_list || list_type != "ol") {
             if (in_list) print "</" list_type ">"
             print "<ol>"
             in_list = 1
             list_type = "ol"
         }
-        gsub(/^[[:space:]]*[0-9]+\.[[:space:]]/, "")
+        gsub(/^[ \t]*[0-9]+\. /, "")
         print "<li>" $0 "</li>"
         next
-    }
-    
-    in_list && !/^[[:space:]]*[•*+-0-9]/ && !/^$/ {
-        print "</" list_type ">"
-        in_list = 0
-        list_type = ""
     }
     
     # Empty lines
@@ -377,17 +332,13 @@ process_markdown() {
             print "</blockquote>"
             in_blockquote = 0
         }
-        if (in_table) {
-            print "</tbody>"
-            print "</table>"
-            in_table = 0
-        }
         next 
     }
     
     # Regular paragraphs
     /./ {
-        if (in_list) {
+        # End any open lists when we hit regular content
+        if (in_list && !/^[ \t]*\*/ && !/^[ \t]*-/ && !/^[ \t]*\+/ && !/^[ \t]*[0-9]/) {
             print "</" list_type ">"
             in_list = 0
             list_type = ""
@@ -396,20 +347,17 @@ process_markdown() {
             print "</blockquote>"
             in_blockquote = 0
         }
-        if (in_table) {
-            print "</tbody>"
-            print "</table>"
-            in_table = 0
+        
+        # Skip if this is a list item (already handled above)
+        if (/^[ \t]*\*/ || /^[ \t]*-/ || /^[ \t]*\+/ || /^[ \t]*[0-9]+\./) {
+            next
         }
         
         # Inline formatting
-        gsub(/\*\*\*([^*]+)\*\*\*/, "<strong><em>\\1</em></strong>")
         gsub(/\*\*([^*]+)\*\*/, "<strong>\\1</strong>")
         gsub(/\*([^*]+)\*/, "<em>\\1</em>")
-        gsub(/_([^_]+)_/, "<em>\\1</em>")
         gsub(/`([^`]+)`/, "<code>\\1</code>")
         gsub(/\[([^\]]+)\]\(([^)]+)\)/, "<a href=\"\\2\">\\1</a>")
-        gsub(/~~([^~]+)~~/, "<del>\\1</del>")
         
         print "<p>" $0 "</p>"
     }
@@ -418,10 +366,6 @@ process_markdown() {
         if (in_code) print "</code></pre>"
         if (in_list) print "</" list_type ">"
         if (in_blockquote) print "</blockquote>"
-        if (in_table) {
-            print "</tbody>"
-            print "</table>"
-        }
     }'
 }
 
