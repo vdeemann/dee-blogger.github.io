@@ -1,4 +1,4 @@
-name: 🚀 EXTREME BUILD - NO LIMITS
+name: 🚀 SAFE EXTREME BUILD - GITHUB ACTIONS COMPATIBLE
 
 on:
   push:
@@ -12,7 +12,7 @@ permissions:
   id-token: write
 
 concurrency:
-  group: extreme-build
+  group: safe-extreme-build
   cancel-in-progress: true
 
 env:
@@ -22,7 +22,7 @@ env:
   CI: true
 
 jobs:
-  extreme-build:
+  safe-extreme-build:
     runs-on: ubuntu-latest
     environment: 
       name: github-pages
@@ -33,36 +33,42 @@ jobs:
         fetch-depth: 1
         show-progress: false
 
-    - name: ⚡ EXTREME OPTIMIZATION
+    - name: 🚀 SAFE EXTREME OPTIMIZATION
       run: |
-        # CPU & Memory optimizations
-        echo 'performance' | sudo tee /sys/devices/system/cpu/cpu*/cpufreq/scaling_governor
-        echo 3 | sudo tee /proc/sys/vm/drop_caches
-        ulimit -n 65536
+        # Safe memory optimizations for GitHub Actions
+        export MALLOC_ARENA_MAX=2
+        export OMP_NUM_THREADS=$(nproc)
+        ulimit -n 32768 2>/dev/null || true
         
-        # Environment setup
+        # Environment acceleration
         export SITE_TITLE="dee-blogger"
         export BASE_URL="https://vdeemann.github.io/dee-blogger.github.io"
-        export LC_ALL=C
-        export LANG=C
+        export LC_ALL=C LANG=C TZ=UTC
         
-        # Ultra-aggressive build
-        time (chmod +x build.sh && ./build.sh)
+        # Build with maximum parallelization
+        echo "🚀 Building with $(nproc) CPU cores"
+        time (chmod +x build.sh && nice -n -10 ./build.sh)
         
-        # Maximum compression pipeline
-        parallel -j$(nproc) 'gzip -9 {}' ::: $(find public -type f \( -name "*.html" -o -name "*.css" -o -name "*.js" \))
-        
-        # Memory cleanup
-        sync && echo 3 | sudo tee /proc/sys/vm/drop_caches
+        # Parallel compression using available tools
+        echo "🗜️ Compressing with $(nproc) threads"
+        find public -type f \( -name "*.html" -o -name "*.css" -o -name "*.js" \) | \
+        xargs -P$(nproc) -I{} sh -c 'gzip -9 "$1" && touch -r "$1.gz" "$1"' _ {}
         
         # Performance metrics
-        echo "📊 STATS: $(du -sh public | cut -f1) | $(find public -name "*.html" | wc -l) pages"
+        TOTAL_SIZE=$(du -sb public | cut -f1)
+        PAGE_COUNT=$(find public -name "*.html" | wc -l)
+        COMPRESSED=$(find public -name "*.gz" | wc -l)
+        
+        echo "🚀 SAFE EXTREME BUILD COMPLETE:"
+        echo "📊 Size: $((TOTAL_SIZE/1024)) KB"
+        echo "📄 Pages: $PAGE_COUNT"
+        echo "🗜️ Compressed: $COMPRESSED files"
+        echo "⚡ Efficiency: $(echo "scale=1;$TOTAL_SIZE/1024/$PAGE_COUNT" | bc) KB/page"
 
-    - name: 🚀 INSTANT DEPLOY
+    - name: 🚀 DEPLOY
       id: deploy
       uses: actions/deploy-pages@v4
       with: 
         path: ./public
-        timeout: 600000
 
-    - run: echo "💥 EXTREME BUILD COMPLETE → ${{ steps.deploy.outputs.page_url }}"
+    - run: echo "🚀 SAFE EXTREME BUILD SUCCESS → ${{ steps.deploy.outputs.page_url }}"
