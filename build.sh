@@ -371,13 +371,13 @@ for i in "${!files[@]}"; do
 </html>
 HTML_EOF
 
-    # Replace placeholders
-    sed -i "s/TITLE_PLACEHOLDER/${title}/g" "public/p/${num}.html"
-    sed -i "s/SITE_TITLE_PLACEHOLDER/${SITE_TITLE}/g" "public/p/${num}.html"
-    sed -i "s/EXCERPT_PLACEHOLDER/${excerpt:0:160}/g" "public/p/${num}.html"
-    sed -i "s/DATE_PLACEHOLDER/${date}/g" "public/p/${num}.html"
-    sed -i "s/READING_TIME_PLACEHOLDER/${reading_time}/g" "public/p/${num}.html"
-    sed -i "s/WORD_COUNT_PLACEHOLDER/${word_count}/g" "public/p/${num}.html"
+    # Replace placeholders using | as delimiter to avoid conflicts with / in content
+    sed -i "s|TITLE_PLACEHOLDER|${title}|g" "public/p/${num}.html"
+    sed -i "s|SITE_TITLE_PLACEHOLDER|${SITE_TITLE}|g" "public/p/${num}.html"
+    sed -i "s|EXCERPT_PLACEHOLDER|${excerpt:0:160}|g" "public/p/${num}.html"
+    sed -i "s|DATE_PLACEHOLDER|${date}|g" "public/p/${num}.html"
+    sed -i "s|READING_TIME_PLACEHOLDER|${reading_time}|g" "public/p/${num}.html"
+    sed -i "s|WORD_COUNT_PLACEHOLDER|${word_count}|g" "public/p/${num}.html"
     sed -i "s|POST_CSS_PLACEHOLDER|${POST_CSS}|g" "public/p/${num}.html"
     # Replace content placeholder using a different delimiter to avoid sed issues
     awk -v content="$content" '{gsub(/CONTENT_PLACEHOLDER/, content); print}' "public/p/${num}.html" > "public/p/${num}.html.tmp"
