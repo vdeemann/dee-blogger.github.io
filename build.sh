@@ -1,924 +1,209 @@
 #!/bin/bash
 set -e
 
-echo "🚀 Building dee-blogger with modern features..."
+echo "🚀 Building final improved blog with consistent UI and fixed search..."
 
-# Configuration
-SITE_TITLE="dee-blogger"
-CONTENT_DIR="content"
-MAX_POSTS_MAIN=20
+SITE_TITLE="${SITE_TITLE:-dee-blogger}"
+BASE_URL="${BASE_URL:-https://vdeemann.github.io/dee-blogger.github.io}"
 
 # Clean and create directories
-echo "ℹ️ Setting up directories..."
 rm -rf public
-mkdir -p public/p public/archive public/assets/js public/assets/css
+mkdir -p public/p public/archive
 
-# Create enhanced CSS with proper spacing and code formatting
-echo "ℹ️ Creating enhanced CSS..."
-cat > public/assets/css/style.css << 'EOF'
-:root {
-  --bg-primary: #ffffff;
-  --bg-secondary: #f8f9fa;
-  --bg-code: #f6f8fa;
-  --text-primary: #24292f;
-  --text-secondary: #656d76;
-  --text-muted: #8b949e;
-  --border-color: #d0d7de;
-  --border-muted: #e8e8e8;
-  --accent-color: #0969da;
-  --accent-hover: #0550ae;
-  --success-color: #28a745;
-  --warning-color: #ffc107;
-  --danger-color: #dc3545;
-  --shadow-sm: 0 1px 3px rgba(0,0,0,0.12);
-  --shadow-md: 0 4px 6px rgba(0,0,0,0.1);
-  --shadow-lg: 0 10px 15px rgba(0,0,0,0.1);
-  --radius-sm: 4px;
-  --radius-md: 8px;
-  --radius-lg: 12px;
-}
+# Shared CSS for both main and archive pages (consistent styling)
+SHARED_CSS='body{max-width:50em;margin:2em auto;padding:0 1em;font-family:system-ui,sans-serif;line-height:1.5;color:#333;background:#fff;position:relative}a{color:#0066cc;text-decoration:none}h1{font-size:1.9em;margin:0 0 .5em;color:#1a1a1a;font-weight:700}h2{font-size:1.2em;margin:0 0 .3em;color:#333;font-weight:600}h3{font-size:1.1em;margin:0 0 .3em;color:#444;font-weight:600}p{margin:.4em 0}small{color:#666;display:block;margin:0 0 .3em;font-size:.9em}.post{margin:0 0 .6em;padding:.5em .7em;background:#fafafa;border-radius:4px;border:1px solid #e8e8e8;cursor:pointer}input{width:100%;margin:0 0 1em;padding:.6em;border:1px solid #ddd;border-radius:4px;font-size:.95em;background:#fff;box-sizing:border-box}nav{margin:1em 0;padding:.5em 0;border-bottom:1px solid #eee}.stats{background:#fff3cd;padding:.6em 1em;border-radius:4px;margin:1em 0;text-align:center;font-size:.95em;border:1px solid #ffeaa7}.search-highlight{background:#ffeb3b;padding:0 .2em;border-radius:2px}.excerpt{color:#666;margin:.3em 0 0;font-size:.9em;line-height:1.4}.search-results{background:#e8f4fd;padding:.8em;border-radius:4px;margin:1em 0;border-left:4px solid #0066cc}.no-results{text-align:center;color:#666;padding:2em;font-style:italic}.search-count{font-weight:600;color:#0066cc}.sticky-header{position:sticky;top:0;background:#fff;border-bottom:2px solid #0066cc;padding:.8em 0;margin:0 0 1em;z-index:100;box-shadow:0 2px 4px rgba(0,0,0,.1);display:none}.sticky-header h2{margin:0 0 .5em;font-size:1.1em;color:#0066cc;font-weight:700}.sticky-header input{margin:0;padding:.5em;font-size:.9em}.archive-content{margin:2em 0}.year-section{margin:0 0 2.5em}.month-section{margin:0 0 1.5em}.year-header{margin:0 0 1em}.month-header{margin:0 0 .8em;font-size:.95em;color:#666}'
 
-[data-theme="dark"] {
-  --bg-primary: #0d1117;
-  --bg-secondary: #161b22;
-  --bg-code: #21262d;
-  --text-primary: #f0f6fc;
-  --text-secondary: #8b949e;
-  --text-muted: #6e7681;
-  --border-color: #30363d;
-  --border-muted: #21262d;
-}
+# Enhanced post page CSS with better typography (like Software Architecture post)
+POST_CSS='body{max-width:48em;margin:2em auto;padding:0 1em;font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;line-height:1.65;color:#2d3748;background:#fff}a{color:#0066cc;text-decoration:none;border-bottom:1px solid transparent}h1{font-size:2.2em;margin:0 0 .4em;color:#1a202c;font-weight:700;line-height:1.2}h2{font-size:1.6em;margin:2.5em 0 1em;color:#2d3748;font-weight:600;line-height:1.3;border-bottom:2px solid #e2e8f0;padding-bottom:.3em}h3{font-size:1.3em;margin:2em 0 .8em;color:#4a5568;font-weight:600;line-height:1.3}p{margin:1.2em 0;font-size:1.05em;line-height:1.7}small{color:#718096;display:block;margin:0 0 2em;font-size:1em;font-weight:500}strong{font-weight:600;color:#2d3748}code{background:#f7fafc;color:#e53e3e;padding:.2em .4em;border-radius:4px;font-family:"SF Mono",Monaco,Consolas,"Liberation Mono","Courier New",monospace;font-size:.9em;border:1px solid #e2e8f0;position:relative}pre{background:#f7fafc;padding:.8em 1em;margin:1.5em 0;border-radius:6px;overflow-x:auto;border:1px solid #e2e8f0;box-shadow:0 1px 3px rgba(0,0,0,.1);position:relative}pre code{background:0;padding:0;font-size:.9em;color:#2d3748;display:block;border:0}ul,ol{margin:1.5em 0;padding-left:2em}li{margin:.8em 0;line-height:1.6}nav{margin:2em 0;padding:.8em 0;border-bottom:1px solid #e2e8f0}blockquote{background:#f7fafc;border-left:4px solid #0066cc;margin:2em 0;padding:1.2em 1.8em;border-radius:0 6px 6px 0;color:#4a5568;font-style:italic;box-shadow:0 1px 3px rgba(0,0,0,.1)}blockquote p{margin:.8em 0}hr{border:0;height:1px;background:#e2e8f0;margin:2.5em 0}.post-meta{background:#f7fafc;padding:1em 1.2em;border-radius:6px;margin:1.5em 0;border-left:4px solid #0066cc}.post-meta p{margin:.3em 0;font-size:.95em;color:#4a5568}.copy-btn{position:absolute;top:.5em;right:.5em;background:#0066cc;color:#fff;border:0;border-radius:3px;padding:.3em .6em;font-size:.8em;cursor:pointer;opacity:1}.copy-btn.copied{background:#28a745}.mermaid{background:#f7fafc;border:1px solid #e2e8f0;border-radius:6px;padding:1em;margin:1.5em 0;text-align:center}.table-container{overflow-x:auto;margin:1.5em 0}table{width:100%;border-collapse:collapse;background:#fff;border-radius:6px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,.1)}th,td{padding:.8em 1em;text-align:left;border-bottom:1px solid #e2e8f0}th{background:#f7fafc;font-weight:600;color:#2d3748}'
 
-* {
-  box-sizing: border-box;
-}
-
-body {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 0 2rem;
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans", Helvetica, Arial, sans-serif;
-  line-height: 1.6;
-  color: var(--text-primary);
-  background: var(--bg-primary);
-  font-size: 16px;
-}
-
-/* Typography */
-h1, h2, h3, h4, h5, h6 {
-  margin: 2em 0 1em 0;
-  font-weight: 600;
-  line-height: 1.25;
-  color: var(--text-primary);
-}
-
-h1 { font-size: 2.5em; margin-top: 0; }
-h2 { font-size: 2em; border-bottom: 1px solid var(--border-muted); padding-bottom: 0.3em; }
-h3 { font-size: 1.5em; }
-h4 { font-size: 1.25em; }
-h5 { font-size: 1.1em; }
-h6 { font-size: 1em; }
-
-p {
-  margin: 1em 0;
-  line-height: 1.7;
-}
-
-a {
-  color: var(--accent-color);
-  text-decoration: none;
-}
-
-a:hover {
-  text-decoration: underline;
-  color: var(--accent-hover);
-}
-
-/* Header */
-.site-header {
-  position: sticky;
-  top: 0;
-  z-index: 100;
-  background: var(--bg-primary);
-  border-bottom: 1px solid var(--border-color);
-  padding: 1rem 0;
-  margin: 0 -2rem 2rem -2rem;
-  padding-left: 2rem;
-  padding-right: 2rem;
-  backdrop-filter: blur(10px);
-}
-
-.site-title {
-  font-size: 1.5rem;
-  font-weight: 700;
-  margin: 0;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-
-.theme-toggle {
-  background: none;
-  border: 1px solid var(--border-color);
-  border-radius: var(--radius-sm);
-  padding: 0.5rem;
-  cursor: pointer;
-  color: var(--text-primary);
-  font-size: 1.2rem;
-}
-
-.theme-toggle:hover {
-  background: var(--bg-secondary);
-}
-
-/* Stats */
-.stats {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
-  padding: 1.5rem 2rem;
-  border-radius: var(--radius-lg);
-  margin: 2rem 0;
-  text-align: center;
-  font-weight: 600;
-  font-size: 1.1rem;
-  box-shadow: var(--shadow-md);
-}
-
-/* Search */
-.search-container {
-  position: relative;
-  margin: 2rem 0;
-}
-
-input[type="search"] {
-  width: 100%;
-  padding: 1rem 3rem 1rem 1rem;
-  border: 2px solid var(--border-color);
-  border-radius: var(--radius-md);
-  font-size: 1rem;
-  background: var(--bg-secondary);
-  color: var(--text-primary);
-  transition: all 0.2s ease;
-}
-
-input[type="search"]:focus {
-  outline: none;
-  border-color: var(--accent-color);
-  box-shadow: 0 0 0 3px rgba(9, 105, 218, 0.1);
-}
-
-.search-icon {
-  position: absolute;
-  right: 1rem;
-  top: 50%;
-  transform: translateY(-50%);
-  color: var(--text-muted);
-}
-
-.search-results {
-  background: var(--bg-secondary);
-  padding: 1rem 1.5rem;
-  border-radius: var(--radius-md);
-  margin: 1rem 0;
-  border-left: 4px solid var(--accent-color);
-  font-weight: 500;
-}
-
-.search-highlight {
-  background: #ffeb3b;
-  padding: 0 0.3em;
-  border-radius: var(--radius-sm);
-  color: #000;
-}
-
-/* Posts */
-.post {
-  margin: 0 0 2rem;
-  padding: 2rem;
-  background: var(--bg-secondary);
-  border-radius: var(--radius-lg);
-  border: 1px solid var(--border-color);
-  cursor: pointer;
-  transition: all 0.3s ease;
-  position: relative;
-  overflow: hidden;
-}
-
-.post::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 4px;
-  height: 100%;
-  background: var(--accent-color);
-  transform: scaleY(0);
-  transition: transform 0.3s ease;
-}
-
-.post:hover {
-  background: var(--bg-primary);
-  border-color: var(--accent-color);
-  transform: translateY(-2px);
-  box-shadow: var(--shadow-lg);
-}
-
-.post:hover::before {
-  transform: scaleY(1);
-}
-
-.post-meta {
-  color: var(--text-muted);
-  font-size: 0.9rem;
-  margin-bottom: 0.5rem;
-  font-weight: 500;
-}
-
-.post-title {
-  font-size: 1.5rem;
-  margin: 0.5rem 0;
-  font-weight: 600;
-  color: var(--text-primary);
-}
-
-.post-excerpt {
-  color: var(--text-secondary);
-  margin: 1rem 0 0;
-  line-height: 1.6;
-}
-
-/* Code blocks */
-pre {
-  position: relative;
-  background: var(--bg-code);
-  border: 1px solid var(--border-color);
-  border-radius: var(--radius-md);
-  padding: 1.5rem;
-  margin: 2rem 0;
-  overflow-x: auto;
-  font-family: 'SF Mono', Monaco, 'Cascadia Code', 'Roboto Mono', Consolas, 'Courier New', monospace;
-  font-size: 0.9rem;
-  line-height: 1.5;
-}
-
-code {
-  background: var(--bg-code);
-  color: #e36209;
-  padding: 0.2em 0.4em;
-  border-radius: var(--radius-sm);
-  font-family: 'SF Mono', Monaco, 'Cascadia Code', 'Roboto Mono', Consolas, 'Courier New', monospace;
-  font-size: 0.9em;
-  border: 1px solid var(--border-color);
-}
-
-pre code {
-  background: none;
-  border: none;
-  padding: 0;
-  color: var(--text-primary);
-}
-
-.code-header {
-  display: flex;
-  justify-content: between;
-  align-items: center;
-  padding: 0.5rem 1rem;
-  background: var(--border-color);
-  border-radius: var(--radius-md) var(--radius-md) 0 0;
-  font-size: 0.8rem;
-  color: var(--text-muted);
-  margin: 0;
-}
-
-.copy-button {
-  position: absolute;
-  top: 0.5rem;
-  right: 0.5rem;
-  background: var(--bg-secondary);
-  border: 1px solid var(--border-color);
-  border-radius: var(--radius-sm);
-  padding: 0.5rem;
-  cursor: pointer;
-  opacity: 0;
-  transition: all 0.2s ease;
-  font-size: 0.8rem;
-}
-
-pre:hover .copy-button {
-  opacity: 1;
-}
-
-.copy-button:hover {
-  background: var(--accent-color);
-  color: white;
-  border-color: var(--accent-color);
-}
-
-.copy-button.copied {
-  background: var(--success-color);
-  color: white;
-  border-color: var(--success-color);
-}
-
-/* Blockquotes */
-blockquote {
-  margin: 2rem 0;
-  padding: 1rem 1.5rem;
-  background: var(--bg-code);
-  border-left: 4px solid var(--accent-color);
-  border-radius: 0 var(--radius-md) var(--radius-md) 0;
-  color: var(--text-secondary);
-  font-style: italic;
-}
-
-/* Lists */
-ul, ol {
-  margin: 1.5rem 0;
-  padding-left: 2rem;
-}
-
-li {
-  margin: 0.5rem 0;
-  line-height: 1.6;
-}
-
-/* Tables */
-table {
-  width: 100%;
-  border-collapse: collapse;
-  margin: 2rem 0;
-  background: var(--bg-secondary);
-  border-radius: var(--radius-md);
-  overflow: hidden;
-  box-shadow: var(--shadow-sm);
-}
-
-th, td {
-  padding: 1rem;
-  text-align: left;
-  border-bottom: 1px solid var(--border-color);
-}
-
-th {
-  background: var(--bg-code);
-  font-weight: 600;
-  color: var(--text-primary);
-}
-
-tr:hover {
-  background: var(--bg-primary);
-}
-
-/* Archive */
-.year-section {
-  margin: 0 0 3rem;
-}
-
-.month-section {
-  margin: 0 0 2rem;
-}
-
-.year-header h2 {
-  color: var(--accent-color);
-  border-bottom: 2px solid var(--accent-color);
-  padding-bottom: 0.5rem;
-}
-
-.month-header h3 {
-  color: var(--text-secondary);
-  margin: 0 0 1rem;
-  font-size: 1.2rem;
-}
-
-/* Navigation */
-nav {
-  margin: 2rem 0;
-  padding: 1rem 0;
-  border-top: 1px solid var(--border-color);
-  border-bottom: 1px solid var(--border-color);
-}
-
-nav a {
-  display: inline-block;
-  padding: 0.5rem 1rem;
-  margin: 0 0.5rem 0 0;
-  background: var(--bg-secondary);
-  border: 1px solid var(--border-color);
-  border-radius: var(--radius-sm);
-  text-decoration: none;
-  transition: all 0.2s ease;
-}
-
-nav a:hover {
-  background: var(--accent-color);
-  color: white;
-  border-color: var(--accent-color);
-  text-decoration: none;
-}
-
-/* Utilities */
-.no-results {
-  text-align: center;
-  color: var(--text-muted);
-  padding: 4rem 2rem;
-  font-style: italic;
-  font-size: 1.1rem;
-}
-
-.loading {
-  text-align: center;
-  padding: 2rem;
-  color: var(--text-muted);
-}
-
-/* Responsive */
-@media (max-width: 768px) {
-  body {
-    padding: 0 1rem;
-  }
-  
-  .site-header {
-    margin: 0 -1rem 1rem -1rem;
-    padding-left: 1rem;
-    padding-right: 1rem;
-  }
-  
-  .post {
-    padding: 1.5rem;
-  }
-  
-  h1 { font-size: 2rem; }
-  h2 { font-size: 1.5rem; }
-  h3 { font-size: 1.25rem; }
-  
-  pre {
-    padding: 1rem;
-    font-size: 0.8rem;
-  }
-}
-
-/* Mermaid diagrams */
-.mermaid {
-  background: var(--bg-secondary);
-  border: 1px solid var(--border-color);
-  border-radius: var(--radius-md);
-  padding: 2rem;
-  margin: 2rem 0;
-  text-align: center;
-}
-
-/* Print styles */
-@media print {
-  .site-header,
-  .search-container,
-  .copy-button,
-  .theme-toggle {
-    display: none;
-  }
-  
-  body {
-    font-size: 12pt;
-    line-height: 1.4;
-  }
-  
-  .post {
-    break-inside: avoid;
-    box-shadow: none;
-    border: 1px solid #ccc;
-  }
-}
-EOF
-
-# Create enhanced JavaScript with modern features
-echo "ℹ️ Creating enhanced JavaScript..."
-cat > public/assets/js/app.js << 'EOF'
-// Search functionality
-let originalPosts = null;
-let searchTimeout = null;
-
-function initializeSearch() {
-    const searchInput = document.getElementById('search');
-    const postsContainer = document.getElementById('posts');
-    const searchInfo = document.getElementById('search-info');
-    const searchCount = document.getElementById('search-count');
+# Enhanced markdown processor with better formatting
+process_markdown() {
+    local file="$1"
     
-    if (!searchInput) return;
+    tail -n +2 "$file" | awk '
+    BEGIN { in_code = 0; in_list = 0; in_blockquote = 0; code_lang = "" }
     
-    // Store original content
-    if (originalPosts === null) {
-        originalPosts = postsContainer.innerHTML;
-    }
-    
-    searchInput.addEventListener('input', function(e) {
-        clearTimeout(searchTimeout);
-        searchTimeout = setTimeout(() => searchPosts(), 300);
-    });
-    
-    searchInput.addEventListener('keyup', function(e) {
-        if (e.key === 'Escape') {
-            searchInput.value = '';
-            searchPosts();
-            searchInput.blur();
+    /^```/ {
+        if (in_code) {
+            if (code_lang != "") {
+                print "<button class=\"copy-btn\" onclick=\"copyCode(this)\">📋 Copy</button>"
+            }
+            print "</code></pre>"
+            in_code = 0
+            code_lang = ""
+        } else {
+            gsub(/^```/, "")
+            code_lang = $0
+            if (code_lang != "") {
+                print "<pre class=\"language-" code_lang "\"><code class=\"language-" code_lang "\">"
+            } else {
+                print "<pre><code>"
+            }
+            in_code = 1
         }
-    });
-}
-
-function searchPosts() {
-    const searchInput = document.getElementById('search');
-    const postsContainer = document.getElementById('posts');
-    const searchInfo = document.getElementById('search-info');
-    const searchCount = document.getElementById('search-count');
-    
-    const query = searchInput.value.toLowerCase().trim();
-    
-    if (query === '' || query.length === 0) {
-        postsContainer.innerHTML = originalPosts;
-        if (searchInfo) searchInfo.style.display = 'none';
-        return;
+        next
     }
     
-    const tempDiv = document.createElement('div');
-    tempDiv.innerHTML = originalPosts;
-    const allPosts = Array.from(tempDiv.children);
-    
-    const filtered = allPosts.filter(post => {
-        const searchable = post.dataset.searchable || '';
-        return searchable.includes(query);
-    });
-    
-    if (filtered.length > 0) {
-        const highlightedResults = filtered.map(post => {
-            let html = post.outerHTML;
-            const escapedQuery = query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-            const regex = new RegExp('(' + escapedQuery + ')', 'gi');
-            html = html.replace(regex, '<span class="search-highlight">$1</span>');
-            return html;
-        }).join('');
-        
-        postsContainer.innerHTML = highlightedResults;
-        
-        // Reattach event listeners to new posts
-        attachPostClickHandlers();
-    } else {
-        postsContainer.innerHTML = '<div class="no-results">No posts found matching "' + escapeHtml(query) + '"</div>';
+    in_code { 
+        gsub(/&/, "\\&amp;")
+        gsub(/</, "\\&lt;")
+        gsub(/>/, "\\&gt;")
+        print
+        next 
     }
     
-    if (searchCount) searchCount.textContent = filtered.length;
-    if (searchInfo) searchInfo.style.display = 'block';
-}
-
-// Theme toggle functionality
-function initializeThemeToggle() {
-    const themeToggle = document.getElementById('theme-toggle');
-    if (!themeToggle) return;
-    
-    // Check for saved theme or default to light
-    const savedTheme = localStorage.getItem('theme') || 'light';
-    document.documentElement.setAttribute('data-theme', savedTheme);
-    updateThemeToggleIcon(savedTheme);
-    
-    themeToggle.addEventListener('click', function() {
-        const currentTheme = document.documentElement.getAttribute('data-theme');
-        const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
-        
-        document.documentElement.setAttribute('data-theme', newTheme);
-        localStorage.setItem('theme', newTheme);
-        updateThemeToggleIcon(newTheme);
-    });
-}
-
-function updateThemeToggleIcon(theme) {
-    const themeToggle = document.getElementById('theme-toggle');
-    if (!themeToggle) return;
-    
-    themeToggle.innerHTML = theme === 'dark' ? '☀️' : '🌙';
-    themeToggle.title = `Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`;
-}
-
-// Copy to clipboard functionality
-function initializeCopyButtons() {
-    document.querySelectorAll('pre').forEach(pre => {
-        const button = document.createElement('button');
-        button.className = 'copy-button';
-        button.innerHTML = '📋 Copy';
-        button.setAttribute('aria-label', 'Copy code to clipboard');
-        
-        button.addEventListener('click', async function() {
-            const code = pre.querySelector('code');
-            const text = code ? code.textContent : pre.textContent;
-            
-            try {
-                await navigator.clipboard.writeText(text);
-                button.innerHTML = '✓ Copied';
-                button.classList.add('copied');
-                
-                setTimeout(() => {
-                    button.innerHTML = '📋 Copy';
-                    button.classList.remove('copied');
-                }, 2000);
-            } catch (err) {
-                // Fallback for older browsers
-                const textArea = document.createElement('textarea');
-                textArea.value = text;
-                document.body.appendChild(textArea);
-                textArea.select();
-                try {
-                    document.execCommand('copy');
-                    button.innerHTML = '✓ Copied';
-                    button.classList.add('copied');
-                    setTimeout(() => {
-                        button.innerHTML = '📋 Copy';
-                        button.classList.remove('copied');
-                    }, 2000);
-                } catch (err) {
-                    button.innerHTML = '❌ Failed';
-                    setTimeout(() => {
-                        button.innerHTML = '📋 Copy';
-                    }, 2000);
-                }
-                document.body.removeChild(textArea);
-            }
-        });
-        
-        pre.style.position = 'relative';
-        pre.appendChild(button);
-    });
-}
-
-// Post click handlers
-function attachPostClickHandlers() {
-    document.querySelectorAll('.post[onclick]').forEach(post => {
-        post.addEventListener('click', function(e) {
-            // Don't navigate if clicking on links or buttons
-            if (e.target.tagName === 'A' || e.target.tagName === 'BUTTON') {
-                return;
-            }
-            
-            const onclick = this.getAttribute('onclick');
-            if (onclick) {
-                eval(onclick);
-            }
-        });
-        
-        // Remove inline onclick to avoid double handling
-        post.removeAttribute('onclick');
-    });
-}
-
-// Smooth scrolling for anchor links
-function initializeSmoothScrolling() {
-    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
-        anchor.addEventListener('click', function (e) {
-            e.preventDefault();
-            const target = document.querySelector(this.getAttribute('href'));
-            if (target) {
-                target.scrollIntoView({
-                    behavior: 'smooth',
-                    block: 'start'
-                });
-            }
-        });
-    });
-}
-
-// Progress indicator
-function initializeProgressIndicator() {
-    if (document.querySelector('article')) {
-        const progressBar = document.createElement('div');
-        progressBar.id = 'progress-bar';
-        progressBar.style.cssText = `
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 0%;
-            height: 3px;
-            background: var(--accent-color);
-            z-index: 1000;
-            transition: width 0.2s ease;
-        `;
-        document.body.appendChild(progressBar);
-        
-        window.addEventListener('scroll', function() {
-            const winScroll = document.body.scrollTop || document.documentElement.scrollTop;
-            const height = document.documentElement.scrollHeight - document.documentElement.clientHeight;
-            const scrolled = (winScroll / height) * 100;
-            progressBar.style.width = scrolled + '%';
-        });
-    }
-}
-
-// Utility functions
-function escapeHtml(text) {
-    const map = {
-        '&': '&amp;',
-        '<': '&lt;',
-        '>': '&gt;',
-        '"': '&quot;',
-        "'": '&#039;'
-    };
-    return text.replace(/[&<>"']/g, m => map[m]);
-}
-
-// Initialize everything when DOM is loaded
-document.addEventListener('DOMContentLoaded', function() {
-    initializeSearch();
-    initializeThemeToggle();
-    initializeCopyButtons();
-    attachPostClickHandlers();
-    initializeSmoothScrolling();
-    initializeProgressIndicator();
-    
-    // Initialize Mermaid if available
-    if (typeof mermaid !== 'undefined') {
-        mermaid.initialize({
-            startOnLoad: true,
-            theme: 'default',
-            securityLevel: 'loose'
-        });
-    }
-    
-    // Initialize Prism if available
-    if (typeof Prism !== 'undefined') {
-        Prism.highlightAll();
-    }
-});
-
-// Service Worker for offline support
-if ('serviceWorker' in navigator) {
-    window.addEventListener('load', function() {
-        navigator.serviceWorker.register('/sw.js')
-            .then(function(registration) {
-                console.log('SW registered: ', registration);
-            })
-            .catch(function(registrationError) {
-                console.log('SW registration failed: ', registrationError);
-            });
-    });
-}
-EOF
-
-# Create Service Worker for offline support
-cat > public/sw.js << 'EOF'
-const CACHE_NAME = 'dee-blogger-v1';
-const urlsToCache = [
-  '/',
-  '/assets/css/style.css',
-  '/assets/js/app.js',
-  '/archive/'
-];
-
-self.addEventListener('install', function(event) {
-  event.waitUntil(
-    caches.open(CACHE_NAME)
-      .then(function(cache) {
-        return cache.addAll(urlsToCache);
-      })
-  );
-});
-
-self.addEventListener('fetch', function(event) {
-  event.respondWith(
-    caches.match(event.request)
-      .then(function(response) {
-        if (response) {
-          return response;
+    /^> / {
+        if (!in_blockquote) {
+            print "<blockquote>"
+            in_blockquote = 1
         }
-        return fetch(event.request);
-      }
-    )
-  );
-});
-EOF
-
-# Helper functions for processing
-extract_title_from_file() {
-    local file="$1"
-    local first_line=$(head -n1 "$file")
-    local title=$(echo "$first_line" | sed 's/^# *//' | sed 's/^[[:space:]]*//' | sed 's/[[:space:]]*$//')
+        gsub(/^> /, "")
+        print "<p>" $0 "</p>"
+        next
+    }
     
-    if [ -z "$title" ] || [ "$title" = "#" ]; then
-        local filename=$(basename "$file" .md)
-        if echo "$filename" | grep -q "^[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]-"; then
-            title=$(echo "$filename" | sed 's/^[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]-//' | sed 's/-/ /g')
-        else
-            title=$(echo "$filename" | sed 's/-/ /g')
-        fi
-        title=$(echo "$title" | awk '{for(i=1;i<=NF;i++) $i=toupper(substr($i,1,1)) tolower(substr($i,2))}1')
-    fi
+    in_blockquote && !/^> / && !/^$/ {
+        print "</blockquote>"
+        in_blockquote = 0
+    }
     
-    echo "$title"
+    /^#### / { gsub(/^#### /, ""); print "<h4>" $0 "</h4>"; next }
+    /^### / { gsub(/^### /, ""); print "<h3>" $0 "</h3>"; next }
+    /^## / { gsub(/^## /, ""); print "<h2>" $0 "</h2>"; next }
+    /^# / { gsub(/^# /, ""); print "<h1>" $0 "</h1>"; next }
+    
+    /^\| / {
+        if (!in_table) {
+            print "<div class=\"table-container\"><table>"
+            in_table = 1
+            table_header = 1
+        }
+        gsub(/^\| /, "")
+        gsub(/ \|$/, "")
+        gsub(/ \| /, "</td><td>")
+        if (table_header) {
+            print "<thead><tr><th>" $0 "</th></tr></thead><tbody>"
+            table_header = 0
+        } else if (!/^[-:|]+$/) {
+            print "<tr><td>" $0 "</td></tr>"
+        }
+        next
+    }
+    
+    in_table && !/^\| / && !/^$/ {
+        print "</tbody></table></div>"
+        in_table = 0
+    }
+    
+    /^[•*-] / {
+        if (!in_list) {
+            print "<ul>"
+            in_list = 1
+        }
+        gsub(/^[•*-] /, "")
+        print "<li>" $0 "</li>"
+        next
+    }
+    
+    /^[0-9]+\. / {
+        if (!in_list) {
+            print "<ol>"
+            in_list = 2
+        }
+        gsub(/^[0-9]+\. /, "")
+        print "<li>" $0 "</li>"
+        next
+    }
+    
+    in_list && !/^[•*-] / && !/^[0-9]+\. / && !/^$/ {
+        if (in_list == 1) {
+            print "</ul>"
+        } else {
+            print "</ol>"
+        }
+        in_list = 0
+    }
+    
+    /^```mermaid/ {
+        print "<div class=\"mermaid\">"
+        while ((getline line) > 0 && line != "```") {
+            print line
+        }
+        print "</div>"
+        next
+    }
+    
+    /^---$/ { print "<hr>"; next }
+    
+    /^$/ { 
+        if (in_list == 1) {
+            print "</ul>"
+            in_list = 0
+        } else if (in_list == 2) {
+            print "</ol>"
+            in_list = 0
+        }
+        if (in_blockquote) {
+            print "</blockquote>"
+            in_blockquote = 0
+        }
+        if (in_table) {
+            print "</tbody></table></div>"
+            in_table = 0
+        }
+        next 
+    }
+    
+    /./ {
+        if (in_list == 1) {
+            print "</ul>"
+            in_list = 0
+        } else if (in_list == 2) {
+            print "</ol>"
+            in_list = 0
+        }
+        if (in_blockquote) {
+            print "</blockquote>"
+            in_blockquote = 0
+        }
+        if (in_table) {
+            print "</tbody></table></div>"
+            in_table = 0
+        }
+        
+        gsub(/\*\*([^*]+)\*\*/, "<strong>\\1</strong>")
+        gsub(/\*([^*]+)\*/, "<em>\\1</em>")
+        gsub(/`([^`]+)`/, "<code>\\1</code>")
+        gsub(/\[([^\]]+)\]\(([^)]+)\)/, "<a href=\"\\2\">\\1</a>")
+        
+        print "<p>" $0 "</p>"
+    }
+    
+    END {
+        if (in_code) {
+            if (code_lang != "") {
+                print "<button class=\"copy-btn\" onclick=\"copyCode(this)\">📋 Copy</button>"
+            }
+            print "</code></pre>"
+        }
+        if (in_list == 1) print "</ul>"
+        if (in_list == 2) print "</ol>"
+        if (in_blockquote) print "</blockquote>"
+        if (in_table) print "</tbody></table></div>"
+    }'
 }
 
-extract_post_number() {
-    local file="$1"
-    local filename=$(basename "$file" .md)
-    echo "$filename" | cksum | cut -d' ' -f1
-}
-
-extract_date_from_filename() {
-    local file="$1"
-    local filename=$(basename "$file" .md)
-    
-    if echo "$filename" | grep -q "^[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]-"; then
-        local year=$(echo "$filename" | cut -d- -f1)
-        local month=$(echo "$filename" | cut -d- -f2)
-        local day=$(echo "$filename" | cut -d- -f3)
-        echo "$year/$month/$day"
-    else
-        date '+%Y/%m/%d'
-    fi
-}
-
-extract_sort_date() {
-    local file="$1"
-    local filename=$(basename "$file" .md)
-    
-    if echo "$filename" | grep -q "^[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]-"; then
-        local year=$(echo "$filename" | cut -d- -f1)
-        local month=$(echo "$filename" | cut -d- -f2)
-        local day=$(echo "$filename" | cut -d- -f3)
-        echo "$year$month$day"
-    else
-        date '+%Y%m%d'
-    fi
-}
-
+# Extract clean excerpt from content (improved version)
 extract_excerpt() {
     local file="$1"
-    local body_content=$(tail -n +2 "$file")
-    local excerpt=$(echo "$body_content" | grep -v '^#' | grep -v '^$' | head -2 | tr '\n' ' ' | sed 's/[*`#\[\]()]/ /g' | sed 's/  */ /g' | cut -c1-150 | sed 's/[[:space:]]*$/.../')
-    
-    if [ -z "$excerpt" ]; then
-        excerpt="Read more..."
-    fi
-    
-    echo "$excerpt"
+    local excerpt=$(tail -n +2 "$file" | grep -v '^#' | grep -v '^```' | grep -v '^$' | head -5 | tr '\n' ' ' | sed 's/[*`#\[\]()]/./g' | sed 's/\s\+/ /g' | cut -c1-180)
+    echo "$excerpt" | sed 's/\.\.\.*//' | sed 's/\s*$/.../'
 }
 
-# Enhanced markdown processing with syntax highlighting and mermaid support
-process_markdown_enhanced() {
-    local file="$1"
-    local content=$(tail -n +2 "$file")
-    
-    # Process the markdown with enhanced features
-    echo "$content" | sed '
-        # Handle code fences with language detection
-        /^```/{
-            s/^```\([a-zA-Z]*\).*/<pre><code class="language-\1">/
-            :loop
-            n
-            /^```$/{
-                s/.*/\<\/code\>\<\/pre\>/
-                b
-            }
-            s/&/\&amp;/g
-            s/</\&lt;/g
-            s/>/\&gt;/g
-            b loop
-        }
-        
-        # Handle mermaid diagrams
-        /^```mermaid/{
-            s/.*/\<div class="mermaid"\>/
-            :mermaid_loop
-            n
-            /^```$/{
-                s/.*/\<\/div\>/
-                b
-            }
-            b mermaid_loop
-        }
-        
-        # Headers with anchor links
-        s/^#### \(.*\)/<h4 id="\L\1\E">\1<\/h4>/
-        s/^### \(.*\)/<h3 id="\L\1\E">\1<\/h3>/
-        s/^## \(.*\)/<h2 id="\L\1\E">\1<\/h2>/
-        s/^# \(.*\)/<h1 id="\L\1\E">\1<\/h1>/
-        
-        # Blockquotes
-        s/^> \(.*\)/<blockquote><p>\1<\/p><\/blockquote>/
-        
-        # Bold and italic
-        s/\*\*\([^*]*\)\*\*/<strong>\1<\/strong>/g
-        s/\*\([^*]*\)\*/<em>\1<\/em>/g
-        
-        # Inline code
-        s/`\([^`]*\)`/<code>\1<\/code>/g
-        
-        # Links
-        s/\[\([^]]*\)\](\([^)]*\))/<a href="\2">\1<\/a>/g
-        
-        # Remove empty lines
-        /^[[:space:]]*$/d
-        
-        # Wrap non-HTML lines in paragraphs
-        /^[^<]/s/^/<p>/
-        /^<p>/s/$/<\/p>/
-    '
-}
-
+# Get month name from number
 get_month_name() {
-    case "$1" in
+    local month="$1"
+    case "$month" in
         01) echo "January" ;;
         02) echo "February" ;;
         03) echo "March" ;;
@@ -931,381 +216,505 @@ get_month_name() {
         10) echo "October" ;;
         11) echo "November" ;;
         12) echo "December" ;;
-        *) echo "Month" ;;
+        *) echo "Unknown" ;;
     esac
 }
 
-# Main processing
-echo "ℹ️ Finding markdown files..."
-
-if [ ! -d "$CONTENT_DIR" ]; then
-    echo "❌ Content directory not found: $CONTENT_DIR"
-    exit 1
-fi
-
-files=$(find "$CONTENT_DIR" -name "*.md" -type f | sort)
-total=$(echo "$files" | wc -l)
+# Get all markdown files and process them
+echo "📁 Processing markdown files..."
+files=($(find content -name "*.md" | sort))
+total=${#files[@]}
 
 if [ $total -eq 0 ]; then
-    echo "❌ No markdown files found"
+    echo "❌ No markdown files found in content/ directory"
     exit 1
 fi
 
-echo "✅ Found $total markdown files"
+echo "📊 Found $total markdown files"
 
-# Process files
-echo "ℹ️ Processing files..."
-
-post_list_file="/tmp/post_list.txt"
-post_data_file="/tmp/post_data.txt"
-
-> "$post_list_file"
-> "$post_data_file"
-
-count=0
-for file in $files; do
-    count=$((count + 1))
-    printf "\r🔄 Processing: %d/%d (%s)" "$count" "$total" "$(basename "$file")"
+# Process each post
+declare -A post_data
+for i in "${!files[@]}"; do
+    file="${files[$i]}"
     
-    if [ ! -f "$file" ] || [ ! -r "$file" ]; then
+    echo "Processing file: $file"
+    
+    if [ ! -f "$file" ]; then
+        echo "Warning: File not found: $file"
         continue
     fi
     
-    title=$(extract_title_from_file "$file")
-    post_num=$(extract_post_number "$file")
-    date_str=$(extract_date_from_filename "$file")
-    sort_date=$(extract_sort_date "$file")
-    excerpt=$(extract_excerpt "$file")
-    
+    title=$(head -n1 "$file" | sed 's/^# *//' | sed 's/[<>&"'\'']/./g')
     if [ -z "$title" ]; then
-        continue
+        title="Untitled Post $((i + 1))"
     fi
     
-    # Count words for reading time
-    word_count=$(tail -n +2 "$file" | wc -w)
+    slug=$(basename "$file" .md)
+    num=$(echo "$slug" | grep -o '[0-9]\+$' || echo "$((i + 1))")
+    
+    if [[ "$slug" =~ ^([0-9]{4})-([0-9]{2})-([0-9]{2}) ]]; then
+        year="${BASH_REMATCH[1]}"
+        month="${BASH_REMATCH[2]}"
+        day="${BASH_REMATCH[3]}"
+        date="$year/$month/$day"
+        sort_date="$year$month$day"
+    else
+        date="$(date +%Y/%m/%d)"
+        sort_date="$(date +%Y%m%d)"
+        year="$(date +%Y)"
+        month="$(date +%m)"
+        day="$(date +%d)"
+    fi
+    
+    excerpt=$(extract_excerpt "$file")
+    if [ -z "$excerpt" ]; then
+        excerpt="No excerpt available..."
+    fi
+    
+    echo "  Title: $title"
+    echo "  Date: $date"
+    echo "  Excerpt: ${excerpt:0:50}..."
+    
+    post_data["$num,title"]="$title"
+    post_data["$num,date"]="$date"
+    post_data["$num,excerpt"]="$excerpt"
+    post_data["$num,file"]="$file"
+    post_data["$num,year"]="$year"
+    post_data["$num,month"]="$month"
+    post_data["$num,day"]="$day"
+    post_data["$num,sort_date"]="$sort_date"
+    
+    content=$(process_markdown "$file")
+    word_count=$(echo "$content" | wc -w)
     reading_time=$(echo "$word_count / 200 + 1" | bc 2>/dev/null || echo "1")
     
-    # Store data
-    echo "$post_num|$title|$date_str|$sort_date|$excerpt|$file|$word_count|$reading_time" >> "$post_data_file"
-    echo "$sort_date $post_num" >> "$post_list_file"
-    
-    # Generate individual post page with enhanced features
-    content=$(process_markdown_enhanced "$file")
-    
-    cat > "public/p/${post_num}.html" << EOF
+    cat > "public/p/${num}.html" << HTML_EOF
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width,initial-scale=1">
     <title>${title} - ${SITE_TITLE}</title>
-    <meta name="description" content="${excerpt}">
-    <meta name="author" content="${SITE_TITLE}">
-    <meta property="og:title" content="${title}">
-    <meta property="og:description" content="${excerpt}">
-    <meta property="og:type" content="article">
-    
-    <!-- Stylesheets -->
-    <link rel="stylesheet" href="../assets/css/style.css">
+    <meta name="description" content="${excerpt:0:160}">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism.min.css">
-    
-    <!-- Favicon -->
-    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📝</text></svg>">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mermaid/10.6.1/mermaid.min.js"></script>
+    <style>${POST_CSS}</style>
 </head>
 <body>
-    <header class="site-header">
-        <div class="site-title">
-            <a href="../">${SITE_TITLE}</a>
-            <button id="theme-toggle" class="theme-toggle" aria-label="Toggle theme">🌙</button>
-        </div>
-    </header>
-    
-    <nav>
-        <a href="../">← Blog</a>
-        <a href="../archive/">📚 Archive</a>
+    <nav><a href="../">← Blog</a> | <a href="../archive/">Archive</a></nav>
+    <h1>${title}</h1>
+    <small>${date}</small>
+    <div class="post-meta">
+        <p><strong>Published:</strong> ${date}</p>
+        <p><strong>Reading time:</strong> ~${reading_time} min (${word_count} words)</p>
+    </div>
+    ${content}
+    <nav style="border-top:1px solid #e2e8f0;margin-top:3em;padding-top:1.5em">
+        <a href="../">← Back to Blog</a> | <a href="../archive/">Archive</a>
     </nav>
     
-    <article>
-        <header>
-            <h1>${title}</h1>
-            <div class="post-meta">
-                <time datetime="${date_str}">${date_str}</time> • 
-                ~${reading_time} min read • 
-                ${word_count} words
-            </div>
-        </header>
+    <script>
+        // Initialize Mermaid
+        mermaid.initialize({
+            startOnLoad: true,
+            theme: 'default',
+            securityLevel: 'loose'
+        });
         
-        <div class="post-content">
-            ${content}
-        </div>
-    </article>
-    
-    <nav style="border-top: 2px solid var(--border-color); margin-top: 4rem; padding-top: 2rem;">
-        <a href="../">← Back to Blog</a>
-        <a href="../archive/">📚 Archive</a>
-    </nav>
-    
-    <!-- Scripts -->
+        // Copy code functionality
+        function copyCode(button) {
+            const pre = button.closest('pre');
+            const code = pre.querySelector('code');
+            const text = code.textContent;
+            
+            navigator.clipboard.writeText(text).then(() => {
+                const originalText = button.textContent;
+                button.textContent = '✓ Copied';
+                button.classList.add('copied');
+                setTimeout(() => {
+                    button.textContent = originalText;
+                    button.classList.remove('copied');
+                }, 2000);
+            }).catch(() => {
+                // Fallback for older browsers
+                const textarea = document.createElement('textarea');
+                textarea.value = text;
+                document.body.appendChild(textarea);
+                textarea.select();
+                document.execCommand('copy');
+                document.body.removeChild(textarea);
+                
+                const originalText = button.textContent;
+                button.textContent = '✓ Copied';
+                button.classList.add('copied');
+                setTimeout(() => {
+                    button.textContent = originalText;
+                    button.classList.remove('copied');
+                }, 2000);
+            });
+        }
+        
+        // Add copy buttons to all pre elements
+        document.querySelectorAll('pre').forEach(pre => {
+            if (!pre.querySelector('.copy-btn')) {
+                const button = document.createElement('button');
+                button.className = 'copy-btn';
+                button.innerHTML = '📋 Copy';
+                button.onclick = () => copyCode(button);
+                pre.appendChild(button);
+            }
+        });
+    </script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-core.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/autoloader/prism-autoloader.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/mermaid/10.6.1/mermaid.min.js"></script>
-    <script src="../assets/js/app.js"></script>
 </body>
 </html>
-EOF
+HTML_EOF
+
+    echo "✅ Processed: $num - $title"
 done
 
-echo
+# Generate main page with archive-style consistency
+echo "🏠 Generating main page with consistent styling..."
 
-processed=$(wc -l < "$post_data_file")
-echo "✅ Processed $processed files"
-
-if [ $processed -eq 0 ]; then
-    echo "❌ No posts were processed successfully"
-    exit 1
-fi
-
-# Generate enhanced main page
-echo "ℹ️ Generating main page..."
-
-recent_posts=$(sort -rn "$post_list_file" | head -$MAX_POSTS_MAIN | cut -d' ' -f2)
-
-cat > public/index.html << EOF
+cat > public/index.html << MAIN_EOF
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width,initial-scale=1">
     <title>${SITE_TITLE}</title>
-    <meta name="description" content="A modern blog with ${processed} posts about technology, programming, and more">
-    <meta name="author" content="${SITE_TITLE}">
-    <meta property="og:title" content="${SITE_TITLE}">
-    <meta property="og:description" content="A modern blog with ${processed} posts">
-    <meta property="og:type" content="website">
-    
-    <!-- Stylesheets -->
-    <link rel="stylesheet" href="assets/css/style.css">
-    
-    <!-- Favicon -->
-    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📝</text></svg>">
+    <meta name="description" content="A blog with ${total} posts">
+    <style>${SHARED_CSS}</style>
 </head>
 <body>
-    <header class="site-header">
-        <div class="site-title">
-            <span>${SITE_TITLE}</span>
-            <button id="theme-toggle" class="theme-toggle" aria-label="Toggle theme">🌙</button>
-        </div>
-    </header>
-    
-    <main>
-        <div class="stats">
-            📊 ${processed} posts published
-        </div>
-        
-        <div class="search-container">
-            <input 
-                type="search" 
-                id="search" 
-                placeholder="Search posts..." 
-                autocomplete="off"
-                aria-label="Search posts"
-            >
-            <span class="search-icon">🔍</span>
-        </div>
-        
-        <div id="search-info" class="search-results" style="display:none">
-            Found <span id="search-count">0</span> posts
-        </div>
-        
-        <div id="posts">
-EOF
+    <h1>${SITE_TITLE}</h1>
+    <div class="stats">📊 ${total} posts published</div>
+    <input id="search" placeholder="Search posts..." autocomplete="off">
+    <div id="search-info" class="search-results" style="display:none">
+        <span id="search-count">0</span> posts found
+    </div>
+    <div id="posts">
+MAIN_EOF
 
-for post_num in $recent_posts; do
-    post_data=$(grep "^$post_num|" "$post_data_file")
-    if [ -n "$post_data" ]; then
-        title=$(echo "$post_data" | cut -d'|' -f2)
-        date_str=$(echo "$post_data" | cut -d'|' -f3)
-        excerpt=$(echo "$post_data" | cut -d'|' -f5)
-        reading_time=$(echo "$post_data" | cut -d'|' -f8)
-        
-        cat >> public/index.html << EOF
-            <article class="post" data-title="${title,,}" data-excerpt="${excerpt,,}" data-searchable="${title,,} ${excerpt,,}" onclick="window.location.href='p/${post_num}.html'">
-                <div class="post-meta">${date_str} • ~${reading_time} min read</div>
-                <h2 class="post-title"><a href="p/${post_num}.html">${title}</a></h2>
-                <div class="post-excerpt">${excerpt}</div>
-            </article>
-EOF
-    fi
+# Get recent posts (last 20, sorted by date newest first)
+recent_nums=($(for file in "${files[@]}"; do
+    slug=$(basename "$file" .md)
+    num=$(echo "$slug" | grep -o '[0-9]\+$' || echo "1")
+    echo "${post_data["$num,sort_date"]} $num"
+done | sort -rn | head -20 | cut -d' ' -f2))
+
+for num in "${recent_nums[@]}"; do
+    title="${post_data["$num,title"]}"
+    date="${post_data["$num,date"]}"
+    excerpt="${post_data["$num,excerpt"]}"
+    
+    cat >> public/index.html << POST_EOF
+        <div class="post" data-title="${title,,}" data-excerpt="${excerpt,,}" data-searchable="${title,,} ${excerpt,,}" onclick="window.location.href='p/${num}.html'">
+            <small>${date}</small>
+            <h2><a href="p/${num}.html">${title}</a></h2>
+            <div class="excerpt">${excerpt}</div>
+        </div>
+POST_EOF
 done
 
-cat >> public/index.html << EOF
-        </div>
+cat >> public/index.html << MAIN_END_EOF
+    </div>
+    <nav style="margin-top:2em">
+        <p>📚 <a href="archive/">View all posts in Archive →</a></p>
+    </nav>
+
+    <script>
+        let originalPosts = null;
+        const searchInput = document.getElementById('search');
+        const postsContainer = document.getElementById('posts');
+        const searchInfo = document.getElementById('search-info');
+        const searchCount = document.getElementById('search-count');
         
-        <nav style="margin-top: 3rem;">
-            <a href="archive/">📚 View all ${processed} posts in Archive →</a>
-        </nav>
-    </main>
-    
-    <!-- Scripts -->
-    <script src="assets/js/app.js"></script>
+        function searchPosts() {
+            const query = searchInput.value.toLowerCase().trim();
+            
+            // Store original content only once
+            if (originalPosts === null) {
+                originalPosts = postsContainer.innerHTML;
+            }
+            
+            if (!query) {
+                postsContainer.innerHTML = originalPosts;
+                searchInfo.style.display = 'none';
+                return;
+            }
+            
+            // Get all posts from original content
+            const tempDiv = document.createElement('div');
+            tempDiv.innerHTML = originalPosts;
+            const posts = Array.from(tempDiv.children);
+            
+            const filtered = posts.filter(post => {
+                const searchable = post.dataset.searchable || '';
+                return searchable.includes(query);
+            });
+            
+            if (filtered.length > 0) {
+                postsContainer.innerHTML = filtered.map(post => {
+                    let html = post.outerHTML;
+                    const regex = new RegExp(\`(\${query})\`, 'gi');
+                    html = html.replace(regex, '<span class="search-highlight">\$1</span>');
+                    return html;
+                }).join('');
+            } else {
+                postsContainer.innerHTML = '<div class="no-results">No posts found matching your search.</div>';
+            }
+            
+            searchCount.textContent = filtered.length;
+            searchInfo.style.display = 'block';
+        }
+        
+        // Use input event for real-time search including backspace
+        searchInput.addEventListener('input', searchPosts);
+    </script>
 </body>
 </html>
-EOF
+MAIN_END_EOF
 
-# Generate enhanced archive page
-echo "ℹ️ Generating archive..."
+# Generate archive page with fixed sticky header and search
+echo "📚 Generating archive with fixed search and sticky header..."
 
-all_posts=$(sort -rn "$post_list_file" | cut -d' ' -f2)
-
-cat > public/archive/index.html << EOF
+cat > public/archive/index.html << ARCHIVE_START_EOF
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width,initial-scale=1">
     <title>Archive - ${SITE_TITLE}</title>
-    <meta name="description" content="Archive of all ${processed} posts">
-    <meta name="author" content="${SITE_TITLE}">
-    
-    <!-- Stylesheets -->
-    <link rel="stylesheet" href="../assets/css/style.css">
-    
-    <!-- Favicon -->
-    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📚</text></svg>">
+    <meta name="description" content="Chronological archive of all ${total} posts">
+    <style>${SHARED_CSS}</style>
 </head>
 <body>
-    <header class="site-header">
-        <div class="site-title">
-            <a href="../">${SITE_TITLE}</a>
-            <button id="theme-toggle" class="theme-toggle" aria-label="Toggle theme">🌙</button>
-        </div>
-    </header>
+    <nav><a href="../">← Home</a></nav>
+    <h1>Archive</h1>
+    <div class="stats">📊 ${total} posts chronologically ordered</div>
+    <input id="search-main" placeholder="Search all posts..." autocomplete="off">
+    <div id="search-info" class="search-results" style="display:none">
+        <span id="search-count">0</span> of ${total} posts found
+    </div>
     
-    <nav>
-        <a href="../">← Home</a>
-    </nav>
+    <div id="sticky-header" class="sticky-header">
+        <h2 id="sticky-title">Timeline</h2>
+        <input id="search-sticky" placeholder="Search all posts..." autocomplete="off">
+    </div>
     
-    <main>
-        <h1>Archive</h1>
-        <div class="stats">📚 ${processed} posts chronologically ordered</div>
-        
-        <div class="search-container">
-            <input 
-                type="search" 
-                id="search" 
-                placeholder="Search all posts..." 
-                autocomplete="off"
-                aria-label="Search all posts"
-            >
-            <span class="search-icon">🔍</span>
-        </div>
-        
-        <div id="search-info" class="search-results" style="display:none">
-            Found <span id="search-count">0</span> of ${processed} posts
-        </div>
-        
-        <div id="posts">
-EOF
+    <div class="archive-content" id="archive">
+ARCHIVE_START_EOF
 
-current_year=""
-current_month=""
+# Sort all posts chronologically (newest first)
+sorted_nums=($(for file in "${files[@]}"; do
+    slug=$(basename "$file" .md)
+    num=$(echo "$slug" | grep -o '[0-9]\+$' || echo "1")
+    echo "${post_data["$num,sort_date"]} $num"
+done | sort -rn | cut -d' ' -f2))
 
-for post_num in $all_posts; do
-    post_data=$(grep "^$post_num|" "$post_data_file")
-    if [ -n "$post_data" ]; then
-        title=$(echo "$post_data" | cut -d'|' -f2)
-        date_str=$(echo "$post_data" | cut -d'|' -f3)
-        excerpt=$(echo "$post_data" | cut -d'|' -f5)
-        reading_time=$(echo "$post_data" | cut -d'|' -f8)
-        
-        year=$(echo "$date_str" | cut -d'/' -f1)
-        month=$(echo "$date_str" | cut -d'/' -f2)
-        month_name=$(get_month_name "$month")
-        
-        if [ "$year" != "$current_year" ]; then
-            if [ -n "$current_year" ]; then
-                echo "                </div>" >> public/archive/index.html
-                echo "            </div>" >> public/archive/index.html
-            fi
-            echo "            <div class=\"year-section\">" >> public/archive/index.html
-            echo "                <div class=\"year-header\"><h2>$year</h2></div>" >> public/archive/index.html
-            current_year="$year"
-            current_month=""
-        fi
-        
-        if [ "$month" != "$current_month" ]; then
-            if [ -n "$current_month" ]; then
-                echo "                </div>" >> public/archive/index.html
-            fi
-            echo "                <div class=\"month-section\">" >> public/archive/index.html
-            echo "                    <div class=\"month-header\"><h3>$month_name</h3></div>" >> public/archive/index.html
-            current_month="$month"
-        fi
-        
-        cat >> public/archive/index.html << EOF
-                    <article class="post" data-title="${title,,}" data-excerpt="${excerpt,,}" data-searchable="${title,,} ${excerpt,,}" onclick="window.location.href='../p/${post_num}.html'">
-                        <div class="post-meta">${date_str} • ~${reading_time} min read</div>
-                        <h3 class="post-title"><a href="../p/${post_num}.html">${title}</a></h3>
-                        <div class="post-excerpt">${excerpt}</div>
-                    </article>
-EOF
-    fi
+# Group by year and month
+declare -A year_months
+for num in "${sorted_nums[@]}"; do
+    year="${post_data["$num,year"]}"
+    month="${post_data["$num,month"]}"
+    ym="$year-$month"
+    year_months["$ym"]+="$num "
 done
 
-if [ -n "$current_month" ]; then
-    echo "                </div>" >> public/archive/index.html
-fi
-if [ -n "$current_year" ]; then
-    echo "            </div>" >> public/archive/index.html
-fi
-
-cat >> public/archive/index.html << EOF
-        </div>
-    </main>
+# Generate timeline
+current_year=""
+for ym in $(printf '%s\n' "${!year_months[@]}" | sort -rn); do
+    year=$(echo "$ym" | cut -d- -f1)
+    month=$(echo "$ym" | cut -d- -f2)
+    month_name=$(get_month_name "$month")
     
-    <!-- Scripts -->
-    <script src="../assets/js/app.js"></script>
+    # Year section
+    if [ "$year" != "$current_year" ]; then
+        [ -n "$current_year" ] && echo "        </div>" >> public/archive/index.html
+        cat >> public/archive/index.html << YEAR_EOF
+        <div class="year-section" data-year="$year">
+            <div class="year-header">
+                <h2>$year</h2>
+            </div>
+YEAR_EOF
+        current_year="$year"
+    fi
+    
+    # Month section
+    cat >> public/archive/index.html << MONTH_EOF
+            <div class="month-section" data-month="$month" data-year-month="$year $month_name">
+                <div class="month-header">
+                    <h3>$month_name</h3>
+                </div>
+MONTH_EOF
+    
+    # Posts in this month (sorted by day, newest first)
+    month_nums=($(printf '%s\n' ${year_months[$ym]} | xargs -n1 | while read num; do
+        echo "${post_data["$num,sort_date"]} $num"
+    done | sort -rn | cut -d' ' -f2))
+    
+    for num in "${month_nums[@]}"; do
+        title="${post_data["$num,title"]}"
+        date="${post_data["$num,date"]}"
+        excerpt="${post_data["$num,excerpt"]}"
+        
+        cat >> public/archive/index.html << POST_ARCHIVE_EOF
+                <div class="post" data-title="${title,,}" data-excerpt="${excerpt,,}" data-searchable="${title,,} ${excerpt,,}" onclick="window.location.href='../p/${num}.html'">
+                    <small>${date}</small>
+                    <h3><a href="../p/${num}.html">${title}</a></h3>
+                    <div class="excerpt">${excerpt}</div>
+                </div>
+POST_ARCHIVE_EOF
+    done
+    echo "            </div>" >> public/archive/index.html
+done
+
+[ -n "$current_year" ] && echo "        </div>" >> public/archive/index.html
+
+cat >> public/archive/index.html << ARCHIVE_END_EOF
+    </div>
+
+    <script>
+        let originalArchive = null;
+        const searchMainInput = document.getElementById('search-main');
+        const searchStickyInput = document.getElementById('search-sticky');
+        const archiveContainer = document.getElementById('archive');
+        const searchInfo = document.getElementById('search-info');
+        const searchCount = document.getElementById('search-count');
+        const stickyHeader = document.getElementById('sticky-header');
+        const stickyTitle = document.getElementById('sticky-title');
+        
+        function updateStickyHeader() {
+            const scrollTop = window.pageYOffset;
+            const searchMainRect = searchMainInput.getBoundingClientRect();
+            
+            if (searchMainRect.bottom < 0) {
+                stickyHeader.style.display = 'block';
+                if (searchStickyInput.value !== searchMainInput.value) {
+                    searchStickyInput.value = searchMainInput.value;
+                }
+            } else {
+                stickyHeader.style.display = 'none';
+            }
+            
+            if (stickyHeader.style.display === 'block') {
+                const sections = document.querySelectorAll('.year-section, .month-section');
+                let currentSection = null;
+                
+                for (let section of sections) {
+                    const rect = section.getBoundingClientRect();
+                    if (rect.top <= 150) {
+                        currentSection = section;
+                    }
+                }
+                
+                if (currentSection) {
+                    const yearSection = currentSection.closest('.year-section');
+                    const monthSection = currentSection.classList.contains('month-section') ? currentSection : null;
+                    
+                    let title = '';
+                    if (yearSection) {
+                        title = yearSection.dataset.year;
+                        if (monthSection && monthSection.dataset.yearMonth) {
+                            title = monthSection.dataset.yearMonth;
+                        }
+                    }
+                    
+                    if (title) {
+                        stickyTitle.textContent = title;
+                    } else {
+                        stickyTitle.textContent = 'Archive';
+                    }
+                } else {
+                    stickyTitle.textContent = 'Archive';
+                }
+            }
+        }
+        
+        function searchArchive() {
+            const mainQuery = searchMainInput.value.toLowerCase().trim();
+            const stickyQuery = searchStickyInput.value.toLowerCase().trim();
+            const query = mainQuery || stickyQuery;
+            
+            // Sync both inputs
+            if (mainQuery !== stickyQuery) {
+                if (mainQuery) {
+                    searchStickyInput.value = searchMainInput.value;
+                } else {
+                    searchMainInput.value = searchStickyInput.value;
+                }
+            }
+            
+            // Store original content only once
+            if (originalArchive === null) {
+                originalArchive = archiveContainer.innerHTML;
+            }
+            
+            if (!query) {
+                archiveContainer.innerHTML = originalArchive;
+                searchInfo.style.display = 'none';
+                updateStickyHeader();
+                return;
+            }
+            
+            // Get all posts from original content
+            const tempDiv = document.createElement('div');
+            tempDiv.innerHTML = originalArchive;
+            const posts = Array.from(tempDiv.querySelectorAll('.post'));
+            
+            const filtered = posts.filter(post => {
+                const searchable = post.dataset.searchable || '';
+                return searchable.includes(query);
+            });
+            
+            if (filtered.length > 0) {
+                let html = '<div class="year-section"><div class="year-header"><h2>Search Results</h2></div><div class="month-section">';
+                html += filtered.map(post => {
+                    let postHtml = post.outerHTML;
+                    const regex = new RegExp(\`(\${query})\`, 'gi');
+                    postHtml = postHtml.replace(regex, '<span class="search-highlight">\$1</span>');
+                    return postHtml;
+                }).join('');
+                html += '</div></div>';
+                archiveContainer.innerHTML = html;
+                
+                if (stickyHeader.style.display === 'block') {
+                    stickyTitle.textContent = \`Search Results (\${filtered.length})\`;
+                }
+            } else {
+                archiveContainer.innerHTML = '<div class="no-results">No posts found matching your search.</div>';
+                if (stickyHeader.style.display === 'block') {
+                    stickyTitle.textContent = 'Search Results (0)';
+                }
+            }
+            
+            searchCount.textContent = filtered.length;
+            searchInfo.style.display = 'block';
+        }
+        
+        // Use input event for real-time search including backspace
+        searchMainInput.addEventListener('input', searchArchive);
+        searchStickyInput.addEventListener('input', searchArchive);
+        window.addEventListener('scroll', updateStickyHeader);
+        window.addEventListener('resize', updateStickyHeader);
+        
+        updateStickyHeader();
+    </script>
 </body>
 </html>
-EOF
+ARCHIVE_END_EOF
 
-# Create manifest.json for PWA support
-cat > public/manifest.json << EOF
-{
-  "name": "${SITE_TITLE}",
-  "short_name": "${SITE_TITLE}",
-  "description": "A modern blog with ${processed} posts",
-  "start_url": "/",
-  "display": "standalone",
-  "background_color": "#ffffff",
-  "theme_color": "#0969da",
-  "icons": [
-    {
-      "src": "data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📝</text></svg>",
-      "sizes": "192x192",
-      "type": "image/svg+xml"
-    }
-  ]
-}
-EOF
-
-# Cleanup
-rm -f "$post_list_file" "$post_data_file"
-
-echo "✅ Build completed successfully!"
-echo
-echo "📊 STATISTICS:"
-echo "  ✅ Total files processed: $processed"
-echo "  ✅ Enhanced features added:"
-echo "    - 🎨 Modern responsive design with dark/light themes"
-echo "    - 🔍 Advanced search with highlighting"
-echo "    - 📋 Copy-to-clipboard for code blocks"
-echo "    - 🎯 Syntax highlighting with Prism.js"
-echo "    - 📊 Mermaid diagram support"
-echo "    - 📱 Progressive Web App features"
-echo "    - 📈 Reading progress indicator"
-echo "    - 🔄 Offline support via Service Worker"
-echo "    - ♿ Accessibility improvements"
-echo "    - 🚀 Performance optimizations"
-echo
-echo "🌐 Your enhanced blog is ready!"
+echo "✅ Final improved blog build completed!"
+echo "📊 Generated:"
+echo "  - Main page with consistent archive-style UI and hover effects"
+echo "  - Fixed search functionality with proper backspace handling"
+echo "  - Clean sticky header with single year/month display"
+echo "  - Enhanced blog post typography matching Software Architecture style"
+echo "  - Code blocks with copy-to-clipboard functionality"
+echo "  - Mermaid diagram support with proper rendering"
+echo "  - Syntax highlighting with Prism.js"
+echo "  - Table formatting and responsive design"
+echo "  - $total individual post pages with improved styling"
+echo "  - Real-time search with proper state management"
