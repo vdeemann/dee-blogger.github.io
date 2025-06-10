@@ -795,45 +795,12 @@ cat >> public/index.html << 'MAIN_FOOTER'
     
     <script>
         (function() {
-            let postsData = [];
-            const searchInput = document.getElementById('search');
-            const postsContainer = document.getElementById('posts');
-            const searchInfo = document.getElementById('search-info');
-            const searchCount = document.getElementById('search-count');
-            
-            if (!searchInput || !postsContainer || !searchInfo || !searchCount) {
-                console.error('Search elements not found');
-                return;
-            }
-            
-            // Initialize posts data on load
-            function initializePosts() {
-                const posts = postsContainer.querySelectorAll('.post');
-                postsData = Array.from(posts).map(post => {
-                    const titleEl = post.querySelector('.post-title a');
-                    const excerptEl = post.querySelector('.excerpt');
-                    const dateEl = post.querySelector('.post-date');
-                    
-                    return {
-                        element: post,
-                        title: titleEl ? titleEl.textContent : '',
-                        excerpt: excerptEl ? excerptEl.textContent : '',
-                        date: dateEl ? dateEl.textContent : '',
-                        url: titleEl ? titleEl.getAttribute('href') : '',
-                        originalHTML: post.innerHTML
-                    };
-                });
-            }
-            
-            // Escape special regex characters
-            function escapeRegExp(string) {
-                return string.replace(/[.*+?^${}()|[\]\\]/g, '\\    <script>
-        (function() {
             let originalPosts = null;
             const searchInput = document.getElementById('search');
             const postsContainer = document.getElementById('posts');
             const searchInfo = document.getElementById('search-info');
             const searchCount = document.getElementById('search-count');
+            const searchTerm = document.getElementById('search-term');
             
             if (!searchInput || !postsContainer || !searchInfo || !searchCount) {
                 console.error('Search elements not found');
@@ -861,8 +828,11 @@ cat >> public/index.html << 'MAIN_FOOTER'
                 if (!query) {
                     postsContainer.innerHTML = originalPosts;
                     searchInfo.style.display = 'none';
+                    searchInput.classList.remove('searching');
                     return;
                 }
+                
+                searchInput.classList.add('searching');
                 
                 const tempDiv = document.createElement('div');
                 tempDiv.innerHTML = originalPosts;
@@ -899,127 +869,21 @@ cat >> public/index.html << 'MAIN_FOOTER'
                 }
                 
                 searchCount.textContent = filtered.length;
+                searchTerm.textContent = query;
                 searchInfo.style.display = 'block';
             }
             
-            searchInput.addEventListener('input', searchPosts);
-            console.log('Main page search initialized');
-        })();
-    </script>');
-            }
-            
-            // Highlight matching text with proper HTML escaping
-            function highlightMatches(text, query) {
-                if (!query || !text) return text;
-                
-                // First, HTML escape the text
-                const div = document.createElement('div');
-                div.textContent = text;
-                const escapedText = div.innerHTML;
-                
-                // Then apply highlighting
-                const escapedQuery = escapeRegExp(query);
-                const regex = new RegExp('(' + escapedQuery + ')', 'gi');
-                return escapedText.replace(regex, '<span class="search-highlight">$1</span>');
-            }
-            
-            // Perform character-by-character search
-            function performSearch() {
-                const query = searchInput.value.trim();
-                
-                if (!query) {
-                    // Reset to original state
-                    searchInput.classList.remove('searching');
-                    postsData.forEach(post => {
-                        post.element.innerHTML = post.originalHTML;
-                        post.element.style.display = 'block';
-                    });
-                    searchInfo.style.display = 'none';
-                    return;
-                }
-                
-                // Add searching indicator
-                searchInput.classList.add('searching');
-                
-                let matchCount = 0;
-                
-                postsData.forEach(post => {
-                    const titleLower = post.title.toLowerCase();
-                    const excerptLower = post.excerpt.toLowerCase();
-                    const dateLower = post.date.toLowerCase();
-                    const queryLower = query.toLowerCase();
-                    
-                    // Check if post matches the search query
-                    const matches = titleLower.includes(queryLower) || 
-                                  excerptLower.includes(queryLower) || 
-                                  dateLower.includes(queryLower);
-                    
-                    if (matches) {
-                        matchCount++;
-                        post.element.style.display = 'block';
-                        
-                        // Rebuild the post HTML with highlighting
-                        const highlightedDate = highlightMatches(post.date, query);
-                        const highlightedTitle = highlightMatches(post.title, query);
-                        const highlightedExcerpt = highlightMatches(post.excerpt, query);
-                        
-                        post.element.innerHTML = 
-                            '<div class="post-date">' + highlightedDate + '</div>' +
-                            '<div class="post-title">' +
-                            '<a href="' + post.url + '">' + highlightedTitle + '</a>' +
-                            '</div>' +
-                            '<div class="excerpt">' + highlightedExcerpt + '</div>';
-                    } else {
-                        post.element.style.display = 'none';
-                    }
-                });
-                
-                // Update search info
-                searchCount.textContent = matchCount;
-                searchInfo.style.display = 'block';
-                
-                // Show no results message if needed
-                if (matchCount === 0) {
-                    const noResults = document.createElement('div');
-                    noResults.className = 'no-results';
-                    noResults.textContent = 'No posts found matching "' + query + '". Try different keywords.';
-                    postsContainer.appendChild(noResults);
-                } else {
-                    // Remove any existing no results message
-                    const existingNoResults = postsContainer.querySelector('.no-results');
-                    if (existingNoResults) {
-                        existingNoResults.remove();
-                    }
-                }
-            }
-            
-            // Initialize posts data
-            initializePosts();
-            
-            // Add input event listener for real-time search
             let searchTimeout;
             searchInput.addEventListener('input', function() {
                 clearTimeout(searchTimeout);
-                
-                // If search is empty, clear immediately
                 if (!searchInput.value.trim()) {
-                    performSearch();
+                    searchPosts();
                     return;
                 }
-                
-                // Small delay to improve performance on fast typing
-                searchTimeout = setTimeout(performSearch, 50);
+                searchTimeout = setTimeout(searchPosts, 50);
             });
             
-            // Also search immediately on certain keys
-            searchInput.addEventListener('keyup', function(e) {
-                if (e.key === 'Enter' || e.key === ' ') {
-                    clearTimeout(searchTimeout);
-                    performSearch();
-                }
-            });
-            
-            console.log('Enhanced character-by-character search initialized');
+            console.log('Main page search initialized');
         })();
     </script>
 </body>
@@ -1147,57 +1011,6 @@ cat >> public/archive/index.html << 'ARCHIVE_END'
     
     <script>
         (function() {
-            let postsData = [];
-            let yearSections = [];
-            let isSearchActive = false;
-            
-            const searchMainInput = document.getElementById('search-main');
-            const searchStickyInput = document.getElementById('search-sticky');
-            const archiveContainer = document.getElementById('archive');
-            const searchInfo = document.getElementById('search-info');
-            const searchCount = document.getElementById('search-count');
-            const searchTerm = document.getElementById('search-term');
-            const stickyHeader = document.getElementById('sticky-header');
-            const stickyTitle = document.getElementById('sticky-title');
-            
-            if (!searchMainInput || !searchStickyInput || !archiveContainer) {
-                console.error('Archive search elements not found');
-                return;
-            }
-            
-            // Initialize archive data
-            function initializeArchive() {
-                // Store year sections structure
-                const sections = archiveContainer.querySelectorAll('.year-section');
-                yearSections = Array.from(sections).map(section => ({
-                    element: section,
-                    originalHTML: section.innerHTML
-                }));
-                
-                // Store all posts data
-                const posts = archiveContainer.querySelectorAll('.post');
-                postsData = Array.from(posts).map(post => {
-                    const titleEl = post.querySelector('.post-title a');
-                    const excerptEl = post.querySelector('.excerpt');
-                    const dateEl = post.querySelector('.post-date');
-                    
-                    return {
-                        element: post,
-                        title: titleEl ? titleEl.textContent : '',
-                        excerpt: excerptEl ? excerptEl.textContent : '',
-                        date: dateEl ? dateEl.textContent : '',
-                        url: titleEl ? titleEl.getAttribute('href') : '',
-                        originalHTML: post.innerHTML,
-                        parentSection: post.closest('.month-section'),
-                        yearSection: post.closest('.year-section')
-                    };
-                });
-            }
-            
-            // Escape special regex characters
-            function escapeRegExp(string) {
-                return string.replace(/[.*+?^${}()|[\]\\]/g, '\\    <script>
-        (function() {
             let originalArchive = null;
             let isSearchActive = false;
             
@@ -1206,6 +1019,7 @@ cat >> public/archive/index.html << 'ARCHIVE_END'
             const archiveContainer = document.getElementById('archive');
             const searchInfo = document.getElementById('search-info');
             const searchCount = document.getElementById('search-count');
+            const searchTerm = document.getElementById('search-term');
             const stickyHeader = document.getElementById('sticky-header');
             const stickyTitle = document.getElementById('sticky-title');
             
@@ -1276,12 +1090,16 @@ cat >> public/archive/index.html << 'ARCHIVE_END'
                 if (!query) {
                     archiveContainer.innerHTML = originalArchive;
                     searchInfo.style.display = 'none';
+                    searchMainInput.classList.remove('searching');
+                    searchStickyInput.classList.remove('searching');
                     isSearchActive = false;
                     updateStickyHeader();
                     return;
                 }
                 
                 isSearchActive = true;
+                searchMainInput.classList.add('searching');
+                searchStickyInput.classList.add('searching');
                 
                 // Search through posts
                 const tempDiv = document.createElement('div');
@@ -1313,6 +1131,12 @@ cat >> public/archive/index.html << 'ARCHIVE_END'
                             excerptEl.innerHTML = highlightText(excerptEl.textContent, query);
                         }
                         
+                        // Highlight in date
+                        const dateEl = postClone.querySelector('.post-date');
+                        if (dateEl) {
+                            dateEl.innerHTML = highlightText(dateEl.textContent, query);
+                        }
+                        
                         html += postClone.outerHTML;
                     });
                     
@@ -1330,12 +1154,23 @@ cat >> public/archive/index.html << 'ARCHIVE_END'
                 }
                 
                 searchCount.textContent = filtered.length;
+                searchTerm.textContent = query;
                 searchInfo.style.display = 'block';
             }
             
             // Event listeners
-            searchMainInput.addEventListener('input', searchArchive);
-            searchStickyInput.addEventListener('input', searchArchive);
+            let searchTimeout;
+            function handleSearch() {
+                clearTimeout(searchTimeout);
+                if (!this.value.trim()) {
+                    searchArchive();
+                    return;
+                }
+                searchTimeout = setTimeout(searchArchive, 50);
+            }
+            
+            searchMainInput.addEventListener('input', handleSearch);
+            searchStickyInput.addEventListener('input', handleSearch);
             
             // Scroll event for sticky header
             let scrollTimeout = null;
@@ -1353,207 +1188,6 @@ cat >> public/archive/index.html << 'ARCHIVE_END'
             // Initialize
             updateStickyHeader();
             console.log('Archive search and sticky header initialized');
-        })();
-    </script>');
-            }
-            
-            // Highlight matching text
-            function highlightMatches(text, query) {
-                if (!query || !text) return text;
-                
-                // HTML escape the text first
-                const div = document.createElement('div');
-                div.textContent = text;
-                const escapedText = div.innerHTML;
-                
-                // Apply highlighting
-                const escapedQuery = escapeRegExp(query);
-                const regex = new RegExp('(' + escapedQuery + ')', 'gi');
-                return escapedText.replace(regex, '<span class="search-highlight">$1</span>');
-            }
-            
-            // Update sticky header
-            function updateStickyHeader() {
-                const searchMainRect = searchMainInput.getBoundingClientRect();
-                
-                if (searchMainRect.bottom < 0) {
-                    stickyHeader.style.display = 'block';
-                    if (!isSearchActive) {
-                        // Update title based on visible section
-                        const sections = document.querySelectorAll('.year-section, .month-section');
-                        let currentSection = null;
-                        
-                        for (let section of sections) {
-                            const rect = section.getBoundingClientRect();
-                            if (rect.top <= 150 && rect.bottom > 0) {
-                                currentSection = section;
-                                break;
-                            }
-                        }
-                        
-                        if (currentSection) {
-                            if (currentSection.dataset.yearMonth) {
-                                stickyTitle.textContent = currentSection.dataset.yearMonth;
-                            } else if (currentSection.dataset.year) {
-                                stickyTitle.textContent = currentSection.dataset.year;
-                            }
-                        }
-                    }
-                } else {
-                    stickyHeader.style.display = 'none';
-                }
-            }
-            
-            // Perform search
-            function performSearch() {
-                const mainQuery = searchMainInput.value.trim();
-                const stickyQuery = searchStickyInput.value.trim();
-                const query = mainQuery || stickyQuery;
-                
-                // Sync inputs
-                if (document.activeElement === searchMainInput) {
-                    searchStickyInput.value = searchMainInput.value;
-                } else if (document.activeElement === searchStickyInput) {
-                    searchMainInput.value = searchStickyInput.value;
-                }
-                
-                if (!query) {
-                    // Reset to original state
-                    searchMainInput.classList.remove('searching');
-                    searchStickyInput.classList.remove('searching');
-                    isSearchActive = false;
-                    yearSections.forEach(section => {
-                        section.element.innerHTML = section.originalHTML;
-                        section.element.style.display = 'block';
-                    });
-                    searchInfo.style.display = 'none';
-                    updateStickyHeader();
-                    return;
-                }
-                
-                // Add searching indicators
-                searchMainInput.classList.add('searching');
-                searchStickyInput.classList.add('searching');
-                isSearchActive = true;
-                let matchingPosts = [];
-                
-                // Search through all posts
-                postsData.forEach(post => {
-                    const titleLower = post.title.toLowerCase();
-                    const excerptLower = post.excerpt.toLowerCase();
-                    const dateLower = post.date.toLowerCase();
-                    const queryLower = query.toLowerCase();
-                    
-                    if (titleLower.includes(queryLower) || 
-                        excerptLower.includes(queryLower) || 
-                        dateLower.includes(queryLower)) {
-                        
-                        // Create highlighted version
-                        const highlightedPost = {
-                            date: highlightMatches(post.date, query),
-                            title: highlightMatches(post.title, query),
-                            excerpt: highlightMatches(post.excerpt, query),
-                            url: post.url
-                        };
-                        matchingPosts.push(highlightedPost);
-                    }
-                });
-                
-                // Clear archive and show results
-                archiveContainer.innerHTML = '';
-                
-                if (matchingPosts.length > 0) {
-                    // Create search results section
-                    const resultsSection = document.createElement('div');
-                    resultsSection.className = 'year-section';
-                    resultsSection.innerHTML = 
-                        '<div class="year-header"><h2>Search Results</h2></div>' +
-                        '<div class="month-section">';
-                    
-                    // Add matching posts
-                    matchingPosts.forEach(post => {
-                        const postDiv = document.createElement('div');
-                        postDiv.className = 'post';
-                        postDiv.onclick = function() { window.location.href = post.url; };
-                        postDiv.innerHTML = 
-                            '<div class="post-date">' + post.date + '</div>' +
-                            '<div class="post-title">' +
-                            '<a href="' + post.url + '">' + post.title + '</a>' +
-                            '</div>' +
-                            '<div class="excerpt">' + post.excerpt + '</div>';
-                        resultsSection.querySelector('.month-section').appendChild(postDiv);
-                    });
-                    
-                    resultsSection.innerHTML += '</div>';
-                    archiveContainer.appendChild(resultsSection);
-                    
-                    if (stickyHeader.style.display === 'block') {
-                        stickyTitle.textContent = 'Search Results (' + matchingPosts.length + ')';
-                    }
-                } else {
-                    const noResults = document.createElement('div');
-                    noResults.className = 'no-results';
-                    noResults.textContent = 'No posts found matching "' + query + '". Try different keywords.';
-                    archiveContainer.appendChild(noResults);
-                    
-                    if (stickyHeader.style.display === 'block') {
-                        stickyTitle.textContent = 'Search Results (0)';
-                    }
-                }
-                
-                searchCount.textContent = matchingPosts.length;
-                const searchTermEl = document.getElementById('search-term');
-                if (searchTermEl) searchTermEl.textContent = query;
-                searchInfo.style.display = 'block';
-            }
-            
-            // Initialize
-            initializeArchive();
-            
-            // Event listeners
-            let searchTimeout;
-            function handleSearch() {
-                clearTimeout(searchTimeout);
-                
-                // If search is empty, clear immediately
-                const activeInput = document.activeElement;
-                if (activeInput && !activeInput.value.trim()) {
-                    performSearch();
-                    return;
-                }
-                
-                searchTimeout = setTimeout(performSearch, 50);
-            }
-            
-            searchMainInput.addEventListener('input', handleSearch);
-            searchStickyInput.addEventListener('input', handleSearch);
-            
-            // Immediate search on enter/space
-            [searchMainInput, searchStickyInput].forEach(input => {
-                input.addEventListener('keyup', function(e) {
-                    if (e.key === 'Enter' || e.key === ' ') {
-                        clearTimeout(searchTimeout);
-                        performSearch();
-                    }
-                });
-            });
-            
-            // Scroll event for sticky header
-            let scrollTimeout = null;
-            window.addEventListener('scroll', function() {
-                if (!scrollTimeout) {
-                    scrollTimeout = setTimeout(function() {
-                        updateStickyHeader();
-                        scrollTimeout = null;
-                    }, 10);
-                }
-            });
-            
-            window.addEventListener('resize', updateStickyHeader);
-            
-            // Initialize sticky header
-            updateStickyHeader();
-            console.log('Enhanced archive search initialized');
         })();
     </script>
 </body>
