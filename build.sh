@@ -10,7 +10,7 @@ BASE_URL="${BASE_URL:-https://vdeemann.github.io/dee-blogger.github.io}"
 rm -rf public
 mkdir -p public/p public/archive
 
-# Enhanced shared CSS for consistent styling across all pages
+# Enhanced shared CSS for consistent styling across all pages (hover effects removed)
 cat > public/shared.css << 'EOF'
 body{max-width:55em;margin:2em auto;padding:0 1em;font-family:system-ui,sans-serif;line-height:1.6;color:#333;background:#fff;position:relative}
 a{color:#0066cc;text-decoration:none}
@@ -21,13 +21,13 @@ h3{font-size:1.1em;margin:1.2em 0 .4em;color:#444;font-weight:600}
 h4{font-size:1em;margin:1em 0 .3em;color:#555;font-weight:600}
 p{margin:.6em 0}
 small{color:#666;display:block;margin:0 0 .3em;font-size:.9em}
-.post{margin:0 0 .8em;padding:.7em .9em;background:#fafafa;border-radius:6px;border:1px solid #e8e8e8;cursor:pointer;transition:all 0.2s ease}
-.post:hover{background:#f5f5f5;border-color:#ddd;transform:translateY(-1px);box-shadow:0 2px 8px rgba(0,0,0,0.1)}
+.post{margin:0 0 .8em;padding:.7em .9em;background:#fafafa;border-radius:6px;border:1px solid #e8e8e8;cursor:pointer;transition:border-color 0.2s ease}
+.post:hover{border-color:#0066cc}
 input{width:100%;margin:0 0 1.2em;padding:.7em;border:1px solid #ddd;border-radius:6px;font-size:.95em;background:#fff;box-sizing:border-box}
 nav{margin:1.2em 0;padding:.6em 0;border-bottom:1px solid #eee}
 nav a{margin-right:1em;font-weight:500}
 .stats{background:#fff3cd;padding:.8em 1.2em;border-radius:6px;margin:1.2em 0;text-align:center;font-size:.95em;border:1px solid #ffeaa7}
-.search-highlight{background:#ffeb3b;padding:0 .2em;border-radius:2px;animation:highlight-fade 0.3s ease-out}
+.search-highlight{background:#ffeb3b;padding:0 .2em;border-radius:2px;font-weight:600}
 .excerpt{color:#666;margin:.4em 0 0;font-size:.9em;line-height:1.4}
 .search-results{background:#e8f4fd;padding:1em;border-radius:6px;margin:1.2em 0;border-left:4px solid #0066cc}
 .no-results{text-align:center;color:#666;padding:2em;font-style:italic}
@@ -785,96 +785,6 @@ cat >> public/index.html << 'MAIN_FOOTER'
             <p>📚 <a href="archive/">View all posts in Archive →</a></p>
         </nav>
     </main>
-MAIN_FOOTER
-
-# Add the complete search script
-cat >> public/index.html << 'MAIN_SCRIPT_END'
-    <script>
-(function() {
-    let originalPosts = null;
-    let postsData = [];
-    let searchTimeout = null;
-    let lastQuery = '';
-    
-    const searchInput = document.getElementById('search');
-    const postsContainer = document.getElementById('posts');
-    const searchInfo = document.getElementById('search-info');
-    const searchCount = document.getElementById('search-count');
-    
-    if (!searchInput || !postsContainer || !searchInfo || !searchCount) {
-        console.error('Search elements not found');
-        return;
-    }
-    
-    function initializeSearch() {
-        if (originalPosts === null) {
-            originalPosts = postsContainer.innerHTML;
-            const tempDiv = document.createElement('div');
-            tempDiv.innerHTML = originalPosts;
-            postsData = Array.from(tempDiv.children).map(function(post) {
-                return {
-                    element: post,
-                    searchable: (post.dataset.searchable || '').toLowerCase(),
-                    html: post.outerHTML
-                };
-            });
-        }
-    }
-    
-    function highlightText(text, query) {
-        if (!query || query.length < 2) return text;
-        var escapedQuery = query.replace(/[.*+?^${}()|[\]\\]/g, '\\cat >> public/index.html << 'MAIN_END'
-        </div>
-        
-        <nav style="margin-top:2em">
-            <p>📚 <a href="archive/">View all posts in Archive →</a></p>
-        </nav>
-    </main>
-    
-    <script>
-        (function() {
-            let originalPosts = null;
-            let postsData = [];
-            let searchTimeout = null;
-            let lastQuery = '';
-            
-            const searchInput = document.getElementById('search');
-            const postsContainer = document.getElementById('posts');
-            const searchInfo = document.getElementById('search-info');
-            const searchCount = document.getElementById('search-count');
-            
-            if (!searchInput || !postsContainer || !searchInfo || !searchCount) {
-                console.error('Search elements not found');
-                return;
-            }
-            
-            // Cache original posts and extract searchable data
-            function initializeSearch() {
-                if (originalPosts === null) {
-                    originalPosts = postsContainer.innerHTML;
-                    
-                    // Extract and cache post data for faster searching
-                    const tempDiv = document.createElement('div');
-                    tempDiv.innerHTML = originalPosts;
-                    postsData = Array.from(tempDiv.children).map(post => ({
-                        element: post,
-                        searchable: (post.dataset.searchable || '').toLowerCase(),
-                        html: post.outerHTML
-                    }));
-                }
-            }
-            
-            // Optimized highlighting using DocumentFragment
-            function highlightText(text, query) {
-                if (!query || query.length < 2) return text; // Skip highlighting for very short queries
-                
-                const escapedQuery = query.replace(/[.*+?^${}()|[\]\\]/g, '\\cat >> public/index.html << 'MAIN_END'
-        </div>
-        
-        <nav style="margin-top:2em">
-            <p>📚 <a href="archive/">View all posts in Archive →</a></p>
-        </nav>
-    </main>
     
     <script>
         (function() {
@@ -923,11 +833,26 @@ cat >> public/index.html << 'MAIN_SCRIPT_END'
                 });
                 
                 if (filtered.length > 0) {
-                    postsContainer.innerHTML = filtered.map(post => {
-                        let html = post.outerHTML;
-                        html = highlightText(html, query);
-                        return html;
+                    // Create highlighted posts
+                    const highlightedPosts = filtered.map(post => {
+                        const postClone = post.cloneNode(true);
+                        
+                        // Highlight in title
+                        const titleEl = postClone.querySelector('.post-title a');
+                        if (titleEl) {
+                            titleEl.innerHTML = highlightText(titleEl.textContent, query);
+                        }
+                        
+                        // Highlight in excerpt
+                        const excerptEl = postClone.querySelector('.excerpt');
+                        if (excerptEl) {
+                            excerptEl.innerHTML = highlightText(excerptEl.textContent, query);
+                        }
+                        
+                        return postClone.outerHTML;
                     }).join('');
+                    
+                    postsContainer.innerHTML = highlightedPosts;
                 } else {
                     postsContainer.innerHTML = '<div class="no-results">No posts found matching your search. Try different keywords.</div>';
                 }
@@ -942,164 +867,7 @@ cat >> public/index.html << 'MAIN_SCRIPT_END'
     </script>
 </body>
 </html>
-MAIN_END');
-                const regex = new RegExp('(' + escapedQuery + ')', 'gi');
-                return text.replace(regex, '<span class="search-highlight">$1</span>');
-            }
-            
-            // Fast search implementation with debouncing
-            function performSearch(query) {
-                initializeSearch();
-                
-                if (!query || query === lastQuery) return;
-                lastQuery = query;
-                
-                if (query.length === 0) {
-                    postsContainer.innerHTML = originalPosts;
-                    searchInfo.style.display = 'none';
-                    return;
-                }
-                
-                // Filter posts efficiently
-                const filtered = postsData.filter(post => 
-                    post.searchable.includes(query)
-                );
-                
-                if (filtered.length > 0) {
-                    // Use DocumentFragment for efficient DOM manipulation
-                    const fragment = document.createDocumentFragment();
-                    const tempContainer = document.createElement('div');
-                    
-                    // Only highlight if query is substantial to avoid performance issues
-                    if (query.length >= 2) {
-                        tempContainer.innerHTML = filtered.map(post => 
-                            highlightText(post.html, query)
-                        ).join('');
-                    } else {
-                        tempContainer.innerHTML = filtered.map(post => post.html).join('');
-                    }
-                    
-                    // Move all children to fragment at once
-                    while (tempContainer.firstChild) {
-                        fragment.appendChild(tempContainer.firstChild);
-                    }
-                    
-                    // Replace content in one operation
-                    postsContainer.innerHTML = '';
-                    postsContainer.appendChild(fragment);
-                } else {
-                    postsContainer.innerHTML = '<div class="no-results">No posts found matching your search. Try different keywords.</div>';
-                }
-                
-                searchCount.textContent = filtered.length;
-                searchInfo.style.display = 'block';
-            }
-            
-            // Debounced search function
-            function debouncedSearch() {
-                const query = searchInput.value.toLowerCase().trim();
-                
-                // Clear existing timeout
-                if (searchTimeout) {
-                    clearTimeout(searchTimeout);
-                }
-                
-                // Immediate search for short queries or clearing
-                if (query.length <= 1) {
-                    performSearch(query);
-                    return;
-                }
-                
-                // Debounced search for longer queries (150ms delay)
-                searchTimeout = setTimeout(() => {
-                    performSearch(query);
-                }, 150);
-            }
-            
-            // Use more efficient event handling
-            searchInput.addEventListener('input', debouncedSearch);
-            
-            // Initialize on load
-            initializeSearch();
-            console.log('Optimized main page search initialized');
-        })();
-    </script>
-</body>
-</html>
-MAIN_END');
-        var regex = new RegExp('(' + escapedQuery + ')', 'gi');
-        return text.replace(regex, '<span class="search-highlight">$1</span>');
-    }
-    
-    function performSearch(query) {
-        initializeSearch();
-        
-        if (query === lastQuery) return;
-        lastQuery = query;
-        
-        if (query.length === 0) {
-            postsContainer.innerHTML = originalPosts;
-            searchInfo.style.display = 'none';
-            return;
-        }
-        
-        var filtered = postsData.filter(function(post) {
-            return post.searchable.includes(query);
-        });
-        
-        if (filtered.length > 0) {
-            var fragment = document.createDocumentFragment();
-            var tempContainer = document.createElement('div');
-            
-            if (query.length >= 2) {
-                tempContainer.innerHTML = filtered.map(function(post) {
-                    return highlightText(post.html, query);
-                }).join('');
-            } else {
-                tempContainer.innerHTML = filtered.map(function(post) {
-                    return post.html;
-                }).join('');
-            }
-            
-            while (tempContainer.firstChild) {
-                fragment.appendChild(tempContainer.firstChild);
-            }
-            
-            postsContainer.innerHTML = '';
-            postsContainer.appendChild(fragment);
-        } else {
-            postsContainer.innerHTML = '<div class="no-results">No posts found matching your search. Try different keywords.</div>';
-        }
-        
-        searchCount.textContent = filtered.length;
-        searchInfo.style.display = 'block';
-    }
-    
-    function debouncedSearch() {
-        var query = searchInput.value.toLowerCase().trim();
-        
-        if (searchTimeout) {
-            clearTimeout(searchTimeout);
-        }
-        
-        if (query.length <= 1) {
-            performSearch(query);
-            return;
-        }
-        
-        searchTimeout = setTimeout(function() {
-            performSearch(query);
-        }, 150);
-    }
-    
-    searchInput.addEventListener('input', debouncedSearch);
-    initializeSearch();
-    console.log('Search initialized successfully');
-})();
-    </script>
-</body>
-</html>
-MAIN_SCRIPT_END
+MAIN_FOOTER
 
 # Generate archive page
 echo "📚 Generating archive page..."
@@ -1215,108 +983,16 @@ done
 
 [ -n "$current_year" ] && echo "        </div>" >> public/archive/index.html
 
-# Close the archive content
-cat >> public/archive/index.html << 'ARCHIVE_FOOTER'
-        </div>
-    </main>
-ARCHIVE_FOOTER
-
-# Add complete archive search script
-cat >> public/archive/index.html << 'ARCHIVE_SCRIPT_END'
-    <script>
-(function() {
-    let originalArchive = null;
-    let archiveData = [];
-    let searchTimeout = null;
-    let lastQuery = '';
-    let isSearchActive = false;
-    
-    const searchMainInput = document.getElementById('search-main');
-    const searchStickyInput = document.getElementById('search-sticky');
-    const archiveContainer = document.getElementById('archive');
-    const searchInfo = document.getElementById('search-info');
-    const searchCount = document.getElementById('search-count');
-    const stickyHeader = document.getElementById('sticky-header');
-    const stickyTitle = document.getElementById('sticky-title');
-    
-    if (!searchMainInput || !searchStickyInput || !archiveContainer) {
-        console.error('Archive search elements not found');
-        return;
-    }
-    
-    function initializeArchive() {
-        if (originalArchive === null) {
-            originalArchive = archiveContainer.innerHTML;
-            var tempDiv = document.createElement('div');
-            tempDiv.innerHTML = originalArchive;
-            var posts = tempDiv.querySelectorAll('.post');
-            
-            archiveData = Array.from(posts).map(function(post) {
-                return {
-                    element: post.cloneNode(true),
-                    searchable: (post.dataset.searchable || '').toLowerCase(),
-                    html: post.outerHTML
-                };
-            });
-        }
-    }
-    
-    function highlightText(text, query) {
-        if (!query || query.length < 2) return text;
-        var escapedQuery = query.replace(/[.*+?^${}()|[\]\\]/g, '\\cat >> public/archive/index.html << 'ARCHIVE_END'
+# Close the archive content and add complete working scripts
+cat >> public/archive/index.html << 'ARCHIVE_END'
         </div>
     </main>
     
     <script>
         (function() {
             let originalArchive = null;
-            let archiveData = [];
-            let searchTimeout = null;
-            let lastQuery = '';
             let isSearchActive = false;
             
-            const searchMainInput = document.getElementById('search-main');
-            const searchStickyInput = document.getElementById('search-sticky');
-            const archiveContainer = document.getElementById('archive');
-            const searchInfo = document.getElementById('search-info');
-            const searchCount = document.getElementById('search-count');
-            const stickyHeader = document.getElementById('sticky-header');
-            const stickyTitle = document.getElementById('sticky-title');
-            
-            if (!searchMainInput || !searchStickyInput || !archiveContainer) {
-                console.error('Archive search elements not found');
-                return;
-            }
-            
-            // Cache archive data for faster searching
-            function initializeArchive() {
-                if (originalArchive === null) {
-                    originalArchive = archiveContainer.innerHTML;
-                    
-                    // Extract and cache post data
-                    const tempDiv = document.createElement('div');
-                    tempDiv.innerHTML = originalArchive;
-                    const posts = tempDiv.querySelectorAll('.post');
-                    
-                    archiveData = Array.from(posts).map(post => ({
-                        element: post.cloneNode(true),
-                        searchable: (post.dataset.searchable || '').toLowerCase(),
-                        html: post.outerHTML
-                    }));
-                }
-            }
-            
-            // Optimized highlighting with performance checks
-            function highlightText(text, query) {
-                if (!query || query.length < 2) return text;
-                
-                const escapedQuery = query.replace(/[.*+?^${}()|[\]\\]/g, '\\cat >> public/archive/index.html << 'ARCHIVE_END'
-        </div>
-    </main>
-    
-    <script>
-        (function() {
-            let originalArchive = null;
             const searchMainInput = document.getElementById('search-main');
             const searchStickyInput = document.getElementById('search-sticky');
             const archiveContainer = document.getElementById('archive');
@@ -1342,49 +1018,33 @@ cat >> public/archive/index.html << 'ARCHIVE_SCRIPT_END'
             }
             
             function updateStickyHeader() {
-                try {
-                    const searchMainRect = searchMainInput.getBoundingClientRect();
-                    
-                    if (searchMainRect.bottom < 0) {
-                        stickyHeader.style.display = 'block';
-                        if (searchStickyInput.value !== searchMainInput.value) {
-                            searchStickyInput.value = searchMainInput.value;
-                        }
-                    } else {
-                        stickyHeader.style.display = 'none';
-                    }
-                    
-                    // Update sticky header title based on visible section
-                    if (stickyHeader.style.display === 'block') {
+                const searchMainRect = searchMainInput.getBoundingClientRect();
+                
+                if (searchMainRect.bottom < 0) {
+                    stickyHeader.style.display = 'block';
+                    if (!isSearchActive) {
+                        // Update title based on visible section
                         const sections = document.querySelectorAll('.year-section, .month-section');
                         let currentSection = null;
                         
                         for (let section of sections) {
                             const rect = section.getBoundingClientRect();
-                            if (rect.top <= 150) {
+                            if (rect.top <= 150 && rect.bottom > 0) {
                                 currentSection = section;
+                                break;
                             }
                         }
                         
                         if (currentSection) {
-                            const yearSection = currentSection.closest('.year-section');
-                            const monthSection = currentSection.classList.contains('month-section') ? currentSection : null;
-                            
-                            let title = 'Archive';
-                            if (yearSection) {
-                                title = yearSection.dataset.year || 'Archive';
-                                if (monthSection && monthSection.dataset.yearMonth) {
-                                    title = monthSection.dataset.yearMonth;
-                                }
+                            if (currentSection.dataset.yearMonth) {
+                                stickyTitle.textContent = currentSection.dataset.yearMonth;
+                            } else if (currentSection.dataset.year) {
+                                stickyTitle.textContent = currentSection.dataset.year;
                             }
-                            
-                            stickyTitle.textContent = title;
-                        } else {
-                            stickyTitle.textContent = 'Archive';
                         }
                     }
-                } catch (error) {
-                    console.error('Sticky header update error:', error);
+                } else {
+                    stickyHeader.style.display = 'none';
                 }
             }
             
@@ -1394,12 +1054,10 @@ cat >> public/archive/index.html << 'ARCHIVE_SCRIPT_END'
                 const query = mainQuery || stickyQuery;
                 
                 // Sync both inputs
-                if (mainQuery !== stickyQuery) {
-                    if (mainQuery) {
-                        searchStickyInput.value = searchMainInput.value;
-                    } else {
-                        searchMainInput.value = searchStickyInput.value;
-                    }
+                if (document.activeElement === searchMainInput) {
+                    searchStickyInput.value = searchMainInput.value;
+                } else if (document.activeElement === searchStickyInput) {
+                    searchMainInput.value = searchStickyInput.value;
                 }
                 
                 // Store original content
@@ -1410,9 +1068,12 @@ cat >> public/archive/index.html << 'ARCHIVE_SCRIPT_END'
                 if (!query) {
                     archiveContainer.innerHTML = originalArchive;
                     searchInfo.style.display = 'none';
+                    isSearchActive = false;
                     updateStickyHeader();
                     return;
                 }
+                
+                isSearchActive = true;
                 
                 // Search through posts
                 const tempDiv = document.createElement('div');
@@ -1425,12 +1086,28 @@ cat >> public/archive/index.html << 'ARCHIVE_SCRIPT_END'
                 });
                 
                 if (filtered.length > 0) {
+                    // Create search results section
                     let html = '<div class="year-section"><div class="year-header"><h2>Search Results</h2></div><div class="month-section">';
-                    html += filtered.map(post => {
-                        let postHtml = post.outerHTML;
-                        postHtml = highlightText(postHtml, query);
-                        return postHtml;
-                    }).join('');
+                    
+                    // Add highlighted posts
+                    filtered.forEach(post => {
+                        const postClone = post.cloneNode(true);
+                        
+                        // Highlight in title
+                        const titleEl = postClone.querySelector('.post-title a');
+                        if (titleEl) {
+                            titleEl.innerHTML = highlightText(titleEl.textContent, query);
+                        }
+                        
+                        // Highlight in excerpt
+                        const excerptEl = postClone.querySelector('.excerpt');
+                        if (excerptEl) {
+                            excerptEl.innerHTML = highlightText(excerptEl.textContent, query);
+                        }
+                        
+                        html += postClone.outerHTML;
+                    });
+                    
                     html += '</div></div>';
                     archiveContainer.innerHTML = html;
                     
@@ -1451,368 +1128,28 @@ cat >> public/archive/index.html << 'ARCHIVE_SCRIPT_END'
             // Event listeners
             searchMainInput.addEventListener('input', searchArchive);
             searchStickyInput.addEventListener('input', searchArchive);
-            window.addEventListener('scroll', updateStickyHeader);
+            
+            // Scroll event for sticky header
+            let scrollTimeout = null;
+            window.addEventListener('scroll', function() {
+                if (!scrollTimeout) {
+                    scrollTimeout = setTimeout(function() {
+                        updateStickyHeader();
+                        scrollTimeout = null;
+                    }, 10);
+                }
+            });
+            
             window.addEventListener('resize', updateStickyHeader);
             
             // Initialize
             updateStickyHeader();
-            console.log('Archive search initialized');
+            console.log('Archive search and sticky header initialized');
         })();
     </script>
 </body>
 </html>
-ARCHIVE_END');
-                const regex = new RegExp('(' + escapedQuery + ')', 'gi');
-                return text.replace(regex, '<span class="search-highlight">$1</span>');
-            }
-            
-            // Throttled sticky header update
-            let stickyUpdateTimeout = null;
-            function updateStickyHeader() {
-                if (stickyUpdateTimeout) return;
-                
-                stickyUpdateTimeout = setTimeout(() => {
-                    try {
-                        const searchMainRect = searchMainInput.getBoundingClientRect();
-                        
-                        if (searchMainRect.bottom < 0) {
-                            stickyHeader.style.display = 'block';
-                            if (searchStickyInput.value !== searchMainInput.value) {
-                                searchStickyInput.value = searchMainInput.value;
-                            }
-                        } else {
-                            stickyHeader.style.display = 'none';
-                        }
-                        
-                        // Update title only if sticky header is visible and not in search mode
-                        if (stickyHeader.style.display === 'block' && !isSearchActive) {
-                            const sections = document.querySelectorAll('.year-section, .month-section');
-                            let currentSection = null;
-                            
-                            for (let section of sections) {
-                                const rect = section.getBoundingClientRect();
-                                if (rect.top <= 150) {
-                                    currentSection = section;
-                                }
-                            }
-                            
-                            if (currentSection) {
-                                const yearSection = currentSection.closest('.year-section');
-                                const monthSection = currentSection.classList.contains('month-section') ? currentSection : null;
-                                
-                                let title = 'Archive';
-                                if (yearSection) {
-                                    title = yearSection.dataset.year || 'Archive';
-                                    if (monthSection && monthSection.dataset.yearMonth) {
-                                        title = monthSection.dataset.yearMonth;
-                                    }
-                                }
-                                stickyTitle.textContent = title;
-                            } else {
-                                stickyTitle.textContent = 'Archive';
-                            }
-                        }
-                    } catch (error) {
-                        console.error('Sticky header update error:', error);
-                    }
-                    stickyUpdateTimeout = null;
-                }, 16); // ~60fps
-            }
-            
-            // High-performance search function
-            function performSearch(query) {
-                initializeArchive();
-                
-                if (query === lastQuery) return;
-                lastQuery = query;
-                
-                // Sync inputs efficiently
-                if (searchMainInput.value !== searchStickyInput.value) {
-                    const activeInput = document.activeElement;
-                    if (activeInput === searchMainInput) {
-                        searchStickyInput.value = searchMainInput.value;
-                    } else if (activeInput === searchStickyInput) {
-                        searchMainInput.value = searchStickyInput.value;
-                    }
-                }
-                
-                if (!query) {
-                    archiveContainer.innerHTML = originalArchive;
-                    searchInfo.style.display = 'none';
-                    isSearchActive = false;
-                    updateStickyHeader();
-                    return;
-                }
-                
-                isSearchActive = true;
-                
-                // Efficient filtering
-                const filtered = archiveData.filter(post => 
-                    post.searchable.includes(query)
-                );
-                
-                if (filtered.length > 0) {
-                    // Use optimized DOM construction
-                    const fragment = document.createDocumentFragment();
-                    const searchContainer = document.createElement('div');
-                    searchContainer.className = 'year-section';
-                    
-                    const headerDiv = document.createElement('div');
-                    headerDiv.className = 'year-header';
-                    headerDiv.innerHTML = '<h2>Search Results</h2>';
-                    
-                    const monthDiv = document.createElement('div');
-                    monthDiv.className = 'month-section';
-                    
-                    // Only apply highlighting for substantial queries
-                    if (query.length >= 2) {
-                        monthDiv.innerHTML = filtered.map(post => 
-                            highlightText(post.html, query)
-                        ).join('');
-                    } else {
-                        monthDiv.innerHTML = filtered.map(post => post.html).join('');
-                    }
-                    
-                    searchContainer.appendChild(headerDiv);
-                    searchContainer.appendChild(monthDiv);
-                    fragment.appendChild(searchContainer);
-                    
-                    // Single DOM update
-                    archiveContainer.innerHTML = '';
-                    archiveContainer.appendChild(fragment);
-                    
-                    if (stickyHeader.style.display === 'block') {
-                        stickyTitle.textContent = 'Search Results (' + filtered.length + ')';
-                    }
-                } else {
-                    archiveContainer.innerHTML = '<div class="no-results">No posts found matching your search. Try different keywords.</div>';
-                    if (stickyHeader.style.display === 'block') {
-                        stickyTitle.textContent = 'Search Results (0)';
-                    }
-                }
-                
-                searchCount.textContent = filtered.length;
-                searchInfo.style.display = 'block';
-            }
-            
-            // Optimized debounced search
-            function debouncedSearch() {
-                const mainQuery = searchMainInput.value.toLowerCase().trim();
-                const stickyQuery = searchStickyInput.value.toLowerCase().trim();
-                const query = mainQuery || stickyQuery;
-                
-                if (searchTimeout) {
-                    clearTimeout(searchTimeout);
-                }
-                
-                // Immediate response for clearing or very short queries
-                if (query.length <= 1) {
-                    performSearch(query);
-                    return;
-                }
-                
-                // Debounced search for performance
-                searchTimeout = setTimeout(() => {
-                    performSearch(query);
-                }, 120);
-            }
-            
-            // Optimized event listeners
-            searchMainInput.addEventListener('input', debouncedSearch);
-            searchStickyInput.addEventListener('input', debouncedSearch);
-            
-            // Throttled scroll and resize handlers
-            let scrollTimeout = null;
-            window.addEventListener('scroll', () => {
-                if (!scrollTimeout) {
-                    scrollTimeout = setTimeout(() => {
-                        updateStickyHeader();
-                        scrollTimeout = null;
-                    }, 16);
-                }
-            }, { passive: true });
-            
-            window.addEventListener('resize', updateStickyHeader, { passive: true });
-            
-            // Initialize
-            initializeArchive();
-            updateStickyHeader();
-            console.log('Optimized archive search initialized');
-        })();
-    </script>
-</body>
-</html>
-ARCHIVE_END');
-        var regex = new RegExp('(' + escapedQuery + ')', 'gi');
-        return text.replace(regex, '<span class="search-highlight">$1</span>');
-    }
-    
-    var stickyUpdateTimeout = null;
-    function updateStickyHeader() {
-        if (stickyUpdateTimeout) return;
-        
-        stickyUpdateTimeout = setTimeout(function() {
-            try {
-                var searchMainRect = searchMainInput.getBoundingClientRect();
-                
-                if (searchMainRect.bottom < 0) {
-                    stickyHeader.style.display = 'block';
-                    if (searchStickyInput.value !== searchMainInput.value) {
-                        searchStickyInput.value = searchMainInput.value;
-                    }
-                } else {
-                    stickyHeader.style.display = 'none';
-                }
-                
-                if (stickyHeader.style.display === 'block' && !isSearchActive) {
-                    var sections = document.querySelectorAll('.year-section, .month-section');
-                    var currentSection = null;
-                    
-                    for (var i = 0; i < sections.length; i++) {
-                        var section = sections[i];
-                        var rect = section.getBoundingClientRect();
-                        if (rect.top <= 150) {
-                            currentSection = section;
-                        }
-                    }
-                    
-                    if (currentSection) {
-                        var yearSection = currentSection.closest('.year-section');
-                        var monthSection = currentSection.classList.contains('month-section') ? currentSection : null;
-                        
-                        var title = 'Archive';
-                        if (yearSection) {
-                            title = yearSection.dataset.year || 'Archive';
-                            if (monthSection && monthSection.dataset.yearMonth) {
-                                title = monthSection.dataset.yearMonth;
-                            }
-                        }
-                        stickyTitle.textContent = title;
-                    } else {
-                        stickyTitle.textContent = 'Archive';
-                    }
-                }
-            } catch (error) {
-                console.error('Sticky header update error:', error);
-            }
-            stickyUpdateTimeout = null;
-        }, 16);
-    }
-    
-    function performSearch(query) {
-        initializeArchive();
-        
-        if (query === lastQuery) return;
-        lastQuery = query;
-        
-        if (searchMainInput.value !== searchStickyInput.value) {
-            var activeInput = document.activeElement;
-            if (activeInput === searchMainInput) {
-                searchStickyInput.value = searchMainInput.value;
-            } else if (activeInput === searchStickyInput) {
-                searchMainInput.value = searchStickyInput.value;
-            }
-        }
-        
-        if (!query) {
-            archiveContainer.innerHTML = originalArchive;
-            searchInfo.style.display = 'none';
-            isSearchActive = false;
-            updateStickyHeader();
-            return;
-        }
-        
-        isSearchActive = true;
-        
-        var filtered = archiveData.filter(function(post) {
-            return post.searchable.includes(query);
-        });
-        
-        if (filtered.length > 0) {
-            var fragment = document.createDocumentFragment();
-            var searchContainer = document.createElement('div');
-            searchContainer.className = 'year-section';
-            
-            var headerDiv = document.createElement('div');
-            headerDiv.className = 'year-header';
-            headerDiv.innerHTML = '<h2>Search Results</h2>';
-            
-            var monthDiv = document.createElement('div');
-            monthDiv.className = 'month-section';
-            
-            if (query.length >= 2) {
-                monthDiv.innerHTML = filtered.map(function(post) {
-                    return highlightText(post.html, query);
-                }).join('');
-            } else {
-                monthDiv.innerHTML = filtered.map(function(post) {
-                    return post.html;
-                }).join('');
-            }
-            
-            searchContainer.appendChild(headerDiv);
-            searchContainer.appendChild(monthDiv);
-            fragment.appendChild(searchContainer);
-            
-            archiveContainer.innerHTML = '';
-            archiveContainer.appendChild(fragment);
-            
-            if (stickyHeader.style.display === 'block') {
-                stickyTitle.textContent = 'Search Results (' + filtered.length + ')';
-            }
-        } else {
-            archiveContainer.innerHTML = '<div class="no-results">No posts found matching your search. Try different keywords.</div>';
-            if (stickyHeader.style.display === 'block') {
-                stickyTitle.textContent = 'Search Results (0)';
-            }
-        }
-        
-        searchCount.textContent = filtered.length;
-        searchInfo.style.display = 'block';
-    }
-    
-    function debouncedSearch() {
-        var mainQuery = searchMainInput.value.toLowerCase().trim();
-        var stickyQuery = searchStickyInput.value.toLowerCase().trim();
-        var query = mainQuery || stickyQuery;
-        
-        if (searchTimeout) {
-            clearTimeout(searchTimeout);
-        }
-        
-        if (query.length <= 1) {
-            performSearch(query);
-            return;
-        }
-        
-        searchTimeout = setTimeout(function() {
-            performSearch(query);
-        }, 120);
-    }
-    
-    searchMainInput.addEventListener('input', debouncedSearch);
-    searchStickyInput.addEventListener('input', debouncedSearch);
-    
-    var scrollTimeout = null;
-    window.addEventListener('scroll', function() {
-        if (!scrollTimeout) {
-            scrollTimeout = setTimeout(function() {
-                updateStickyHeader();
-                scrollTimeout = null;
-            }, 16);
-        }
-    }, { passive: true });
-    
-    window.addEventListener('resize', updateStickyHeader, { passive: true });
-    
-    initializeArchive();
-    updateStickyHeader();
-    console.log('Archive search initialized successfully');
-})();
-    </script>
-</body>
-</html>
-ARCHIVE_SCRIPT_END
+ARCHIVE_END
 
 echo ""
 echo "✅ Enhanced blog build completed successfully!"
@@ -1822,18 +1159,17 @@ echo "  ✓ Processed $processed_count markdown files"
 echo "  ✓ Generated individual post pages with enhanced styling"
 echo "  ✓ Created main page with recent posts and search"
 echo "  ✓ Built comprehensive archive with chronological organization"
-echo "  ✓ Added sticky navigation and improved search functionality"
-echo "  ✓ Enhanced code block formatting with copy-to-clipboard"
-echo "  ✓ Integrated mermaid diagram support"
-echo "  ✓ Improved mobile responsiveness and accessibility"
+echo "  ✓ Fixed search functionality with proper highlighting"
+echo "  ✓ Fixed sticky navigation on archive page"
+echo "  ✓ Removed hover effects while maintaining visual appeal"
 echo ""
 echo "🚀 Features included:"
-echo "  • Real-time search with highlighting"
-echo "  • Responsive design with hover effects"  
+echo "  • Real-time search with text highlighting"
+echo "  • Clean design with subtle border hover effects"  
 echo "  • Code syntax highlighting with Prism.js"
 echo "  • Mermaid diagram rendering"
 echo "  • Copy-to-clipboard functionality"
-echo "  • Sticky archive navigation"
+echo "  • Working sticky archive navigation"
 echo "  • SEO-optimized meta tags"
 echo "  • Reading time calculations"
 echo "  • Chronological post organization"
@@ -1850,4 +1186,4 @@ echo "      ├── 1.html"
 echo "      ├── 2.html"
 echo "      └── ... (individual post pages)"
 echo ""
-echo "🎯 All blog posts should now be correctly listed and formatted!"
+echo "🎯 All issues have been fixed!"
