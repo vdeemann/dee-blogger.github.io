@@ -423,17 +423,35 @@ echo "📁 Scanning for markdown files..."
 
 # Look for markdown files in common locations
 files=()
-for location in "content" "posts" "articles" "_posts" "."; do
+search_paths=("content" "posts" "articles" "_posts" ".")
+
+for location in "${search_paths[@]}"; do
     if [ -d "$location" ]; then
+        echo "  🔍 Searching in: $location/"
         while IFS= read -r -d '' file; do
-            files+=("$file")
-        done < <(find "$location" -name "*.md" -type f -print0 2>/dev/null)
+            if [ -f "$file" ] && [ -s "$file" ]; then
+                files+=("$file")
+                echo "    ✓ Found: $file"
+            fi
+        done < <(find "$location" -maxdepth 3 -name "*.md" -type f -print0 2>/dev/null)
+    else
+        echo "  ⚠️ Directory not found: $location/"
     fi
 done
 
 # Remove duplicates and sort
 if [ ${#files[@]} -gt 0 ]; then
     readarray -t files < <(printf '%s\n' "${files[@]}" | sort -u)
+    echo "📋 After deduplication: ${#files[@]} unique files"
+else
+    # Also try a simple find in current directory as fallback
+    echo "  🔍 Fallback: searching current directory for any .md files..."
+    while IFS= read -r -d '' file; do
+        if [ -f "$file" ] && [ -s "$file" ]; then
+            files+=("$file")
+            echo "    ✓ Found: $file"
+        fi
+    done < <(find . -name "*.md" -type f -print0 2>/dev/null)
 fi
 
 total=${#files[@]}
@@ -503,6 +521,7 @@ for i in "${!files[@]}"; do
     
     echo "  ✓ Title: $title"
     echo "  ✓ Date: $date_string"
+    echo "  ✓ Sort date: $sort_date"
     echo "  ✓ Excerpt: ${excerpt:0:60}..."
     
     # Store post data
@@ -687,15 +706,29 @@ cat >> public/index.html << MAIN_META
 MAIN_META
 
 # Get all posts sorted by date (newest first)
-all_nums=($(for ((i=1; i<=processed_count; i++)); do
-    echo "${post_data["$i,sort_date"]} $i"
-done | sort -rn | cut -d' ' -f2))
+echo "📊 Sorting posts by date..."
+all_nums=()
+for ((i=1; i<=processed_count; i++)); do
+    sort_date="${post_data["$i,sort_date"]}"
+    if [ -n "$sort_date" ]; then
+        all_nums+=("$sort_date $i")
+    else
+        echo "  ⚠️ Warning: No sort date for post $i"
+        all_nums+=("99999999 $i")  # Put at end if no date
+    fi
+done
+
+# Sort by date (newest first) and extract post numbers
+sorted_nums=($(printf '%s\n' "${all_nums[@]}" | sort -rn | cut -d' ' -f2))
+
+echo "📋 Posts sorted in order: ${sorted_nums[*]:0:10}..." # Show first 10
 
 # Show recent posts on main page (latest 15)
 recent_count=0
 max_recent=15
 
-for num in "${all_nums[@]}"; do
+echo "🏠 Adding posts to main page..."
+for num in "${sorted_nums[@]}"; do
     if [ $recent_count -ge $max_recent ]; then
         break
     fi
@@ -705,8 +738,11 @@ for num in "${all_nums[@]}"; do
     excerpt="${post_data["$num,excerpt"]}"
     
     if [ -z "$title" ]; then
+        echo "  ⚠️ Skipping post $num - no title found"
         continue
     fi
+    
+    echo "  ✓ Adding post $num: $title"
     
     # Prepare data for search and display (properly escaped)
     title_lower=$(echo "${title}" | tr '[:upper:]' '[:lower:]' | html_escape)
@@ -715,7 +751,7 @@ for num in "${all_nums[@]}"; do
     title_display=$(html_escape "$title")
     excerpt_display=$(html_escape "$excerpt")
     
-    cat >> public/index.html << POST_ENTRY
+    cat >> public/index.html << POST_ENTRY_END
             <div class="post" data-title="${title_lower}" data-excerpt="${excerpt_lower}" data-searchable="${searchable_lower}" onclick="window.location.href='p/${num}.html'">
                 <div class="post-date">${date}</div>
                 <div class="post-title">
@@ -723,10 +759,23 @@ for num in "${all_nums[@]}"; do
                 </div>
                 <div class="excerpt">${excerpt_display}</div>
             </div>
-POST_ENTRY
+POST_ENTRY_END
     
     recent_count=$((recent_count + 1))
 done
+
+echo "📄 Added $recent_count posts to main page"
+
+# If no posts were added, add a placeholder
+if [ $recent_count -eq 0 ]; then
+    echo "⚠️ No posts found to display on main page"
+    cat >> public/index.html << 'NO_POSTS'
+            <div class="no-results">
+                <h3>Welcome to the Blog!</h3>
+                <p>No posts have been published yet. Check back soon for new content!</p>
+            </div>
+NO_POSTS
+fi
 
 cat >> public/index.html << 'MAIN_END'
         </div>
@@ -973,7 +1022,7 @@ ARCHIVE_META
 
 # Group posts by year and month
 declare -A year_months
-for num in "${all_nums[@]}"; do
+for num in "${sorted_nums[@]}"; do
     year="${post_data["$num,year"]}"
     month="${post_data["$num,month"]}"
     if [ -n "$year" ] && [ -n "$month" ]; then
@@ -981,6 +1030,8 @@ for num in "${all_nums[@]}"; do
         year_months["$ym"]+="$num "
     fi
 done
+
+echo "📅 Grouped posts by year/month: ${!year_months[*]}"
 
 # Generate archive structure
 current_year=""
