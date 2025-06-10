@@ -410,7 +410,7 @@ for num in "${recent_nums[@]}"; do
     excerpt="${post_data["$num,excerpt"]}"
     
     cat >> public/index.html << POST_EOF
-        <div class="post" data-title="${title,,}" data-excerpt="${excerpt,,}" data-searchable="${title,,} ${excerpt,,}" onclick="window.location.href='p/${num}.html'">
+        <div class="post" data-title="$(echo "${title}" | tr '[:upper:]' '[:lower:]')" data-excerpt="$(echo "${excerpt}" | tr '[:upper:]' '[:lower:]')" data-searchable="$(echo "${title} ${excerpt}" | tr '[:upper:]' '[:lower:]')" onclick="window.location.href='p/${num}.html'">
             <small>${date}</small>
             <h2><a href="p/${num}.html">${title}</a></h2>
             <div class="excerpt">${excerpt}</div>
@@ -576,7 +576,7 @@ MONTH_EOF
         excerpt="${post_data["$num,excerpt"]}"
         
         cat >> public/archive/index.html << POST_ARCHIVE_EOF
-                <div class="post" data-title="${title,,}" data-excerpt="${excerpt,,}" data-searchable="${title,,} ${excerpt,,}" onclick="window.location.href='../p/${num}.html'">
+                <div class="post" data-title="$(echo "${title}" | tr '[:upper:]' '[:lower:]')" data-excerpt="$(echo "${excerpt}" | tr '[:upper:]' '[:lower:]')" data-searchable="$(echo "${title} ${excerpt}" | tr '[:upper:]' '[:lower:]')" onclick="window.location.href='../p/${num}.html'">
                     <small>${date}</small>
                     <h3><a href="../p/${num}.html">${title}</a></h3>
                     <div class="excerpt">${excerpt}</div>
