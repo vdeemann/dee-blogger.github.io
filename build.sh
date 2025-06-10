@@ -288,27 +288,27 @@ for i in "${!files[@]}"; do
     word_count=$(echo "$content" | wc -w)
     reading_time=$(echo "$word_count / 200 + 1" | bc 2>/dev/null || echo "1")
     
-    cat > "public/p/${num}.html" << HTML_EOF
+    cat > "public/p/${num}.html" << 'HTML_EOF'
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width,initial-scale=1">
-    <title>${title} - ${SITE_TITLE}</title>
-    <meta name="description" content="${excerpt:0:160}">
+    <title>TITLE_PLACEHOLDER - SITE_TITLE_PLACEHOLDER</title>
+    <meta name="description" content="EXCERPT_PLACEHOLDER">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/mermaid/10.6.1/mermaid.min.js"></script>
-    <style>${POST_CSS}</style>
+    <style>POST_CSS_PLACEHOLDER</style>
 </head>
 <body>
     <nav><a href="../">← Blog</a> | <a href="../archive/">Archive</a></nav>
-    <h1>${title}</h1>
-    <small>${date}</small>
+    <h1>TITLE_PLACEHOLDER</h1>
+    <small>DATE_PLACEHOLDER</small>
     <div class="post-meta">
-        <p><strong>Published:</strong> ${date}</p>
-        <p><strong>Reading time:</strong> ~${reading_time} min (${word_count} words)</p>
+        <p><strong>Published:</strong> DATE_PLACEHOLDER</p>
+        <p><strong>Reading time:</strong> ~READING_TIME_PLACEHOLDER min (WORD_COUNT_PLACEHOLDER words)</p>
     </div>
-    ${content}
+    CONTENT_PLACEHOLDER
     <nav style="border-top:1px solid #e2e8f0;margin-top:3em;padding-top:1.5em">
         <a href="../">← Back to Blog</a> | <a href="../archive/">Archive</a>
     </nav>
@@ -371,6 +371,18 @@ for i in "${!files[@]}"; do
 </html>
 HTML_EOF
 
+    # Replace placeholders
+    sed -i "s/TITLE_PLACEHOLDER/${title}/g" "public/p/${num}.html"
+    sed -i "s/SITE_TITLE_PLACEHOLDER/${SITE_TITLE}/g" "public/p/${num}.html"
+    sed -i "s/EXCERPT_PLACEHOLDER/${excerpt:0:160}/g" "public/p/${num}.html"
+    sed -i "s/DATE_PLACEHOLDER/${date}/g" "public/p/${num}.html"
+    sed -i "s/READING_TIME_PLACEHOLDER/${reading_time}/g" "public/p/${num}.html"
+    sed -i "s/WORD_COUNT_PLACEHOLDER/${word_count}/g" "public/p/${num}.html"
+    sed -i "s|POST_CSS_PLACEHOLDER|${POST_CSS}|g" "public/p/${num}.html"
+    # Replace content placeholder using a different delimiter to avoid sed issues
+    awk -v content="$content" '{gsub(/CONTENT_PLACEHOLDER/, content); print}' "public/p/${num}.html" > "public/p/${num}.html.tmp"
+    mv "public/p/${num}.html.tmp" "public/p/${num}.html"
+
     echo "✅ Processed: $num - $title"
 done
 
@@ -409,8 +421,13 @@ for num in "${recent_nums[@]}"; do
     date="${post_data["$num,date"]}"
     excerpt="${post_data["$num,excerpt"]}"
     
+    # Convert to lowercase using tr for compatibility
+    title_lower=$(echo "${title}" | tr '[:upper:]' '[:lower:]')
+    excerpt_lower=$(echo "${excerpt}" | tr '[:upper:]' '[:lower:]')
+    searchable_lower=$(echo "${title} ${excerpt}" | tr '[:upper:]' '[:lower:]')
+    
     cat >> public/index.html << POST_EOF
-        <div class="post" data-title="$(echo "${title}" | tr '[:upper:]' '[:lower:]')" data-excerpt="$(echo "${excerpt}" | tr '[:upper:]' '[:lower:]')" data-searchable="$(echo "${title} ${excerpt}" | tr '[:upper:]' '[:lower:]')" onclick="window.location.href='p/${num}.html'">
+        <div class="post" data-title="${title_lower}" data-excerpt="${excerpt_lower}" data-searchable="${searchable_lower}" onclick="window.location.href='p/${num}.html'">
             <small>${date}</small>
             <h2><a href="p/${num}.html">${title}</a></h2>
             <div class="excerpt">${excerpt}</div>
@@ -418,7 +435,7 @@ for num in "${recent_nums[@]}"; do
 POST_EOF
 done
 
-cat >> public/index.html << MAIN_END_EOF
+cat >> public/index.html << 'MAIN_END_EOF'
     </div>
     <nav style="margin-top:2em">
         <p>📚 <a href="archive/">View all posts in Archive →</a></p>
@@ -465,7 +482,7 @@ cat >> public/index.html << MAIN_END_EOF
                 postsContainer.innerHTML = filtered.map(post => {
                     let html = post.outerHTML;
                     // Escape special regex characters
-                    const escapedQuery = query.replace(/[.*+?^${}()|[\]\\]/g, '\\\\$&');
+                    const escapedQuery = query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
                     const regex = new RegExp('(' + escapedQuery + ')', 'gi');
                     html = html.replace(regex, '<span class="search-highlight">$1</span>');
                     return html;
@@ -575,8 +592,13 @@ MONTH_EOF
         date="${post_data["$num,date"]}"
         excerpt="${post_data["$num,excerpt"]}"
         
+        # Convert to lowercase using tr for compatibility
+        title_lower=$(echo "${title}" | tr '[:upper:]' '[:lower:]')
+        excerpt_lower=$(echo "${excerpt}" | tr '[:upper:]' '[:lower:]')
+        searchable_lower=$(echo "${title} ${excerpt}" | tr '[:upper:]' '[:lower:]')
+        
         cat >> public/archive/index.html << POST_ARCHIVE_EOF
-                <div class="post" data-title="$(echo "${title}" | tr '[:upper:]' '[:lower:]')" data-excerpt="$(echo "${excerpt}" | tr '[:upper:]' '[:lower:]')" data-searchable="$(echo "${title} ${excerpt}" | tr '[:upper:]' '[:lower:]')" onclick="window.location.href='../p/${num}.html'">
+                <div class="post" data-title="${title_lower}" data-excerpt="${excerpt_lower}" data-searchable="${searchable_lower}" onclick="window.location.href='../p/${num}.html'">
                     <small>${date}</small>
                     <h3><a href="../p/${num}.html">${title}</a></h3>
                     <div class="excerpt">${excerpt}</div>
@@ -588,7 +610,7 @@ done
 
 [ -n "$current_year" ] && echo "        </div>" >> public/archive/index.html
 
-cat >> public/archive/index.html << ARCHIVE_END_EOF
+cat >> public/archive/index.html << 'ARCHIVE_END_EOF'
     </div>
 
     <script>
@@ -699,7 +721,7 @@ cat >> public/archive/index.html << ARCHIVE_END_EOF
                 html += filtered.map(post => {
                     let postHtml = post.outerHTML;
                     // Escape special regex characters
-                    const escapedQuery = query.replace(/[.*+?^${}()|[\]\\]/g, '\\\\$&');
+                    const escapedQuery = query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
                     const regex = new RegExp('(' + escapedQuery + ')', 'gi');
                     postHtml = postHtml.replace(regex, '<span class="search-highlight">$1</span>');
                     return postHtml;
