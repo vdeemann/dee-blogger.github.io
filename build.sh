@@ -464,16 +464,8 @@ cat >> public/index.html << MAIN_END_EOF
             if (filtered.length > 0) {
                 postsContainer.innerHTML = filtered.map(post => {
                     let html = post.outerHTML;
-                    const escapedQuery = query.replace(/[.*+?^${}()|[\\]\\\\]/g, '\\\\            if (filtered.length > 0) {
-                postsContainer.innerHTML = filtered.map(post => {
-                    let html = post.outerHTML;
-                    const regex = new RegExp(\`(\${query})\`, 'gi');
-                    html = html.replace(regex, '<span class="search-highlight">\$1</span>');
-                    return html;
-                }).join('');
-            } else {
-                postsContainer.innerHTML = '<div class="no-results">No posts found matching your search.</div>';
-            }');
+                    // Escape special regex characters
+                    const escapedQuery = query.replace(/[.*+?^${}()|[\]\\]/g, '\\\\$&');
                     const regex = new RegExp('(' + escapedQuery + ')', 'gi');
                     html = html.replace(regex, '<span class="search-highlight">$1</span>');
                     return html;
@@ -706,66 +698,8 @@ cat >> public/archive/index.html << ARCHIVE_END_EOF
                 let html = '<div class="year-section"><div class="year-header"><h2>Search Results</h2></div><div class="month-section">';
                 html += filtered.map(post => {
                     let postHtml = post.outerHTML;
-                    const escapedQuery = query.replace(/[.*+?^${}()|[\\]\\\\]/g, '\\\\        function searchArchive() {
-            const mainQuery = searchMainInput.value.toLowerCase().trim();
-            const stickyQuery = searchStickyInput.value.toLowerCase().trim();
-            const query = mainQuery || stickyQuery;
-            
-            // Sync both inputs
-            if (mainQuery !== stickyQuery) {
-                if (mainQuery) {
-                    searchStickyInput.value = searchMainInput.value;
-                } else {
-                    searchMainInput.value = searchStickyInput.value;
-                }
-            }
-            
-            // Store original content only once
-            if (originalArchive === null) {
-                originalArchive = archiveContainer.innerHTML;
-            }
-            
-            if (!query) {
-                archiveContainer.innerHTML = originalArchive;
-                searchInfo.style.display = 'none';
-                updateStickyHeader();
-                return;
-            }
-            
-            // Get all posts from original content
-            const tempDiv = document.createElement('div');
-            tempDiv.innerHTML = originalArchive;
-            const posts = Array.from(tempDiv.querySelectorAll('.post'));
-            
-            const filtered = posts.filter(post => {
-                const searchable = post.dataset.searchable || '';
-                return searchable.includes(query);
-            });
-            
-            if (filtered.length > 0) {
-                let html = '<div class="year-section"><div class="year-header"><h2>Search Results</h2></div><div class="month-section">';
-                html += filtered.map(post => {
-                    let postHtml = post.outerHTML;
-                    const regex = new RegExp(\`(\${query})\`, 'gi');
-                    postHtml = postHtml.replace(regex, '<span class="search-highlight">\$1</span>');
-                    return postHtml;
-                }).join('');
-                html += '</div></div>';
-                archiveContainer.innerHTML = html;
-                
-                if (stickyHeader.style.display === 'block') {
-                    stickyTitle.textContent = \`Search Results (\${filtered.length})\`;
-                }
-            } else {
-                archiveContainer.innerHTML = '<div class="no-results">No posts found matching your search.</div>';
-                if (stickyHeader.style.display === 'block') {
-                    stickyTitle.textContent = 'Search Results (0)';
-                }
-            }
-            
-            searchCount.textContent = filtered.length;
-            searchInfo.style.display = 'block';
-        }');
+                    // Escape special regex characters
+                    const escapedQuery = query.replace(/[.*+?^${}()|[\]\\]/g, '\\\\$&');
                     const regex = new RegExp('(' + escapedQuery + ')', 'gi');
                     postHtml = postHtml.replace(regex, '<span class="search-highlight">$1</span>');
                     return postHtml;
