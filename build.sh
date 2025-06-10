@@ -431,6 +431,12 @@ cat >> public/index.html << MAIN_END_EOF
         const searchInfo = document.getElementById('search-info');
         const searchCount = document.getElementById('search-count');
         
+        // Check if all elements exist
+        if (!searchInput || !postsContainer || !searchInfo || !searchCount) {
+            console.error('Some main page search elements not found');
+            return;
+        }
+        
         function searchPosts() {
             const query = searchInput.value.toLowerCase().trim();
             
@@ -458,8 +464,18 @@ cat >> public/index.html << MAIN_END_EOF
             if (filtered.length > 0) {
                 postsContainer.innerHTML = filtered.map(post => {
                     let html = post.outerHTML;
+                    const escapedQuery = query.replace(/[.*+?^${}()|[\\]\\\\]/g, '\\\\            if (filtered.length > 0) {
+                postsContainer.innerHTML = filtered.map(post => {
+                    let html = post.outerHTML;
                     const regex = new RegExp(\`(\${query})\`, 'gi');
                     html = html.replace(regex, '<span class="search-highlight">\$1</span>');
+                    return html;
+                }).join('');
+            } else {
+                postsContainer.innerHTML = '<div class="no-results">No posts found matching your search.</div>';
+            }');
+                    const regex = new RegExp('(' + escapedQuery + ')', 'gi');
+                    html = html.replace(regex, '<span class="search-highlight">$1</span>');
                     return html;
                 }).join('');
             } else {
@@ -471,7 +487,14 @@ cat >> public/index.html << MAIN_END_EOF
         }
         
         // Use input event for real-time search including backspace
-        searchInput.addEventListener('input', searchPosts);
+        try {
+            searchInput.addEventListener('input', searchPosts);
+            
+            // Debug: Log that search is initialized
+            console.log('Main page search initialized successfully');
+        } catch (error) {
+            console.error('Failed to initialize main page search:', error);
+        }
     </script>
 </body>
 </html>
@@ -586,54 +609,104 @@ cat >> public/archive/index.html << ARCHIVE_END_EOF
         const stickyHeader = document.getElementById('sticky-header');
         const stickyTitle = document.getElementById('sticky-title');
         
+        // Check if all elements exist
+        if (!searchMainInput || !searchStickyInput || !archiveContainer || !searchInfo || !searchCount || !stickyHeader || !stickyTitle) {
+            console.error('Some archive search elements not found');
+            return;
+        }
+        
         function updateStickyHeader() {
-            const scrollTop = window.pageYOffset;
-            const searchMainRect = searchMainInput.getBoundingClientRect();
-            
-            if (searchMainRect.bottom < 0) {
-                stickyHeader.style.display = 'block';
-                if (searchStickyInput.value !== searchMainInput.value) {
-                    searchStickyInput.value = searchMainInput.value;
-                }
-            } else {
-                stickyHeader.style.display = 'none';
-            }
-            
-            if (stickyHeader.style.display === 'block') {
-                const sections = document.querySelectorAll('.year-section, .month-section');
-                let currentSection = null;
+            try {
+                const scrollTop = window.pageYOffset;
+                const searchMainRect = searchMainInput.getBoundingClientRect();
                 
-                for (let section of sections) {
-                    const rect = section.getBoundingClientRect();
-                    if (rect.top <= 150) {
-                        currentSection = section;
+                if (searchMainRect.bottom < 0) {
+                    stickyHeader.style.display = 'block';
+                    if (searchStickyInput.value !== searchMainInput.value) {
+                        searchStickyInput.value = searchMainInput.value;
                     }
+                } else {
+                    stickyHeader.style.display = 'none';
                 }
                 
-                if (currentSection) {
-                    const yearSection = currentSection.closest('.year-section');
-                    const monthSection = currentSection.classList.contains('month-section') ? currentSection : null;
+                if (stickyHeader.style.display === 'block') {
+                    const sections = document.querySelectorAll('.year-section, .month-section');
+                    let currentSection = null;
                     
-                    let title = '';
-                    if (yearSection) {
-                        title = yearSection.dataset.year;
-                        if (monthSection && monthSection.dataset.yearMonth) {
-                            title = monthSection.dataset.yearMonth;
+                    for (let section of sections) {
+                        const rect = section.getBoundingClientRect();
+                        if (rect.top <= 150) {
+                            currentSection = section;
                         }
                     }
                     
-                    if (title) {
-                        stickyTitle.textContent = title;
+                    if (currentSection) {
+                        const yearSection = currentSection.closest('.year-section');
+                        const monthSection = currentSection.classList.contains('month-section') ? currentSection : null;
+                        
+                        let title = '';
+                        if (yearSection) {
+                            title = yearSection.dataset.year || '';
+                            if (monthSection && monthSection.dataset.yearMonth) {
+                                title = monthSection.dataset.yearMonth;
+                            }
+                        }
+                        
+                        if (title) {
+                            stickyTitle.textContent = title;
+                        } else {
+                            stickyTitle.textContent = 'Archive';
+                        }
                     } else {
                         stickyTitle.textContent = 'Archive';
                     }
-                } else {
-                    stickyTitle.textContent = 'Archive';
                 }
+            } catch (error) {
+                console.error('Sticky header update error:', error);
             }
         }
         
         function searchArchive() {
+            const mainQuery = searchMainInput.value.toLowerCase().trim();
+            const stickyQuery = searchStickyInput.value.toLowerCase().trim();
+            const query = mainQuery || stickyQuery;
+            
+            // Sync both inputs
+            if (mainQuery !== stickyQuery) {
+                if (mainQuery) {
+                    searchStickyInput.value = searchMainInput.value;
+                } else {
+                    searchMainInput.value = searchStickyInput.value;
+                }
+            }
+            
+            // Store original content only once
+            if (originalArchive === null) {
+                originalArchive = archiveContainer.innerHTML;
+            }
+            
+            if (!query) {
+                archiveContainer.innerHTML = originalArchive;
+                searchInfo.style.display = 'none';
+                updateStickyHeader();
+                return;
+            }
+            
+            // Get all posts from original content
+            const tempDiv = document.createElement('div');
+            tempDiv.innerHTML = originalArchive;
+            const posts = Array.from(tempDiv.querySelectorAll('.post'));
+            
+            const filtered = posts.filter(post => {
+                const searchable = post.dataset.searchable || '';
+                return searchable.includes(query);
+            });
+            
+            if (filtered.length > 0) {
+                let html = '<div class="year-section"><div class="year-header"><h2>Search Results</h2></div><div class="month-section">';
+                html += filtered.map(post => {
+                    let postHtml = post.outerHTML;
+                    const escapedQuery = query.replace(/[.*+?^${}()|[\\]\\\\]/g, '\\\\        function searchArchive() {
             const mainQuery = searchMainInput.value.toLowerCase().trim();
             const stickyQuery = searchStickyInput.value.toLowerCase().trim();
             const query = mainQuery || stickyQuery;
@@ -692,15 +765,43 @@ cat >> public/archive/index.html << ARCHIVE_END_EOF
             
             searchCount.textContent = filtered.length;
             searchInfo.style.display = 'block';
+        }');
+                    const regex = new RegExp('(' + escapedQuery + ')', 'gi');
+                    postHtml = postHtml.replace(regex, '<span class="search-highlight">$1</span>');
+                    return postHtml;
+                }).join('');
+                html += '</div></div>';
+                archiveContainer.innerHTML = html;
+                
+                if (stickyHeader.style.display === 'block') {
+                    stickyTitle.textContent = 'Search Results (' + filtered.length + ')';
+                }
+            } else {
+                archiveContainer.innerHTML = '<div class="no-results">No posts found matching your search.</div>';
+                if (stickyHeader.style.display === 'block') {
+                    stickyTitle.textContent = 'Search Results (0)';
+                }
+            }
+            
+            searchCount.textContent = filtered.length;
+            searchInfo.style.display = 'block';
         }
         
         // Use input event for real-time search including backspace
-        searchMainInput.addEventListener('input', searchArchive);
-        searchStickyInput.addEventListener('input', searchArchive);
-        window.addEventListener('scroll', updateStickyHeader);
-        window.addEventListener('resize', updateStickyHeader);
-        
-        updateStickyHeader();
+        try {
+            searchMainInput.addEventListener('input', searchArchive);
+            searchStickyInput.addEventListener('input', searchArchive);
+            window.addEventListener('scroll', updateStickyHeader);
+            window.addEventListener('resize', updateStickyHeader);
+            
+            // Initialize on page load
+            updateStickyHeader();
+            
+            // Debug: Log that search is initialized
+            console.log('Archive search initialized successfully');
+        } catch (error) {
+            console.error('Failed to initialize archive search:', error);
+        }
     </script>
 </body>
 </html>
