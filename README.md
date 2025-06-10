@@ -18,13 +18,13 @@ A sub-3KB blog system that respects your readers' bandwidth and time.
 
 ## Features
 
-- ✅ **Sub-3KB pages** - Entire blog posts under 3KB
-- ✅ **Real-time search** - Find posts instantly
-- ✅ **Individual post pages** - Clean, readable layouts
-- ✅ **Mobile responsive** - Works on all devices
-- ✅ **No tracking** - Respects privacy
-- ✅ **No external dependencies** - Completely self-contained
-- ✅ **Auto-deployment** - Updates on every git push
+- **Sub-3KB pages** - Entire blog posts under 3KB
+- **Real-time search** - Find posts instantly
+- **Individual post pages** - Clean, readable layouts
+- **Mobile responsive** - Works on all devices
+- **No tracking** - Respects privacy
+- **No external dependencies** - Completely self-contained
+- **Auto-deployment** - Updates on every git push
 
 ## Size Breakdown
 
