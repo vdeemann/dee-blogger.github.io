@@ -50,6 +50,28 @@ nav a{margin-right:1em;font-weight:500}
 .post-date{font-size:.85em;color:#888;margin-bottom:.3em}
 .post-title{margin:0 0 .3em;font-size:1.05em}
 .post-title a{color:#333;font-weight:500}
+.global-search{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.8);z-index:1000;display:none;animation:fadeIn 0.2s ease-out}
+.global-search.active{display:flex;align-items:flex-start;justify-content:center;padding:3em 1em}
+.global-search-container{background:#fff;border-radius:12px;width:100%;max-width:45em;max-height:80vh;display:flex;flex-direction:column;box-shadow:0 20px 60px rgba(0,0,0,0.3);animation:slideDown 0.3s ease-out}
+@keyframes slideDown{from{transform:translateY(-30px);opacity:0}to{transform:translateY(0);opacity:1}}
+.global-search-header{padding:1.5em;border-bottom:1px solid #e8e8e8;position:relative}
+.global-search-header h2{margin:0;font-size:1.3em;color:#333}
+.global-search-close{position:absolute;top:1.5em;right:1.5em;background:none;border:none;font-size:1.5em;color:#666;cursor:pointer;padding:0;width:32px;height:32px;display:flex;align-items:center;justify-content:center;border-radius:50%;transition:all 0.2s}
+.global-search-close:hover{background:#f0f0f0;color:#333}
+.global-search-input{width:100%;padding:1em 3em 1em 1.2em;border:2px solid #0066cc;border-radius:8px;font-size:1.1em;margin-top:1em;background:#fff url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="%230066cc" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>') no-repeat right 12px center;background-size:24px}
+.global-search-input:focus{outline:none;box-shadow:0 0 0 4px rgba(0,102,204,0.15)}
+.global-search-results{flex:1;overflow-y:auto;padding:1.5em}
+.global-search-status{padding:1em;text-align:center;color:#666;font-style:italic}
+.search-result-item{margin-bottom:1.5em;padding:1em;background:#fafafa;border-radius:8px;border:1px solid #e8e8e8;cursor:pointer;transition:all 0.2s}
+.search-result-item:hover{border-color:#0066cc;transform:translateY(-2px);box-shadow:0 4px 12px rgba(0,0,0,0.1)}
+.search-result-title{font-size:1.1em;font-weight:600;margin-bottom:0.3em}
+.search-result-title a{color:#333}
+.search-result-date{font-size:0.85em;color:#888;margin-bottom:0.5em}
+.search-result-excerpt{font-size:0.9em;color:#666;line-height:1.5}
+.search-trigger{position:fixed;bottom:2em;right:2em;background:#0066cc;color:#fff;border:none;border-radius:50%;width:60px;height:60px;display:flex;align-items:center;justify-content:center;font-size:1.5em;cursor:pointer;box-shadow:0 4px 12px rgba(0,102,204,0.3);transition:all 0.2s;z-index:999}
+.search-trigger:hover{transform:scale(1.1);box-shadow:0 6px 20px rgba(0,102,204,0.4)}
+kbd{background:#f0f0f0;border:1px solid #ccc;border-radius:3px;padding:2px 5px;font-family:monospace;font-size:0.9em;box-shadow:0 1px 2px rgba(0,0,0,0.1)}
+@media (max-width: 600px){.global-search-container{margin:1em;max-height:90vh}.search-trigger{width:50px;height:50px;font-size:1.3em}}
 EOF
 
 # Enhanced post page CSS
@@ -576,12 +598,15 @@ for i in "${!files[@]}"; do
     <meta property="og:type" content="article">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism.min.css">
     <link rel="stylesheet" href="../post.css">
+    <link rel="stylesheet" href="../shared.css">
+    <script src="../search-index.js" defer></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/mermaid/10.6.1/mermaid.min.js"></script>
 </head>
 <body>
     <nav>
         <a href="../">← Blog Home</a>
         <a href="../archive/">Archive</a>
+        <span style="float:right">Press <kbd>Ctrl+K</kbd> to search</span>
     </nav>
     
     <article>
@@ -679,6 +704,264 @@ done
 
 echo "📄 Successfully processed $processed_count out of $total files"
 
+# Generate search index for global search
+echo "🔍 Generating search index..."
+cat > public/search-index.js << 'SEARCH_INDEX_START'
+window.searchIndex = [
+SEARCH_INDEX_START
+
+# Add all posts to search index
+for num in "${sorted_nums[@]}"; do
+    title="${post_data["$num,title"]}"
+    date="${post_data["$num,date"]}"
+    excerpt="${post_data["$num,excerpt"]}"
+    slug="${post_data["$num,slug"]}"
+    
+    if [ -z "$title" ]; then
+        continue
+    fi
+    
+    # Escape for JavaScript
+    title_js=$(echo "$title" | sed 's/\\/\\\\/g' | sed 's/"/\\"/g' | sed "s/'/\\\\'/g" | tr '\n' ' ')
+    excerpt_js=$(echo "$excerpt" | sed 's/\\/\\\\/g' | sed 's/"/\\"/g' | sed "s/'/\\\\'/g" | tr '\n' ' ')
+    date_js=$(echo "$date" | sed 's/\\/\\\\/g' | sed 's/"/\\"/g' | tr '\n' ' ')
+    
+    cat >> public/search-index.js << SEARCH_ENTRY
+{
+    id: ${num},
+    title: "${title_js}",
+    excerpt: "${excerpt_js}",
+    date: "${date_js}",
+    url: "p/${num}.html"
+},
+SEARCH_ENTRY
+done
+
+# Close search index
+cat >> public/search-index.js << 'SEARCH_INDEX_END'
+];
+
+// Global search functionality
+(function() {
+    let searchOverlay = null;
+    let searchInput = null;
+    let searchResults = null;
+    let searchStatus = null;
+    
+    function escapeRegExp(string) {
+        return string.replace(/[.*+?^${}()|[\]\\]/g, '\\echo "📄 Successfully processed $processed_count out of $total files"
+
+# Generate main page
+echo "🏠 Generating main page..."');
+    }
+    
+    function highlightText(text, query) {
+        if (!query || query.length === 0) return text;
+        
+        // Escape the query for regex
+        const escapedQuery = escapeRegExp(query);
+        
+        // Create a case-insensitive regex for the exact query
+        const regex = new RegExp('(' + escapedQuery + ')', 'gi');
+        
+        // Replace matches with highlighted version
+        return text.replace(regex, '<span class="search-highlight">$1</span>');
+    }
+    
+    function performGlobalSearch(query) {
+        if (!query || query.trim().length === 0) {
+            searchResults.innerHTML = '';
+            searchStatus.textContent = 'Type to search across all ' + window.searchIndex.length + ' posts...';
+            return;
+        }
+        
+        const queryLower = query.toLowerCase().trim();
+        
+        // Search through all posts character by character
+        const matches = window.searchIndex.filter(post => {
+            const titleLower = post.title.toLowerCase();
+            const excerptLower = post.excerpt.toLowerCase();
+            const dateLower = post.date.toLowerCase();
+            
+            // Check if query appears in any field
+            return titleLower.includes(queryLower) || 
+                   excerptLower.includes(queryLower) || 
+                   dateLower.includes(queryLower);
+        });
+        
+        if (matches.length === 0) {
+            searchResults.innerHTML = '';
+            searchStatus.innerHTML = '<div class="no-results">No posts found matching "<span class="search-term">' + escapeHtml(query) + '</span>"</div>';
+            return;
+        }
+        
+        // Sort by relevance
+        matches.sort((a, b) => {
+            const aTitle = a.title.toLowerCase();
+            const bTitle = b.title.toLowerCase();
+            const aExcerpt = a.excerpt.toLowerCase();
+            const bExcerpt = b.excerpt.toLowerCase();
+            
+            // Title matches are most important
+            const aTitleIndex = aTitle.indexOf(queryLower);
+            const bTitleIndex = bTitle.indexOf(queryLower);
+            
+            if (aTitleIndex !== -1 && bTitleIndex === -1) return -1;
+            if (aTitleIndex === -1 && bTitleIndex !== -1) return 1;
+            
+            // If both have title matches, prefer matches at the beginning
+            if (aTitleIndex !== -1 && bTitleIndex !== -1) {
+                if (aTitleIndex !== bTitleIndex) return aTitleIndex - bTitleIndex;
+            }
+            
+            // Then check excerpt matches
+            const aExcerptIndex = aExcerpt.indexOf(queryLower);
+            const bExcerptIndex = bExcerpt.indexOf(queryLower);
+            
+            if (aExcerptIndex !== -1 && bExcerptIndex === -1) return -1;
+            if (aExcerptIndex === -1 && bExcerptIndex !== -1) return 1;
+            
+            // Finally, sort by date (newest first)
+            return b.id - a.id;
+        });
+        
+        // Display results
+        searchStatus.innerHTML = 'Found <span class="search-count">' + matches.length + '</span> posts matching "<span class="search-term">' + escapeHtml(query) + '</span>"';
+        
+        searchResults.innerHTML = matches.map(post => {
+            const highlightedTitle = highlightText(escapeHtml(post.title), query);
+            const highlightedExcerpt = highlightText(escapeHtml(post.excerpt), query);
+            const highlightedDate = highlightText(escapeHtml(post.date), query);
+            
+            return '<div class="search-result-item" onclick="window.location.href=\'' + getRelativePath() + post.url + '\'">' +
+                '<div class="search-result-date">' + highlightedDate + '</div>' +
+                '<div class="search-result-title"><a href="' + getRelativePath() + post.url + '">' + highlightedTitle + '</a></div>' +
+                '<div class="search-result-excerpt">' + highlightedExcerpt + '</div>' +
+                '</div>';
+        }).join('');
+    }
+    
+    function escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+    
+    function getRelativePath() {
+        // Determine relative path based on current location
+        if (window.location.pathname.includes('/p/')) {
+            return '../';
+        } else if (window.location.pathname.includes('/archive/')) {
+            return '../';
+        }
+        return '';
+    }
+    
+    function createSearchOverlay() {
+        // Create overlay HTML
+        const overlay = document.createElement('div');
+        overlay.className = 'global-search';
+        overlay.innerHTML = 
+            '<div class="global-search-container">' +
+                '<div class="global-search-header">' +
+                    '<h2>Search All Posts</h2>' +
+                    '<button class="global-search-close">×</button>' +
+                    '<input type="text" class="global-search-input" placeholder="Search titles, content, and dates..." autofocus>' +
+                '</div>' +
+                '<div class="global-search-status">Type to search across all ' + window.searchIndex.length + ' posts...</div>' +
+                '<div class="global-search-results"></div>' +
+            '</div>';
+        
+        document.body.appendChild(overlay);
+        
+        searchOverlay = overlay;
+        searchInput = overlay.querySelector('.global-search-input');
+        searchResults = overlay.querySelector('.global-search-results');
+        searchStatus = overlay.querySelector('.global-search-status');
+        
+        // Event listeners
+        overlay.querySelector('.global-search-close').addEventListener('click', closeSearch);
+        
+        overlay.addEventListener('click', function(e) {
+            if (e.target === overlay) {
+                closeSearch();
+            }
+        });
+        
+        // Character-by-character search
+        let searchTimeout;
+        searchInput.addEventListener('input', function() {
+            clearTimeout(searchTimeout);
+            const query = this.value;
+            
+            if (query.length === 0) {
+                performGlobalSearch('');
+                return;
+            }
+            
+            // Small delay for performance
+            searchTimeout = setTimeout(() => performGlobalSearch(query), 50);
+        });
+        
+        // Handle escape key
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape' && searchOverlay.classList.contains('active')) {
+                closeSearch();
+            }
+        });
+    }
+    
+    function openSearch() {
+        if (!searchOverlay) {
+            createSearchOverlay();
+        }
+        searchOverlay.classList.add('active');
+        searchInput.focus();
+        searchInput.value = '';
+        performGlobalSearch('');
+    }
+    
+    function closeSearch() {
+        if (searchOverlay) {
+            searchOverlay.classList.remove('active');
+        }
+    }
+    
+    // Create search trigger button
+    function createSearchTrigger() {
+        const trigger = document.createElement('button');
+        trigger.className = 'search-trigger';
+        trigger.innerHTML = '🔍';
+        trigger.title = 'Search all posts';
+        trigger.addEventListener('click', openSearch);
+        document.body.appendChild(trigger);
+    }
+    
+    // Initialize when DOM is ready
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', createSearchTrigger);
+    } else {
+        createSearchTrigger();
+    }
+    
+    // Keyboard shortcut (Ctrl/Cmd + K)
+    document.addEventListener('keydown', function(e) {
+        if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+            e.preventDefault();
+            openSearch();
+        }
+    });
+    
+    // Expose globally for programmatic access
+    window.globalSearch = {
+        open: openSearch,
+        close: closeSearch
+    };
+})();
+SEARCH_INDEX_END
+
+echo "✅ Search index generated with $processed_count posts"
+
 # Generate main page
 echo "🏠 Generating main page..."
 
@@ -696,11 +979,12 @@ cat >> public/index.html << MAIN_META
     <meta name="description" content="Technical blog with ${processed_count} posts covering software architecture, development, and technology insights">
     <meta name="author" content="${SITE_TITLE}">
     <link rel="stylesheet" href="shared.css">
+    <script src="search-index.js" defer></script>
 </head>
 <body>
     <header>
         <h1>${SITE_TITLE}</h1>
-        <div class="stats">📊 ${processed_count} posts published</div>
+        <div class="stats">📊 ${processed_count} posts published | Press <kbd>Ctrl+K</kbd> to search</div>
     </header>
     
     <main>
@@ -905,9 +1189,10 @@ cat >> public/archive/index.html << ARCHIVE_META
     <title>Archive - ${SITE_TITLE}</title>
     <meta name="description" content="Complete chronological archive of all ${processed_count} posts">
     <link rel="stylesheet" href="../shared.css">
+    <script src="../search-index.js" defer></script>
 </head>
 <body>
-    <nav><a href="../">← Home</a></nav>
+    <nav><a href="../">← Home</a> | Press <kbd>Ctrl+K</kbd> for global search</nav>
     
     <header>
         <h1>Post Archive</h1>
@@ -1204,11 +1489,15 @@ echo "  ✓ Created main page with recent posts and search"
 echo "  ✓ Built comprehensive archive with chronological organization"
 echo "  ✓ Character-by-character search with real-time highlighting"
 echo "  ✓ Fixed sticky navigation on archive page"
-echo "  ✓ Removed hover effects while maintaining visual appeal"
+echo "  ✓ Global search index for entire blog"
 echo ""
 echo "🚀 Features included:"
-echo "  • Character-by-character real-time search with highlighting"
-echo "  • Case-insensitive search across titles, excerpts, and dates"
+echo "  • Global character-by-character search (Ctrl+K)"
+echo "  • Real-time search with yellow highlighting"
+echo "  • Search across titles, excerpts, and dates"
+echo "  • Floating search button on all pages"
+echo "  • Relevance-based search results"
+echo "  • Case-insensitive search across all posts"
 echo "  • Visual search indicators and animations"
 echo "  • Clean design with subtle border hover effects"  
 echo "  • Code syntax highlighting with Prism.js"
@@ -1224,6 +1513,7 @@ echo "  public/"
 echo "  ├── index.html (main page with recent posts)"
 echo "  ├── shared.css (shared styles)"
 echo "  ├── post.css (post-specific styles)"
+echo "  ├── search-index.js (global search index)"
 echo "  ├── archive/"
 echo "  │   └── index.html (complete archive)"
 echo "  └── p/"
@@ -1231,4 +1521,5 @@ echo "      ├── 1.html"
 echo "      ├── 2.html"
 echo "      └── ... (individual post pages)"
 echo ""
-echo "🎯 All issues have been fixed! Search now works character-by-character with highlighting."
+echo "🎯 Global search now works character-by-character with highlighting!"
+echo "   Press Ctrl+K on any page to search the entire blog."
