@@ -11,10 +11,80 @@ rm -rf public
 mkdir -p public/p public/archive
 
 # Enhanced shared CSS for consistent styling across all pages
-SHARED_CSS='body{max-width:55em;margin:2em auto;padding:0 1em;font-family:system-ui,sans-serif;line-height:1.6;color:#333;background:#fff;position:relative}a{color:#0066cc;text-decoration:none}a:hover{text-decoration:underline}h1{font-size:1.9em;margin:0 0 .5em;color:#1a1a1a;font-weight:700}h2{font-size:1.3em;margin:1.5em 0 .5em;color:#333;font-weight:600}h3{font-size:1.1em;margin:1.2em 0 .4em;color:#444;font-weight:600}h4{font-size:1em;margin:1em 0 .3em;color:#555;font-weight:600}p{margin:.6em 0}small{color:#666;display:block;margin:0 0 .3em;font-size:.9em}.post{margin:0 0 .8em;padding:.7em .9em;background:#fafafa;border-radius:6px;border:1px solid #e8e8e8;cursor:pointer;transition:all 0.2s ease}.post:hover{background:#f5f5f5;border-color:#ddd;transform:translateY(-1px);box-shadow:0 2px 8px rgba(0,0,0,0.1)}input{width:100%;margin:0 0 1.2em;padding:.7em;border:1px solid #ddd;border-radius:6px;font-size:.95em;background:#fff;box-sizing:border-box}nav{margin:1.2em 0;padding:.6em 0;border-bottom:1px solid #eee}nav a{margin-right:1em;font-weight:500}.stats{background:#fff3cd;padding:.8em 1.2em;border-radius:6px;margin:1.2em 0;text-align:center;font-size:.95em;border:1px solid #ffeaa7}.search-highlight{background:#ffeb3b;padding:0 .2em;border-radius:2px}.excerpt{color:#666;margin:.4em 0 0;font-size:.9em;line-height:1.4}.search-results{background:#e8f4fd;padding:1em;border-radius:6px;margin:1.2em 0;border-left:4px solid #0066cc}.no-results{text-align:center;color:#666;padding:2em;font-style:italic}.search-count{font-weight:600;color:#0066cc}.sticky-header{position:sticky;top:0;background:rgba(255,255,255,0.95);backdrop-filter:blur(10px);border-bottom:2px solid #0066cc;padding:1em 0;margin:0 0 1.2em;z-index:100;box-shadow:0 2px 10px rgba(0,0,0,.1);display:none}.sticky-header h2{margin:0 0 .6em;font-size:1.1em;color:#0066cc;font-weight:700}.sticky-header input{margin:0;padding:.6em;font-size:.9em}.archive-content{margin:2em 0}.year-section{margin:0 0 3em}.month-section{margin:0 0 2em}.year-header{margin:0 0 1.2em;border-bottom:2px solid #eee;padding-bottom:.5em}.month-header{margin:0 0 1em;font-size:.95em;color:#666;font-weight:600}.post-date{font-size:.85em;color:#888;margin-bottom:.3em}.post-title{margin:0 0 .3em;font-size:1.05em}.post-title a{color:#333;font-weight:500}'
+cat > public/shared.css << 'EOF'
+body{max-width:55em;margin:2em auto;padding:0 1em;font-family:system-ui,sans-serif;line-height:1.6;color:#333;background:#fff;position:relative}
+a{color:#0066cc;text-decoration:none}
+a:hover{text-decoration:underline}
+h1{font-size:1.9em;margin:0 0 .5em;color:#1a1a1a;font-weight:700}
+h2{font-size:1.3em;margin:1.5em 0 .5em;color:#333;font-weight:600}
+h3{font-size:1.1em;margin:1.2em 0 .4em;color:#444;font-weight:600}
+h4{font-size:1em;margin:1em 0 .3em;color:#555;font-weight:600}
+p{margin:.6em 0}
+small{color:#666;display:block;margin:0 0 .3em;font-size:.9em}
+.post{margin:0 0 .8em;padding:.7em .9em;background:#fafafa;border-radius:6px;border:1px solid #e8e8e8;cursor:pointer;transition:all 0.2s ease}
+.post:hover{background:#f5f5f5;border-color:#ddd;transform:translateY(-1px);box-shadow:0 2px 8px rgba(0,0,0,0.1)}
+input{width:100%;margin:0 0 1.2em;padding:.7em;border:1px solid #ddd;border-radius:6px;font-size:.95em;background:#fff;box-sizing:border-box}
+nav{margin:1.2em 0;padding:.6em 0;border-bottom:1px solid #eee}
+nav a{margin-right:1em;font-weight:500}
+.stats{background:#fff3cd;padding:.8em 1.2em;border-radius:6px;margin:1.2em 0;text-align:center;font-size:.95em;border:1px solid #ffeaa7}
+.search-highlight{background:#ffeb3b;padding:0 .2em;border-radius:2px}
+.excerpt{color:#666;margin:.4em 0 0;font-size:.9em;line-height:1.4}
+.search-results{background:#e8f4fd;padding:1em;border-radius:6px;margin:1.2em 0;border-left:4px solid #0066cc}
+.no-results{text-align:center;color:#666;padding:2em;font-style:italic}
+.search-count{font-weight:600;color:#0066cc}
+.sticky-header{position:sticky;top:0;background:rgba(255,255,255,0.95);backdrop-filter:blur(10px);border-bottom:2px solid #0066cc;padding:1em 0;margin:0 0 1.2em;z-index:100;box-shadow:0 2px 10px rgba(0,0,0,.1);display:none}
+.sticky-header h2{margin:0 0 .6em;font-size:1.1em;color:#0066cc;font-weight:700}
+.sticky-header input{margin:0;padding:.6em;font-size:.9em}
+.archive-content{margin:2em 0}
+.year-section{margin:0 0 3em}
+.month-section{margin:0 0 2em}
+.year-header{margin:0 0 1.2em;border-bottom:2px solid #eee;padding-bottom:.5em}
+.month-header{margin:0 0 1em;font-size:.95em;color:#666;font-weight:600}
+.post-date{font-size:.85em;color:#888;margin-bottom:.3em}
+.post-title{margin:0 0 .3em;font-size:1.05em}
+.post-title a{color:#333;font-weight:500}
+EOF
 
-# Enhanced post page CSS with better typography and code styling
-POST_CSS='body{max-width:55em;margin:2em auto;padding:0 1em;font-family:system-ui,sans-serif;line-height:1.6;color:#333;background:#fff}a{color:#0066cc;text-decoration:none}a:hover{text-decoration:underline}h1{font-size:2.2em;margin:0 0 .6em;color:#1a1a1a;font-weight:700;line-height:1.2}h2{font-size:1.4em;margin:2em 0 .6em;color:#333;font-weight:600;border-bottom:2px solid #e2e8f0;padding-bottom:.4em}h3{font-size:1.2em;margin:1.8em 0 .5em;color:#444;font-weight:600}h4{font-size:1.05em;margin:1.5em 0 .4em;color:#555;font-weight:600}p{margin:.8em 0}small{color:#666;display:block;margin:0 0 .4em;font-size:.9em}strong{font-weight:600;color:#333}em{font-style:italic;color:#444}code{background:#f7fafc;color:#e53e3e;padding:.2em .4em;border-radius:3px;font-family:"SF Mono",Monaco,Consolas,"Liberation Mono","Courier New",monospace;font-size:.85em;border:1px solid #e2e8f0}pre{background:#f7fafc;padding:1em 1.2em;margin:2em 0;border-radius:8px;overflow-x:auto;border:1px solid #e2e8f0;box-shadow:0 2px 6px rgba(0,0,0,.08);position:relative}pre code{background:transparent;padding:0;font-size:.9em;color:#2d3748;display:block;border:0;white-space:pre}ul,ol{margin:1.5em 0;padding-left:2.2em}li{margin:.6em 0;line-height:1.6}nav{margin:1.2em 0;padding:.6em 0;border-bottom:1px solid #eee}nav a{margin-right:1.2em;font-weight:500}blockquote{background:#f7fafc;border-left:4px solid #0066cc;margin:2em 0;padding:1.2em 1.8em;border-radius:0 8px 8px 0;color:#4a5568;font-style:italic;box-shadow:0 2px 6px rgba(0,0,0,.08)}blockquote p{margin:.6em 0}blockquote h1,blockquote h2,blockquote h3,blockquote h4{color:#2d3748;font-style:normal}hr{border:0;height:1px;background:#e2e8f0;margin:3em 0}.post-meta{background:#f7fafc;padding:1.2em 1.5em;border-radius:8px;margin:2em 0;border-left:4px solid #0066cc;box-shadow:0 2px 6px rgba(0,0,0,.08)}.post-meta p{margin:.4em 0;font-size:.95em;color:#4a5568}.copy-btn{position:absolute;top:.8em;right:.8em;background:#0066cc;color:#fff;border:0;border-radius:4px;padding:.4em .8em;font-size:.8em;cursor:pointer;opacity:.8;transition:all 0.2s ease}.copy-btn:hover{opacity:1;background:#0052a3}.copy-btn.copied{background:#28a745}.mermaid{background:#f7fafc;border:1px solid #e2e8f0;border-radius:8px;padding:1.5em;margin:2em 0;text-align:center;box-shadow:0 2px 6px rgba(0,0,0,.08)}.table-container{overflow-x:auto;margin:2em 0;border-radius:8px;box-shadow:0 2px 6px rgba(0,0,0,.08)}table{width:100%;border-collapse:collapse;background:#fff;border-radius:8px;overflow:hidden}th,td{padding:1em 1.2em;text-align:left;border-bottom:1px solid #e2e8f0}th{background:#f7fafc;font-weight:600;color:#2d3748}tr:hover{background:#fafafa}.toc{background:#f7fafc;border:1px solid #e2e8f0;border-radius:8px;padding:1.5em;margin:2em 0}.toc h3{margin:0 0 1em;color:#2d3748}.toc ul{margin:0;padding-left:1.5em}.toc a{color:#0066cc;font-weight:normal}'
+# Enhanced post page CSS
+cat > public/post.css << 'EOF'
+body{max-width:55em;margin:2em auto;padding:0 1em;font-family:system-ui,sans-serif;line-height:1.6;color:#333;background:#fff}
+a{color:#0066cc;text-decoration:none}
+a:hover{text-decoration:underline}
+h1{font-size:2.2em;margin:0 0 .6em;color:#1a1a1a;font-weight:700;line-height:1.2}
+h2{font-size:1.4em;margin:2em 0 .6em;color:#333;font-weight:600;border-bottom:2px solid #e2e8f0;padding-bottom:.4em}
+h3{font-size:1.2em;margin:1.8em 0 .5em;color:#444;font-weight:600}
+h4{font-size:1.05em;margin:1.5em 0 .4em;color:#555;font-weight:600}
+p{margin:.8em 0}
+small{color:#666;display:block;margin:0 0 .4em;font-size:.9em}
+strong{font-weight:600;color:#333}
+em{font-style:italic;color:#444}
+code{background:#f7fafc;color:#e53e3e;padding:.2em .4em;border-radius:3px;font-family:"SF Mono",Monaco,Consolas,"Liberation Mono","Courier New",monospace;font-size:.85em;border:1px solid #e2e8f0}
+pre{background:#f7fafc;padding:1em 1.2em;margin:2em 0;border-radius:8px;overflow-x:auto;border:1px solid #e2e8f0;box-shadow:0 2px 6px rgba(0,0,0,.08);position:relative}
+pre code{background:transparent;padding:0;font-size:.9em;color:#2d3748;display:block;border:0;white-space:pre}
+ul,ol{margin:1.5em 0;padding-left:2.2em}
+li{margin:.6em 0;line-height:1.6}
+nav{margin:1.2em 0;padding:.6em 0;border-bottom:1px solid #eee}
+nav a{margin-right:1.2em;font-weight:500}
+blockquote{background:#f7fafc;border-left:4px solid #0066cc;margin:2em 0;padding:1.2em 1.8em;border-radius:0 8px 8px 0;color:#4a5568;font-style:italic;box-shadow:0 2px 6px rgba(0,0,0,.08)}
+blockquote p{margin:.6em 0}
+blockquote h1,blockquote h2,blockquote h3,blockquote h4{color:#2d3748;font-style:normal}
+hr{border:0;height:1px;background:#e2e8f0;margin:3em 0}
+.post-meta{background:#f7fafc;padding:1.2em 1.5em;border-radius:8px;margin:2em 0;border-left:4px solid #0066cc;box-shadow:0 2px 6px rgba(0,0,0,.08)}
+.post-meta p{margin:.4em 0;font-size:.95em;color:#4a5568}
+.copy-btn{position:absolute;top:.8em;right:.8em;background:#0066cc;color:#fff;border:0;border-radius:4px;padding:.4em .8em;font-size:.8em;cursor:pointer;opacity:.8;transition:all 0.2s ease}
+.copy-btn:hover{opacity:1;background:#0052a3}
+.copy-btn.copied{background:#28a745}
+.mermaid{background:#f7fafc;border:1px solid #e2e8f0;border-radius:8px;padding:1.5em;margin:2em 0;text-align:center;box-shadow:0 2px 6px rgba(0,0,0,.08)}
+.table-container{overflow-x:auto;margin:2em 0;border-radius:8px;box-shadow:0 2px 6px rgba(0,0,0,.08)}
+table{width:100%;border-collapse:collapse;background:#fff;border-radius:8px;overflow:hidden}
+th,td{padding:1em 1.2em;text-align:left;border-bottom:1px solid #e2e8f0}
+th{background:#f7fafc;font-weight:600;color:#2d3748}
+tr:hover{background:#fafafa}
+.toc{background:#f7fafc;border:1px solid #e2e8f0;border-radius:8px;padding:1.5em;margin:2em 0}
+.toc h3{margin:0 0 1em;color:#2d3748}
+.toc ul{margin:0;padding-left:1.5em}
+.toc a{color:#0066cc;font-weight:normal}
+EOF
 
 # Improved markdown processor with better handling of complex content
 process_markdown() {
@@ -342,6 +412,12 @@ get_month_name() {
     esac
 }
 
+# Safe text escaping for HTML
+html_escape() {
+    local text="$1"
+    echo "$text" | sed 's/&/\&amp;/g; s/</\&lt;/g; s/>/\&gt;/g; s/"/\&quot;/g; s/'"'"'/\&#39;/g'
+}
+
 # Find all markdown files and process them
 echo "📁 Scanning for markdown files..."
 
@@ -391,7 +467,7 @@ for i in "${!files[@]}"; do
     fi
     
     # Extract title from first line
-    title=$(head -n1 "$file" | sed 's/^#* *//' | sed 's/[<>&"'\'']/./g' | sed 's/^\s*//' | sed 's/\s*$//')
+    title=$(head -n1 "$file" | sed 's/^#* *//' | sed 's/^\s*//' | sed 's/\s*$//')
     if [ -z "$title" ]; then
         title="Untitled Post $((i + 1))"
     fi
@@ -454,22 +530,27 @@ for i in "${!files[@]}"; do
         reading_time=1
     fi
     
-    # Generate individual post HTML
-    cat > "public/p/${num}.html" << 'HTML_EOF'
+    # HTML escape values for safe insertion
+    title_safe=$(html_escape "$title")
+    excerpt_safe=$(html_escape "$excerpt")
+    slug_safe=$(html_escape "$slug")
+    
+    # Generate individual post HTML using here document to avoid sed issues
+    cat > "public/p/${num}.html" << HTML_END
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width,initial-scale=1">
-    <title>TITLE_PLACEHOLDER - SITE_TITLE_PLACEHOLDER</title>
-    <meta name="description" content="EXCERPT_PLACEHOLDER">
-    <meta name="author" content="SITE_TITLE_PLACEHOLDER">
-    <meta property="og:title" content="TITLE_PLACEHOLDER">
-    <meta property="og:description" content="EXCERPT_PLACEHOLDER">
+    <title>${title_safe} - ${SITE_TITLE}</title>
+    <meta name="description" content="${excerpt_safe:0:160}">
+    <meta name="author" content="${SITE_TITLE}">
+    <meta property="og:title" content="${title_safe}">
+    <meta property="og:description" content="${excerpt_safe:0:160}">
     <meta property="og:type" content="article">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism.min.css">
+    <link rel="stylesheet" href="../post.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/mermaid/10.6.1/mermaid.min.js"></script>
-    <style>POST_CSS_PLACEHOLDER</style>
 </head>
 <body>
     <nav>
@@ -479,18 +560,18 @@ for i in "${!files[@]}"; do
     
     <article>
         <header>
-            <h1>TITLE_PLACEHOLDER</h1>
-            <small>Published on DATE_PLACEHOLDER</small>
+            <h1>${title_safe}</h1>
+            <small>Published on ${date_string}</small>
             
             <div class="post-meta">
-                <p><strong>📅 Published:</strong> DATE_PLACEHOLDER</p>
-                <p><strong>⏱️ Reading time:</strong> ~READING_TIME_PLACEHOLDER min (WORD_COUNT_PLACEHOLDER words)</p>
-                <p><strong>📝 Source:</strong> SLUG_PLACEHOLDER.md</p>
+                <p><strong>📅 Published:</strong> ${date_string}</p>
+                <p><strong>⏱️ Reading time:</strong> ~${reading_time} min (${word_count} words)</p>
+                <p><strong>📝 Source:</strong> ${slug_safe}.md</p>
             </div>
         </header>
         
         <main>
-            CONTENT_PLACEHOLDER
+${content}
         </main>
     </article>
     
@@ -564,27 +645,7 @@ for i in "${!files[@]}"; do
     <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/autoloader/prism-autoloader.min.js"></script>
 </body>
 </html>
-HTML_EOF
-
-    # Replace placeholders safely
-    sed -i.bak "s|TITLE_PLACEHOLDER|${title}|g" "public/p/${num}.html"
-    sed -i.bak "s|SITE_TITLE_PLACEHOLDER|${SITE_TITLE}|g" "public/p/${num}.html"
-    sed -i.bak "s|DATE_PLACEHOLDER|${date_string}|g" "public/p/${num}.html"
-    sed -i.bak "s|READING_TIME_PLACEHOLDER|${reading_time}|g" "public/p/${num}.html"
-    sed -i.bak "s|WORD_COUNT_PLACEHOLDER|${word_count}|g" "public/p/${num}.html"
-    sed -i.bak "s|SLUG_PLACEHOLDER|${slug}|g" "public/p/${num}.html"
-    sed -i.bak "s|POST_CSS_PLACEHOLDER|${POST_CSS}|g" "public/p/${num}.html"
-    
-    # Handle excerpt with special characters
-    excerpt_escaped=$(printf '%s\n' "$excerpt" | sed 's/[[\.*^$()+?{|]/\\&/g')
-    sed -i.bak "s|EXCERPT_PLACEHOLDER|${excerpt_escaped:0:160}|g" "public/p/${num}.html"
-    
-    # Replace content using awk to handle multiline content properly
-    awk -v content="$content" '{gsub(/CONTENT_PLACEHOLDER/, content); print}' "public/p/${num}.html" > "public/p/${num}.html.tmp"
-    mv "public/p/${num}.html.tmp" "public/p/${num}.html"
-    
-    # Clean up backup files
-    rm -f "public/p/${num}.html.bak"
+HTML_END
     
     processed_count=$((processed_count + 1))
     echo "  ✅ Generated: public/p/${num}.html"
@@ -595,16 +656,20 @@ echo "📄 Successfully processed $processed_count out of $total files"
 # Generate main page
 echo "🏠 Generating main page..."
 
-cat > public/index.html << MAIN_EOF
+cat > public/index.html << 'MAIN_START'
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width,initial-scale=1">
+MAIN_START
+
+# Add title and meta tags
+cat >> public/index.html << MAIN_META
     <title>${SITE_TITLE}</title>
     <meta name="description" content="Technical blog with ${processed_count} posts covering software architecture, development, and technology insights">
     <meta name="author" content="${SITE_TITLE}">
-    <style>${SHARED_CSS}</style>
+    <link rel="stylesheet" href="shared.css">
 </head>
 <body>
     <header>
@@ -619,7 +684,7 @@ cat > public/index.html << MAIN_EOF
         </div>
         
         <div id="posts">
-MAIN_EOF
+MAIN_META
 
 # Get all posts sorted by date (newest first)
 all_nums=($(for ((i=1; i<=processed_count; i++)); do
@@ -643,16 +708,14 @@ for num in "${all_nums[@]}"; do
         continue
     fi
     
-    # Prepare data for search (lowercase, escaped)
-    title_lower=$(echo "${title}" | tr '[:upper:]' '[:lower:]' | sed 's/&/\&amp;/g; s/</\&lt;/g; s/>/\&gt;/g; s/"/\&quot;/g')
-    excerpt_lower=$(echo "${excerpt}" | tr '[:upper:]' '[:lower:]' | sed 's/&/\&amp;/g; s/</\&lt;/g; s/>/\&gt;/g; s/"/\&quot;/g')
-    searchable_lower=$(echo "${title} ${excerpt}" | tr '[:upper:]' '[:lower:]' | sed 's/&/\&amp;/g; s/</\&lt;/g; s/>/\&gt;/g; s/"/\&quot;/g')
+    # Prepare data for search and display (properly escaped)
+    title_lower=$(echo "${title}" | tr '[:upper:]' '[:lower:]' | html_escape)
+    excerpt_lower=$(echo "${excerpt}" | tr '[:upper:]' '[:lower:]' | html_escape)
+    searchable_lower=$(echo "${title} ${excerpt}" | tr '[:upper:]' '[:lower:]' | html_escape)
+    title_display=$(html_escape "$title")
+    excerpt_display=$(html_escape "$excerpt")
     
-    # Prepare for display (escaped)
-    title_display=$(echo "${title}" | sed 's/&/\&amp;/g; s/</\&lt;/g; s/>/\&gt;/g; s/"/\&quot;/g')
-    excerpt_display=$(echo "${excerpt}" | sed 's/&/\&amp;/g; s/</\&lt;/g; s/>/\&gt;/g; s/"/\&quot;/g')
-    
-    cat >> public/index.html << POST_EOF
+    cat >> public/index.html << POST_ENTRY
             <div class="post" data-title="${title_lower}" data-excerpt="${excerpt_lower}" data-searchable="${searchable_lower}" onclick="window.location.href='p/${num}.html'">
                 <div class="post-date">${date}</div>
                 <div class="post-title">
@@ -660,12 +723,12 @@ for num in "${all_nums[@]}"; do
                 </div>
                 <div class="excerpt">${excerpt_display}</div>
             </div>
-POST_EOF
+POST_ENTRY
     
     recent_count=$((recent_count + 1))
 done
 
-cat >> public/index.html << 'MAIN_END_EOF'
+cat >> public/index.html << 'MAIN_END'
         </div>
         
         <nav style="margin-top:2em">
@@ -739,20 +802,23 @@ cat >> public/index.html << 'MAIN_END_EOF'
     </script>
 </body>
 </html>
-MAIN_END_EOF
+MAIN_END
 
 # Generate archive page
 echo "📚 Generating archive page..."
 
-cat > public/archive/index.html << ARCHIVE_START_EOF
+cat > public/archive/index.html << 'ARCHIVE_START'
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width,initial-scale=1">
+ARCHIVE_START
+
+cat >> public/archive/index.html << ARCHIVE_META
     <title>Archive - ${SITE_TITLE}</title>
     <meta name="description" content="Complete chronological archive of all ${processed_count} posts">
-    <style>${SHARED_CSS}</style>
+    <link rel="stylesheet" href="../shared.css">
 </head>
 <body>
     <nav><a href="../">← Home</a></nav>
@@ -774,7 +840,7 @@ cat > public/archive/index.html << ARCHIVE_START_EOF
         </div>
         
         <div class="archive-content" id="archive">
-ARCHIVE_START_EOF
+ARCHIVE_META
 
 # Group posts by year and month
 declare -A year_months
@@ -797,22 +863,22 @@ for ym in $(printf '%s\n' "${!year_months[@]}" | sort -rn); do
     # Year section header
     if [ "$year" != "$current_year" ]; then
         [ -n "$current_year" ] && echo "        </div>" >> public/archive/index.html
-        cat >> public/archive/index.html << YEAR_EOF
+        cat >> public/archive/index.html << YEAR_SECTION
         <div class="year-section" data-year="$year">
             <div class="year-header">
                 <h2>$year</h2>
             </div>
-YEAR_EOF
+YEAR_SECTION
         current_year="$year"
     fi
     
     # Month section
-    cat >> public/archive/index.html << MONTH_EOF
+    cat >> public/archive/index.html << MONTH_SECTION
             <div class="month-section" data-month="$month" data-year-month="$year $month_name">
                 <div class="month-header">
                     <h3>$month_name $year</h3>
                 </div>
-MONTH_EOF
+MONTH_SECTION
     
     # Posts in this month (sorted by day, newest first)
     month_nums=($(printf '%s\n' ${year_months[$ym]} | xargs -n1 | while read -r num; do
@@ -828,16 +894,14 @@ MONTH_EOF
             continue
         fi
         
-        # Prepare search data
-        title_lower=$(echo "${title}" | tr '[:upper:]' '[:lower:]' | sed 's/&/\&amp;/g; s/</\&lt;/g; s/>/\&gt;/g; s/"/\&quot;/g')
-        excerpt_lower=$(echo "${excerpt}" | tr '[:upper:]' '[:lower:]' | sed 's/&/\&amp;/g; s/</\&lt;/g; s/>/\&gt;/g; s/"/\&quot;/g')
-        searchable_lower=$(echo "${title} ${excerpt}" | tr '[:upper:]' '[:lower:]' | sed 's/&/\&amp;/g; s/</\&lt;/g; s/>/\&gt;/g; s/"/\&quot;/g')
+        # Prepare data safely
+        title_lower=$(echo "${title}" | tr '[:upper:]' '[:lower:]' | html_escape)
+        excerpt_lower=$(echo "${excerpt}" | tr '[:upper:]' '[:lower:]' | html_escape)
+        searchable_lower=$(echo "${title} ${excerpt}" | tr '[:upper:]' '[:lower:]' | html_escape)
+        title_display=$(html_escape "$title")
+        excerpt_display=$(html_escape "$excerpt")
         
-        # Prepare display data
-        title_display=$(echo "${title}" | sed 's/&/\&amp;/g; s/</\&lt;/g; s/>/\&gt;/g; s/"/\&quot;/g')
-        excerpt_display=$(echo "${excerpt}" | sed 's/&/\&amp;/g; s/</\&lt;/g; s/>/\&gt;/g; s/"/\&quot;/g')
-        
-        cat >> public/archive/index.html << POST_ARCHIVE_EOF
+        cat >> public/archive/index.html << ARCHIVE_POST
                 <div class="post" data-title="${title_lower}" data-excerpt="${excerpt_lower}" data-searchable="${searchable_lower}" onclick="window.location.href='../p/${num}.html'">
                     <div class="post-date">${date}</div>
                     <div class="post-title">
@@ -845,14 +909,14 @@ MONTH_EOF
                     </div>
                     <div class="excerpt">${excerpt_display}</div>
                 </div>
-POST_ARCHIVE_EOF
+ARCHIVE_POST
     done
     echo "            </div>" >> public/archive/index.html
 done
 
 [ -n "$current_year" ] && echo "        </div>" >> public/archive/index.html
 
-cat >> public/archive/index.html << 'ARCHIVE_END_EOF'
+cat >> public/archive/index.html << 'ARCHIVE_END'
         </div>
     </main>
     
@@ -1003,7 +1067,7 @@ cat >> public/archive/index.html << 'ARCHIVE_END_EOF'
     </script>
 </body>
 </html>
-ARCHIVE_END_EOF
+ARCHIVE_END
 
 echo ""
 echo "✅ Enhanced blog build completed successfully!"
@@ -1032,6 +1096,8 @@ echo ""
 echo "📁 Output structure:"
 echo "  public/"
 echo "  ├── index.html (main page with recent posts)"
+echo "  ├── shared.css (shared styles)"
+echo "  ├── post.css (post-specific styles)"
 echo "  ├── archive/"
 echo "  │   └── index.html (complete archive)"
 echo "  └── p/"
