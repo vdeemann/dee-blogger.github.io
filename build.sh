@@ -71,7 +71,7 @@ blockquote h1,blockquote h2,blockquote h3,blockquote h4{color:#2d3748;font-style
 hr{border:0;height:1px;background:#e2e8f0;margin:3em 0}
 .post-meta{background:#f7fafc;padding:1.2em 1.5em;border-radius:8px;margin:2em 0;border-left:4px solid #0066cc;box-shadow:0 2px 6px rgba(0,0,0,.08)}
 .post-meta p{margin:.4em 0;font-size:.95em;color:#4a5568}
-.copy-btn{position:absolute;top:.8em;right:.8em;background:#0066cc;color:#fff;border:0;border-radius:4px;padding:.4em .8em;font-size:.8em;cursor:pointer;opacity:.8}
+.copy-btn{position:absolute;top:.8em;right:.8em;background:#0066cc;color:#fff;border:0;border-radius:4px;padding:.4em .8em;font-size:.8em;cursor:pointer;opacity:.8;transition:all 0.2s ease}
 .copy-btn:hover{opacity:1;background:#0052a3}
 .copy-btn.copied{background:#28a745}
 .mermaid{background:#f7fafc;border:1px solid #e2e8f0;border-radius:8px;padding:1.5em;margin:2em 0;text-align:center;box-shadow:0 2px 6px rgba(0,0,0,.08)}
@@ -423,35 +423,17 @@ echo "📁 Scanning for markdown files..."
 
 # Look for markdown files in common locations
 files=()
-search_paths=("content" "posts" "articles" "_posts" ".")
-
-for location in "${search_paths[@]}"; do
+for location in "content" "posts" "articles" "_posts" "."; do
     if [ -d "$location" ]; then
-        echo "  🔍 Searching in: $location/"
         while IFS= read -r -d '' file; do
-            if [ -f "$file" ] && [ -s "$file" ]; then
-                files+=("$file")
-                echo "    ✓ Found: $file"
-            fi
-        done < <(find "$location" -maxdepth 3 -name "*.md" -type f -print0 2>/dev/null)
-    else
-        echo "  ⚠️ Directory not found: $location/"
+            files+=("$file")
+        done < <(find "$location" -name "*.md" -type f -print0 2>/dev/null)
     fi
 done
 
 # Remove duplicates and sort
 if [ ${#files[@]} -gt 0 ]; then
     readarray -t files < <(printf '%s\n' "${files[@]}" | sort -u)
-    echo "📋 After deduplication: ${#files[@]} unique files"
-else
-    # Also try a simple find in current directory as fallback
-    echo "  🔍 Fallback: searching current directory for any .md files..."
-    while IFS= read -r -d '' file; do
-        if [ -f "$file" ] && [ -s "$file" ]; then
-            files+=("$file")
-            echo "    ✓ Found: $file"
-        fi
-    done < <(find . -name "*.md" -type f -print0 2>/dev/null)
 fi
 
 total=${#files[@]}
@@ -521,7 +503,6 @@ for i in "${!files[@]}"; do
     
     echo "  ✓ Title: $title"
     echo "  ✓ Date: $date_string"
-    echo "  ✓ Sort date: $sort_date"
     echo "  ✓ Excerpt: ${excerpt:0:60}..."
     
     # Store post data
@@ -706,29 +687,15 @@ cat >> public/index.html << MAIN_META
 MAIN_META
 
 # Get all posts sorted by date (newest first)
-echo "📊 Sorting posts by date..."
-all_nums=()
-for ((i=1; i<=processed_count; i++)); do
-    sort_date="${post_data["$i,sort_date"]}"
-    if [ -n "$sort_date" ]; then
-        all_nums+=("$sort_date $i")
-    else
-        echo "  ⚠️ Warning: No sort date for post $i"
-        all_nums+=("99999999 $i")  # Put at end if no date
-    fi
-done
-
-# Sort by date (newest first) and extract post numbers
-sorted_nums=($(printf '%s\n' "${all_nums[@]}" | sort -rn | cut -d' ' -f2))
-
-echo "📋 Posts sorted in order: ${sorted_nums[*]:0:10}..." # Show first 10
+all_nums=($(for ((i=1; i<=processed_count; i++)); do
+    echo "${post_data["$i,sort_date"]} $i"
+done | sort -rn | cut -d' ' -f2))
 
 # Show recent posts on main page (latest 15)
 recent_count=0
 max_recent=15
 
-echo "🏠 Adding posts to main page..."
-for num in "${sorted_nums[@]}"; do
+for num in "${all_nums[@]}"; do
     if [ $recent_count -ge $max_recent ]; then
         break
     fi
@@ -738,11 +705,8 @@ for num in "${sorted_nums[@]}"; do
     excerpt="${post_data["$num,excerpt"]}"
     
     if [ -z "$title" ]; then
-        echo "  ⚠️ Skipping post $num - no title found"
         continue
     fi
-    
-    echo "  ✓ Adding post $num: $title"
     
     # Prepare data for search and display (properly escaped)
     title_lower=$(echo "${title}" | tr '[:upper:]' '[:lower:]' | html_escape)
@@ -751,7 +715,7 @@ for num in "${sorted_nums[@]}"; do
     title_display=$(html_escape "$title")
     excerpt_display=$(html_escape "$excerpt")
     
-    cat >> public/index.html << POST_ENTRY_END
+    cat >> public/index.html << POST_ENTRY
             <div class="post" data-title="${title_lower}" data-excerpt="${excerpt_lower}" data-searchable="${searchable_lower}" onclick="window.location.href='p/${num}.html'">
                 <div class="post-date">${date}</div>
                 <div class="post-title">
@@ -759,71 +723,12 @@ for num in "${sorted_nums[@]}"; do
                 </div>
                 <div class="excerpt">${excerpt_display}</div>
             </div>
-POST_ENTRY_END
+POST_ENTRY
     
     recent_count=$((recent_count + 1))
 done
 
-echo "📄 Added $recent_count posts to main page"
-
-# If no posts were added, add a placeholder
-if [ $recent_count -eq 0 ]; then
-    echo "⚠️ No posts found to display on main page"
-    cat >> public/index.html << 'NO_POSTS'
-            <div class="no-results">
-                <h3>Welcome to the Blog!</h3>
-                <p>No posts have been published yet. Check back soon for new content!</p>
-            </div>
-NO_POSTS
-fi
-
-# Close the posts div and add navigation
-cat >> public/index.html << 'MAIN_FOOTER'
-        </div>
-        
-        <nav style="margin-top:2em">
-            <p>📚 <a href="archive/">View all posts in Archive →</a></p>
-        </nav>
-    </main>
-MAIN_FOOTER
-
-# Add the complete search script
-cat >> public/index.html << 'MAIN_SCRIPT_END'
-    <script>
-(function() {
-    let originalPosts = null;
-    let postsData = [];
-    let searchTimeout = null;
-    let lastQuery = '';
-    
-    const searchInput = document.getElementById('search');
-    const postsContainer = document.getElementById('posts');
-    const searchInfo = document.getElementById('search-info');
-    const searchCount = document.getElementById('search-count');
-    
-    if (!searchInput || !postsContainer || !searchInfo || !searchCount) {
-        console.error('Search elements not found');
-        return;
-    }
-    
-    function initializeSearch() {
-        if (originalPosts === null) {
-            originalPosts = postsContainer.innerHTML;
-            const tempDiv = document.createElement('div');
-            tempDiv.innerHTML = originalPosts;
-            postsData = Array.from(tempDiv.children).map(function(post) {
-                return {
-                    element: post,
-                    searchable: (post.dataset.searchable || '').toLowerCase(),
-                    html: post.outerHTML
-                };
-            });
-        }
-    }
-    
-    function highlightText(text, query) {
-        if (!query || query.length < 2) return text;
-        var escapedQuery = query.replace(/[.*+?^${}()|[\]\\]/g, '\\cat >> public/index.html << 'MAIN_END'
+cat >> public/index.html << 'MAIN_END'
         </div>
         
         <nav style="margin-top:2em">
@@ -1026,80 +931,7 @@ MAIN_END');
     </script>
 </body>
 </html>
-MAIN_END');
-        var regex = new RegExp('(' + escapedQuery + ')', 'gi');
-        return text.replace(regex, '<span class="search-highlight">$1</span>');
-    }
-    
-    function performSearch(query) {
-        initializeSearch();
-        
-        if (query === lastQuery) return;
-        lastQuery = query;
-        
-        if (query.length === 0) {
-            postsContainer.innerHTML = originalPosts;
-            searchInfo.style.display = 'none';
-            return;
-        }
-        
-        var filtered = postsData.filter(function(post) {
-            return post.searchable.includes(query);
-        });
-        
-        if (filtered.length > 0) {
-            var fragment = document.createDocumentFragment();
-            var tempContainer = document.createElement('div');
-            
-            if (query.length >= 2) {
-                tempContainer.innerHTML = filtered.map(function(post) {
-                    return highlightText(post.html, query);
-                }).join('');
-            } else {
-                tempContainer.innerHTML = filtered.map(function(post) {
-                    return post.html;
-                }).join('');
-            }
-            
-            while (tempContainer.firstChild) {
-                fragment.appendChild(tempContainer.firstChild);
-            }
-            
-            postsContainer.innerHTML = '';
-            postsContainer.appendChild(fragment);
-        } else {
-            postsContainer.innerHTML = '<div class="no-results">No posts found matching your search. Try different keywords.</div>';
-        }
-        
-        searchCount.textContent = filtered.length;
-        searchInfo.style.display = 'block';
-    }
-    
-    function debouncedSearch() {
-        var query = searchInput.value.toLowerCase().trim();
-        
-        if (searchTimeout) {
-            clearTimeout(searchTimeout);
-        }
-        
-        if (query.length <= 1) {
-            performSearch(query);
-            return;
-        }
-        
-        searchTimeout = setTimeout(function() {
-            performSearch(query);
-        }, 150);
-    }
-    
-    searchInput.addEventListener('input', debouncedSearch);
-    initializeSearch();
-    console.log('Search initialized successfully');
-})();
-    </script>
-</body>
-</html>
-MAIN_SCRIPT_END
+MAIN_END
 
 # Generate archive page
 echo "📚 Generating archive page..."
@@ -1141,7 +973,7 @@ ARCHIVE_META
 
 # Group posts by year and month
 declare -A year_months
-for num in "${sorted_nums[@]}"; do
+for num in "${all_nums[@]}"; do
     year="${post_data["$num,year"]}"
     month="${post_data["$num,month"]}"
     if [ -n "$year" ] && [ -n "$month" ]; then
@@ -1149,8 +981,6 @@ for num in "${sorted_nums[@]}"; do
         year_months["$ym"]+="$num "
     fi
 done
-
-echo "📅 Grouped posts by year/month: ${!year_months[*]}"
 
 # Generate archive structure
 current_year=""
@@ -1215,55 +1045,7 @@ done
 
 [ -n "$current_year" ] && echo "        </div>" >> public/archive/index.html
 
-# Close the archive content
-cat >> public/archive/index.html << 'ARCHIVE_FOOTER'
-        </div>
-    </main>
-ARCHIVE_FOOTER
-
-# Add complete archive search script
-cat >> public/archive/index.html << 'ARCHIVE_SCRIPT_END'
-    <script>
-(function() {
-    let originalArchive = null;
-    let archiveData = [];
-    let searchTimeout = null;
-    let lastQuery = '';
-    let isSearchActive = false;
-    
-    const searchMainInput = document.getElementById('search-main');
-    const searchStickyInput = document.getElementById('search-sticky');
-    const archiveContainer = document.getElementById('archive');
-    const searchInfo = document.getElementById('search-info');
-    const searchCount = document.getElementById('search-count');
-    const stickyHeader = document.getElementById('sticky-header');
-    const stickyTitle = document.getElementById('sticky-title');
-    
-    if (!searchMainInput || !searchStickyInput || !archiveContainer) {
-        console.error('Archive search elements not found');
-        return;
-    }
-    
-    function initializeArchive() {
-        if (originalArchive === null) {
-            originalArchive = archiveContainer.innerHTML;
-            var tempDiv = document.createElement('div');
-            tempDiv.innerHTML = originalArchive;
-            var posts = tempDiv.querySelectorAll('.post');
-            
-            archiveData = Array.from(posts).map(function(post) {
-                return {
-                    element: post.cloneNode(true),
-                    searchable: (post.dataset.searchable || '').toLowerCase(),
-                    html: post.outerHTML
-                };
-            });
-        }
-    }
-    
-    function highlightText(text, query) {
-        if (!query || query.length < 2) return text;
-        var escapedQuery = query.replace(/[.*+?^${}()|[\]\\]/g, '\\cat >> public/archive/index.html << 'ARCHIVE_END'
+cat >> public/archive/index.html << 'ARCHIVE_END'
         </div>
     </main>
     
@@ -1642,177 +1424,7 @@ ARCHIVE_END');
     </script>
 </body>
 </html>
-ARCHIVE_END');
-        var regex = new RegExp('(' + escapedQuery + ')', 'gi');
-        return text.replace(regex, '<span class="search-highlight">$1</span>');
-    }
-    
-    var stickyUpdateTimeout = null;
-    function updateStickyHeader() {
-        if (stickyUpdateTimeout) return;
-        
-        stickyUpdateTimeout = setTimeout(function() {
-            try {
-                var searchMainRect = searchMainInput.getBoundingClientRect();
-                
-                if (searchMainRect.bottom < 0) {
-                    stickyHeader.style.display = 'block';
-                    if (searchStickyInput.value !== searchMainInput.value) {
-                        searchStickyInput.value = searchMainInput.value;
-                    }
-                } else {
-                    stickyHeader.style.display = 'none';
-                }
-                
-                if (stickyHeader.style.display === 'block' && !isSearchActive) {
-                    var sections = document.querySelectorAll('.year-section, .month-section');
-                    var currentSection = null;
-                    
-                    for (var i = 0; i < sections.length; i++) {
-                        var section = sections[i];
-                        var rect = section.getBoundingClientRect();
-                        if (rect.top <= 150) {
-                            currentSection = section;
-                        }
-                    }
-                    
-                    if (currentSection) {
-                        var yearSection = currentSection.closest('.year-section');
-                        var monthSection = currentSection.classList.contains('month-section') ? currentSection : null;
-                        
-                        var title = 'Archive';
-                        if (yearSection) {
-                            title = yearSection.dataset.year || 'Archive';
-                            if (monthSection && monthSection.dataset.yearMonth) {
-                                title = monthSection.dataset.yearMonth;
-                            }
-                        }
-                        stickyTitle.textContent = title;
-                    } else {
-                        stickyTitle.textContent = 'Archive';
-                    }
-                }
-            } catch (error) {
-                console.error('Sticky header update error:', error);
-            }
-            stickyUpdateTimeout = null;
-        }, 16);
-    }
-    
-    function performSearch(query) {
-        initializeArchive();
-        
-        if (query === lastQuery) return;
-        lastQuery = query;
-        
-        if (searchMainInput.value !== searchStickyInput.value) {
-            var activeInput = document.activeElement;
-            if (activeInput === searchMainInput) {
-                searchStickyInput.value = searchMainInput.value;
-            } else if (activeInput === searchStickyInput) {
-                searchMainInput.value = searchStickyInput.value;
-            }
-        }
-        
-        if (!query) {
-            archiveContainer.innerHTML = originalArchive;
-            searchInfo.style.display = 'none';
-            isSearchActive = false;
-            updateStickyHeader();
-            return;
-        }
-        
-        isSearchActive = true;
-        
-        var filtered = archiveData.filter(function(post) {
-            return post.searchable.includes(query);
-        });
-        
-        if (filtered.length > 0) {
-            var fragment = document.createDocumentFragment();
-            var searchContainer = document.createElement('div');
-            searchContainer.className = 'year-section';
-            
-            var headerDiv = document.createElement('div');
-            headerDiv.className = 'year-header';
-            headerDiv.innerHTML = '<h2>Search Results</h2>';
-            
-            var monthDiv = document.createElement('div');
-            monthDiv.className = 'month-section';
-            
-            if (query.length >= 2) {
-                monthDiv.innerHTML = filtered.map(function(post) {
-                    return highlightText(post.html, query);
-                }).join('');
-            } else {
-                monthDiv.innerHTML = filtered.map(function(post) {
-                    return post.html;
-                }).join('');
-            }
-            
-            searchContainer.appendChild(headerDiv);
-            searchContainer.appendChild(monthDiv);
-            fragment.appendChild(searchContainer);
-            
-            archiveContainer.innerHTML = '';
-            archiveContainer.appendChild(fragment);
-            
-            if (stickyHeader.style.display === 'block') {
-                stickyTitle.textContent = 'Search Results (' + filtered.length + ')';
-            }
-        } else {
-            archiveContainer.innerHTML = '<div class="no-results">No posts found matching your search. Try different keywords.</div>';
-            if (stickyHeader.style.display === 'block') {
-                stickyTitle.textContent = 'Search Results (0)';
-            }
-        }
-        
-        searchCount.textContent = filtered.length;
-        searchInfo.style.display = 'block';
-    }
-    
-    function debouncedSearch() {
-        var mainQuery = searchMainInput.value.toLowerCase().trim();
-        var stickyQuery = searchStickyInput.value.toLowerCase().trim();
-        var query = mainQuery || stickyQuery;
-        
-        if (searchTimeout) {
-            clearTimeout(searchTimeout);
-        }
-        
-        if (query.length <= 1) {
-            performSearch(query);
-            return;
-        }
-        
-        searchTimeout = setTimeout(function() {
-            performSearch(query);
-        }, 120);
-    }
-    
-    searchMainInput.addEventListener('input', debouncedSearch);
-    searchStickyInput.addEventListener('input', debouncedSearch);
-    
-    var scrollTimeout = null;
-    window.addEventListener('scroll', function() {
-        if (!scrollTimeout) {
-            scrollTimeout = setTimeout(function() {
-                updateStickyHeader();
-                scrollTimeout = null;
-            }, 16);
-        }
-    }, { passive: true });
-    
-    window.addEventListener('resize', updateStickyHeader, { passive: true });
-    
-    initializeArchive();
-    updateStickyHeader();
-    console.log('Archive search initialized successfully');
-})();
-    </script>
-</body>
-</html>
-ARCHIVE_SCRIPT_END
+ARCHIVE_END
 
 echo ""
 echo "✅ Enhanced blog build completed successfully!"
