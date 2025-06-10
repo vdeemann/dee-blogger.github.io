@@ -704,6 +704,24 @@ done
 
 echo "📄 Successfully processed $processed_count out of $total files"
 
+# Get all posts sorted by date (newest first) - MOVED HERE FROM LATER
+echo "📊 Sorting posts by date..."
+all_nums=()
+for ((i=1; i<=processed_count; i++)); do
+    sort_date="${post_data["$i,sort_date"]}"
+    if [ -n "$sort_date" ]; then
+        all_nums+=("$sort_date $i")
+    else
+        echo "  ⚠️ Warning: No sort date for post $i"
+        all_nums+=("99999999 $i")  # Put at end if no date
+    fi
+done
+
+# Sort by date (newest first) and extract post numbers
+sorted_nums=($(printf '%s\n' "${all_nums[@]}" | sort -rn | cut -d' ' -f2))
+
+echo "📋 Posts sorted in order: ${sorted_nums[*]:0:10}..." # Show first 10
+
 # Generate search index for global search
 echo "🔍 Generating search index..."
 cat > public/search-index.js << 'SEARCH_INDEX_START'
@@ -711,6 +729,7 @@ window.searchIndex = [
 SEARCH_INDEX_START
 
 # Add all posts to search index
+search_index_count=0
 for num in "${sorted_nums[@]}"; do
     title="${post_data["$num,title"]}"
     date="${post_data["$num,date"]}"
@@ -718,13 +737,14 @@ for num in "${sorted_nums[@]}"; do
     slug="${post_data["$num,slug"]}"
     
     if [ -z "$title" ]; then
+        echo "  ⚠️ Skipping post $num in search index - no title"
         continue
     fi
     
-    # Escape for JavaScript
-    title_js=$(echo "$title" | sed 's/\\/\\\\/g' | sed 's/"/\\"/g' | sed "s/'/\\\\'/g" | tr '\n' ' ')
-    excerpt_js=$(echo "$excerpt" | sed 's/\\/\\\\/g' | sed 's/"/\\"/g' | sed "s/'/\\\\'/g" | tr '\n' ' ')
-    date_js=$(echo "$date" | sed 's/\\/\\\\/g' | sed 's/"/\\"/g' | tr '\n' ' ')
+    # Escape for JavaScript - ensure no line breaks
+    title_js=$(echo "$title" | sed 's/\\/\\\\/g' | sed 's/"/\\"/g' | sed "s/'/\\\\'/g" | tr -d '\n\r')
+    excerpt_js=$(echo "$excerpt" | sed 's/\\/\\\\/g' | sed 's/"/\\"/g' | sed "s/'/\\\\'/g" | tr -d '\n\r')
+    date_js=$(echo "$date" | sed 's/\\/\\\\/g' | sed 's/"/\\"/g' | tr -d '\n\r')
     
     cat >> public/search-index.js << SEARCH_ENTRY
 {
@@ -735,7 +755,11 @@ for num in "${sorted_nums[@]}"; do
     url: "p/${num}.html"
 },
 SEARCH_ENTRY
+    
+    search_index_count=$((search_index_count + 1))
 done
+
+echo "  ✅ Added $search_index_count posts to search index"
 
 # Close search index
 cat >> public/search-index.js << 'SEARCH_INDEX_END'
@@ -749,10 +773,12 @@ cat >> public/search-index.js << 'SEARCH_INDEX_END'
     let searchStatus = null;
     
     function escapeRegExp(string) {
+        return string.replace(/[.*+?^${}()|[\]\\]/g, '\\    function escapeRegExp(string) {
         return string.replace(/[.*+?^${}()|[\]\\]/g, '\\echo "📄 Successfully processed $processed_count out of $total files"
 
 # Generate main page
 echo "🏠 Generating main page..."');
+    }');
     }
     
     function highlightText(text, query) {
@@ -960,7 +986,7 @@ echo "🏠 Generating main page..."');
 })();
 SEARCH_INDEX_END
 
-echo "✅ Search index generated with $processed_count posts"
+echo "✅ Search index generated with $search_index_count posts"
 
 # Generate main page
 echo "🏠 Generating main page..."
@@ -996,24 +1022,6 @@ cat >> public/index.html << MAIN_META
         <div id="posts">
 MAIN_META
 
-# Get all posts sorted by date (newest first)
-echo "📊 Sorting posts by date..."
-all_nums=()
-for ((i=1; i<=processed_count; i++)); do
-    sort_date="${post_data["$i,sort_date"]}"
-    if [ -n "$sort_date" ]; then
-        all_nums+=("$sort_date $i")
-    else
-        echo "  ⚠️ Warning: No sort date for post $i"
-        all_nums+=("99999999 $i")  # Put at end if no date
-    fi
-done
-
-# Sort by date (newest first) and extract post numbers
-sorted_nums=($(printf '%s\n' "${all_nums[@]}" | sort -rn | cut -d' ' -f2))
-
-echo "📋 Posts sorted in order: ${sorted_nums[*]:0:10}..." # Show first 10
-
 # Show recent posts on main page (latest 15)
 recent_count=0
 max_recent=15
@@ -1038,12 +1046,13 @@ for num in "${sorted_nums[@]}"; do
     # Prepare data for search and display (properly escaped)
     title_lower=$(echo "${title}" | tr '[:upper:]' '[:lower:]' | html_escape)
     excerpt_lower=$(echo "${excerpt}" | tr '[:upper:]' '[:lower:]' | html_escape)
-    searchable_lower=$(echo "${title} ${excerpt}" | tr '[:upper:]' '[:lower:]' | html_escape)
+    date_lower=$(echo "${date}" | tr '[:upper:]' '[:lower:]')
+    searchable_lower=$(echo "${title} ${excerpt} ${date}" | tr '[:upper:]' '[:lower:]' | html_escape)
     title_display=$(html_escape "$title")
     excerpt_display=$(html_escape "$excerpt")
     
     cat >> public/index.html << POST_ENTRY_END
-            <div class="post" data-title="${title_lower}" data-excerpt="${excerpt_lower}" data-searchable="${searchable_lower}" onclick="window.location.href='p/${num}.html'">
+            <div class="post" data-title="${title_lower}" data-excerpt="${excerpt_lower}" data-date="${date_lower}" data-searchable="${searchable_lower}" onclick="window.location.href='p/${num}.html'">
                 <div class="post-date">${date}</div>
                 <div class="post-title">
                     <a href="p/${num}.html">${title_display}</a>
@@ -1122,10 +1131,22 @@ cat >> public/index.html << 'MAIN_FOOTER'
                 tempDiv.innerHTML = originalPosts;
                 const posts = Array.from(tempDiv.children);
                 
+                console.log('Searching for:', query, 'in', posts.length, 'posts');
+                
                 const filtered = posts.filter(post => {
                     const searchable = post.dataset.searchable || '';
-                    return searchable.includes(query);
+                    const titleData = post.dataset.title || '';
+                    const excerptData = post.dataset.excerpt || '';
+                    const dateData = post.dataset.date || '';
+                    
+                    // Search in all fields
+                    return searchable.includes(query) || 
+                           titleData.includes(query) || 
+                           excerptData.includes(query) ||
+                           dateData.includes(query);
                 });
+                
+                console.log('Found', filtered.length, 'matches');
                 
                 if (filtered.length > 0) {
                     // Create highlighted posts
@@ -1142,6 +1163,12 @@ cat >> public/index.html << 'MAIN_FOOTER'
                         const excerptEl = postClone.querySelector('.excerpt');
                         if (excerptEl) {
                             excerptEl.innerHTML = highlightText(excerptEl.textContent, query);
+                        }
+                        
+                        // Highlight in date
+                        const dateEl = postClone.querySelector('.post-date');
+                        if (dateEl) {
+                            dateEl.innerHTML = highlightText(dateEl.textContent, query);
                         }
                         
                         return postClone.outerHTML;
@@ -1270,12 +1297,13 @@ MONTH_SECTION
         # Prepare data safely
         title_lower=$(echo "${title}" | tr '[:upper:]' '[:lower:]' | html_escape)
         excerpt_lower=$(echo "${excerpt}" | tr '[:upper:]' '[:lower:]' | html_escape)
-        searchable_lower=$(echo "${title} ${excerpt}" | tr '[:upper:]' '[:lower:]' | html_escape)
+        date_lower=$(echo "${date}" | tr '[:upper:]' '[:lower:]')
+        searchable_lower=$(echo "${title} ${excerpt} ${date}" | tr '[:upper:]' '[:lower:]' | html_escape)
         title_display=$(html_escape "$title")
         excerpt_display=$(html_escape "$excerpt")
         
         cat >> public/archive/index.html << ARCHIVE_POST
-                <div class="post" data-title="${title_lower}" data-excerpt="${excerpt_lower}" data-searchable="${searchable_lower}" onclick="window.location.href='../p/${num}.html'">
+                <div class="post" data-title="${title_lower}" data-excerpt="${excerpt_lower}" data-date="${date_lower}" data-searchable="${searchable_lower}" onclick="window.location.href='../p/${num}.html'">
                     <div class="post-date">${date}</div>
                     <div class="post-title">
                         <a href="../p/${num}.html">${title_display}</a>
@@ -1393,7 +1421,15 @@ cat >> public/archive/index.html << 'ARCHIVE_END'
                 
                 const filtered = posts.filter(post => {
                     const searchable = post.dataset.searchable || '';
-                    return searchable.includes(query);
+                    const titleData = post.dataset.title || '';
+                    const excerptData = post.dataset.excerpt || '';
+                    const dateData = post.dataset.date || '';
+                    
+                    // Search in all fields
+                    return searchable.includes(query) || 
+                           titleData.includes(query) || 
+                           excerptData.includes(query) ||
+                           dateData.includes(query);
                 });
                 
                 if (filtered.length > 0) {
@@ -1489,7 +1525,7 @@ echo "  ✓ Created main page with recent posts and search"
 echo "  ✓ Built comprehensive archive with chronological organization"
 echo "  ✓ Character-by-character search with real-time highlighting"
 echo "  ✓ Fixed sticky navigation on archive page"
-echo "  ✓ Global search index for entire blog"
+echo "  ✓ Global search index with $search_index_count posts"
 echo ""
 echo "🚀 Features included:"
 echo "  • Global character-by-character search (Ctrl+K)"
@@ -1513,7 +1549,7 @@ echo "  public/"
 echo "  ├── index.html (main page with recent posts)"
 echo "  ├── shared.css (shared styles)"
 echo "  ├── post.css (post-specific styles)"
-echo "  ├── search-index.js (global search index)"
+echo "  ├── search-index.js (global search index with $search_index_count posts)"
 echo "  ├── archive/"
 echo "  │   └── index.html (complete archive)"
 echo "  └── p/"
@@ -1521,5 +1557,7 @@ echo "      ├── 1.html"
 echo "      ├── 2.html"
 echo "      └── ... (individual post pages)"
 echo ""
-echo "🎯 Global search now works character-by-character with highlighting!"
-echo "   Press Ctrl+K on any page to search the entire blog."
+echo "🎯 Search functionality has been fixed!"
+echo "   - Fixed search index generation order"
+echo "   - Enhanced local search to check all fields"
+echo "   - Press Ctrl+K on any page for global search"
