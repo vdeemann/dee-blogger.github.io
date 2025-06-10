@@ -132,12 +132,37 @@ nav {
     margin: 0 0 1.5em;
 }
 .year-header {
+    position: sticky;
+    top: 0;
+    background: #fff;
     margin: 0 0 1em;
+    padding: 0.8em 0 0.5em;
+    border-bottom: 2px solid #0066cc;
+    z-index: 20;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+.year-header h2 {
+    margin: 0;
+    font-size: 1.4em;
+    color: #0066cc;
+    font-weight: 700;
 }
 .month-header {
+    position: sticky;
+    top: 60px;
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
     margin: 0 0 0.8em;
-    font-size: 0.95em;
-    color: #666;
+    padding: 0.6em 0.8em;
+    border-radius: 6px;
+    border-left: 3px solid #6c757d;
+    z-index: 10;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+.month-header h3 {
+    margin: 0;
+    font-size: 1.1em;
+    color: #495057;
+    font-weight: 600;
 }
 .post-meta {
     background: #f6f8fa;
@@ -191,6 +216,58 @@ ul, ol {
 li {
     margin: 0.4em 0;
 }
+
+/* Archive-specific sticky enhancements */
+.archive-container {
+    position: relative;
+}
+
+/* Smooth scrolling behavior */
+html {
+    scroll-behavior: smooth;
+}
+
+/* Enhanced visual feedback for sticky headers */
+.year-header.stuck {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(8px);
+}
+
+.month-header.stuck {
+    background: rgba(248, 249, 250, 0.95);
+    backdrop-filter: blur(8px);
+}
+
+/* Quick navigation helper for archive */
+.archive-nav {
+    position: sticky;
+    top: 0;
+    background: #fff;
+    padding: 0.5em 0;
+    border-bottom: 1px solid #eee;
+    margin-bottom: 1em;
+    z-index: 30;
+}
+
+/* Responsive adjustments for sticky elements */
+@media (max-width: 768px) {
+    .year-header {
+        padding: 0.6em 0 0.4em;
+    }
+    
+    .month-header {
+        top: 50px;
+        padding: 0.5em 0.6em;
+    }
+    
+    .year-header h2 {
+        font-size: 1.2em;
+    }
+    
+    .month-header h3 {
+        font-size: 1em;
+    }
+}
 EOCSS
 
 # Create JavaScript
@@ -243,6 +320,28 @@ function searchPosts() {
     if (searchInfo) searchInfo.style.display = 'block';
 }
 
+// Enhanced sticky header functionality
+function initStickyHeaders() {
+    const yearHeaders = document.querySelectorAll('.year-header');
+    const monthHeaders = document.querySelectorAll('.month-header');
+    
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.target.classList.contains('year-header')) {
+                entry.target.classList.toggle('stuck', !entry.isIntersecting);
+            } else if (entry.target.classList.contains('month-header')) {
+                entry.target.classList.toggle('stuck', !entry.isIntersecting);
+            }
+        });
+    }, {
+        threshold: [0, 1],
+        rootMargin: '-1px 0px 0px 0px'
+    });
+    
+    yearHeaders.forEach(header => observer.observe(header));
+    monthHeaders.forEach(header => observer.observe(header));
+}
+
 document.addEventListener('DOMContentLoaded', function() {
     const searchInput = document.getElementById('search');
     if (searchInput) {
@@ -258,6 +357,11 @@ document.addEventListener('DOMContentLoaded', function() {
                 searchPosts();
             }
         });
+    }
+    
+    // Initialize sticky headers for archive page
+    if (document.querySelector('.year-section')) {
+        initStickyHeaders();
     }
 });
 EOJS
@@ -501,7 +605,10 @@ cat > public/archive/index.html << EOARCHIVE
     <script src="../search.js"></script>
 </head>
 <body>
-    <nav><a href="../">← Home</a></nav>
+    <div class="archive-nav">
+        <nav><a href="../">← Home</a></nav>
+    </div>
+    
     <h1>Archive</h1>
     <div class="stats">📊 ${processed} posts chronologically ordered</div>
     
@@ -510,7 +617,7 @@ cat > public/archive/index.html << EOARCHIVE
         <span id="search-count">0</span> of ${processed} posts found
     </div>
     
-    <div id="posts">
+    <div id="posts" class="archive-container">
 EOARCHIVE
 
 current_year=""
@@ -571,8 +678,9 @@ echo
 echo "📊 STATISTICS:"
 echo "  ✅ Total files processed: $processed (in parallel)"
 echo "  ✅ Main page generated with recent posts"
-echo "  ✅ Archive generated with chronological organization"
+echo "  ✅ Archive generated with sticky scroll navigation"
 echo "  ✅ Individual post pages created"
 echo
 echo "🌐 Your blog is ready!"
 echo "⚡ Processing time: ~10x faster with parallel optimization"
+echo "📜 Archive page now features sticky year/month headers for easy navigation"
