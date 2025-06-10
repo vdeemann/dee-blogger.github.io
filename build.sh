@@ -421,90 +421,104 @@ for num in "${recent_nums[@]}"; do
     date="${post_data["$num,date"]}"
     excerpt="${post_data["$num,excerpt"]}"
     
-    # Convert to lowercase using tr for compatibility
-    title_lower=$(echo "${title}" | tr '[:upper:]' '[:lower:]')
-    excerpt_lower=$(echo "${excerpt}" | tr '[:upper:]' '[:lower:]')
-    searchable_lower=$(echo "${title} ${excerpt}" | tr '[:upper:]' '[:lower:]')
+    # Convert to lowercase using tr for compatibility and escape HTML entities
+    title_lower=$(echo "${title}" | tr '[:upper:]' '[:lower:]' | sed 's/&/\&amp;/g; s/</\&lt;/g; s/>/\&gt;/g; s/"/\&quot;/g')
+    excerpt_lower=$(echo "${excerpt}" | tr '[:upper:]' '[:lower:]' | sed 's/&/\&amp;/g; s/</\&lt;/g; s/>/\&gt;/g; s/"/\&quot;/g')
+    searchable_lower=$(echo "${title} ${excerpt}" | tr '[:upper:]' '[:lower:]' | sed 's/&/\&amp;/g; s/</\&lt;/g; s/>/\&gt;/g; s/"/\&quot;/g')
+    
+    # Escape for HTML attributes
+    title_display=$(echo "${title}" | sed 's/&/\&amp;/g; s/</\&lt;/g; s/>/\&gt;/g; s/"/\&quot;/g')
+    excerpt_display=$(echo "${excerpt}" | sed 's/&/\&amp;/g; s/</\&lt;/g; s/>/\&gt;/g; s/"/\&quot;/g')
     
     cat >> public/index.html << POST_EOF
         <div class="post" data-title="${title_lower}" data-excerpt="${excerpt_lower}" data-searchable="${searchable_lower}" onclick="window.location.href='p/${num}.html'">
             <small>${date}</small>
-            <h2><a href="p/${num}.html">${title}</a></h2>
-            <div class="excerpt">${excerpt}</div>
+            <h2><a href="p/${num}.html">${title_display}</a></h2>
+            <div class="excerpt">${excerpt_display}</div>
         </div>
 POST_EOF
 done
+
+# Generate the search JavaScript as a separate file to avoid bash interpretation issues
+cat > "public/search-main.js" << 'SEARCH_JS_EOF'
+(function() {
+    let originalPosts = null;
+    const searchInput = document.getElementById('search');
+    const postsContainer = document.getElementById('posts');
+    const searchInfo = document.getElementById('search-info');
+    const searchCount = document.getElementById('search-count');
+    
+    // Check if all elements exist
+    if (!searchInput || !postsContainer || !searchInfo || !searchCount) {
+        console.error('Some main page search elements not found');
+        return;
+    }
+    
+    function escapeRegExp(string) {
+        return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    }
+    
+    function highlightText(text, query) {
+        if (!query) return text;
+        const escapedQuery = escapeRegExp(query);
+        const regex = new RegExp('(' + escapedQuery + ')', 'gi');
+        return text.replace(regex, '<span class="search-highlight">$1</span>');
+    }
+    
+    function searchPosts() {
+        const query = searchInput.value.toLowerCase().trim();
+        
+        // Store original content only once
+        if (originalPosts === null) {
+            originalPosts = postsContainer.innerHTML;
+        }
+        
+        if (!query) {
+            postsContainer.innerHTML = originalPosts;
+            searchInfo.style.display = 'none';
+            return;
+        }
+        
+        // Get all posts from original content
+        const tempDiv = document.createElement('div');
+        tempDiv.innerHTML = originalPosts;
+        const posts = Array.from(tempDiv.children);
+        
+        const filtered = posts.filter(post => {
+            const searchable = post.dataset.searchable || '';
+            return searchable.includes(query);
+        });
+        
+        if (filtered.length > 0) {
+            postsContainer.innerHTML = filtered.map(post => {
+                let html = post.outerHTML;
+                html = highlightText(html, query);
+                return html;
+            }).join('');
+        } else {
+            postsContainer.innerHTML = '<div class="no-results">No posts found matching your search.</div>';
+        }
+        
+        searchCount.textContent = filtered.length;
+        searchInfo.style.display = 'block';
+    }
+    
+    // Use input event for real-time search including backspace
+    try {
+        searchInput.addEventListener('input', searchPosts);
+        console.log('Main page search initialized successfully');
+    } catch (error) {
+        console.error('Failed to initialize main page search:', error);
+    }
+})();
+SEARCH_JS_EOF
 
 cat >> public/index.html << 'MAIN_END_EOF'
     </div>
     <nav style="margin-top:2em">
         <p>📚 <a href="archive/">View all posts in Archive →</a></p>
     </nav>
-
-    <script>
-        let originalPosts = null;
-        const searchInput = document.getElementById('search');
-        const postsContainer = document.getElementById('posts');
-        const searchInfo = document.getElementById('search-info');
-        const searchCount = document.getElementById('search-count');
-        
-        // Check if all elements exist
-        if (!searchInput || !postsContainer || !searchInfo || !searchCount) {
-            console.error('Some main page search elements not found');
-            return;
-        }
-        
-        function searchPosts() {
-            const query = searchInput.value.toLowerCase().trim();
-            
-            // Store original content only once
-            if (originalPosts === null) {
-                originalPosts = postsContainer.innerHTML;
-            }
-            
-            if (!query) {
-                postsContainer.innerHTML = originalPosts;
-                searchInfo.style.display = 'none';
-                return;
-            }
-            
-            // Get all posts from original content
-            const tempDiv = document.createElement('div');
-            tempDiv.innerHTML = originalPosts;
-            const posts = Array.from(tempDiv.children);
-            
-            const filtered = posts.filter(post => {
-                const searchable = post.dataset.searchable || '';
-                return searchable.includes(query);
-            });
-            
-            if (filtered.length > 0) {
-                postsContainer.innerHTML = filtered.map(post => {
-                    let html = post.outerHTML;
-                    // Escape special regex characters
-                    const escapedQuery = query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-                    const regex = new RegExp('(' + escapedQuery + ')', 'gi');
-                    html = html.replace(regex, '<span class="search-highlight">$1</span>');
-                    return html;
-                }).join('');
-            } else {
-                postsContainer.innerHTML = '<div class="no-results">No posts found matching your search.</div>';
-            }
-            
-            searchCount.textContent = filtered.length;
-            searchInfo.style.display = 'block';
-        }
-        
-        // Use input event for real-time search including backspace
-        try {
-            searchInput.addEventListener('input', searchPosts);
-            
-            // Debug: Log that search is initialized
-            console.log('Main page search initialized successfully');
-        } catch (error) {
-            console.error('Failed to initialize main page search:', error);
-        }
-    </script>
+    <script src="search-main.js"></script>
 </body>
 </html>
 MAIN_END_EOF
@@ -592,16 +606,20 @@ MONTH_EOF
         date="${post_data["$num,date"]}"
         excerpt="${post_data["$num,excerpt"]}"
         
-        # Convert to lowercase using tr for compatibility
-        title_lower=$(echo "${title}" | tr '[:upper:]' '[:lower:]')
-        excerpt_lower=$(echo "${excerpt}" | tr '[:upper:]' '[:lower:]')
-        searchable_lower=$(echo "${title} ${excerpt}" | tr '[:upper:]' '[:lower:]')
+        # Convert to lowercase and escape for HTML attributes
+        title_lower=$(echo "${title}" | tr '[:upper:]' '[:lower:]' | sed 's/&/\&amp;/g; s/</\&lt;/g; s/>/\&gt;/g; s/"/\&quot;/g')
+        excerpt_lower=$(echo "${excerpt}" | tr '[:upper:]' '[:lower:]' | sed 's/&/\&amp;/g; s/</\&lt;/g; s/>/\&gt;/g; s/"/\&quot;/g')
+        searchable_lower=$(echo "${title} ${excerpt}" | tr '[:upper:]' '[:lower:]' | sed 's/&/\&amp;/g; s/</\&lt;/g; s/>/\&gt;/g; s/"/\&quot;/g')
+        
+        # Escape for HTML display
+        title_display=$(echo "${title}" | sed 's/&/\&amp;/g; s/</\&lt;/g; s/>/\&gt;/g; s/"/\&quot;/g')
+        excerpt_display=$(echo "${excerpt}" | sed 's/&/\&amp;/g; s/</\&lt;/g; s/>/\&gt;/g; s/"/\&quot;/g')
         
         cat >> public/archive/index.html << POST_ARCHIVE_EOF
                 <div class="post" data-title="${title_lower}" data-excerpt="${excerpt_lower}" data-searchable="${searchable_lower}" onclick="window.location.href='../p/${num}.html'">
                     <small>${date}</small>
-                    <h3><a href="../p/${num}.html">${title}</a></h3>
-                    <div class="excerpt">${excerpt}</div>
+                    <h3><a href="../p/${num}.html">${title_display}</a></h3>
+                    <div class="excerpt">${excerpt_display}</div>
                 </div>
 POST_ARCHIVE_EOF
     done
@@ -610,155 +628,166 @@ done
 
 [ -n "$current_year" ] && echo "        </div>" >> public/archive/index.html
 
-cat >> public/archive/index.html << 'ARCHIVE_END_EOF'
-    </div>
-
-    <script>
-        let originalArchive = null;
-        const searchMainInput = document.getElementById('search-main');
-        const searchStickyInput = document.getElementById('search-sticky');
-        const archiveContainer = document.getElementById('archive');
-        const searchInfo = document.getElementById('search-info');
-        const searchCount = document.getElementById('search-count');
-        const stickyHeader = document.getElementById('sticky-header');
-        const stickyTitle = document.getElementById('sticky-title');
-        
-        // Check if all elements exist
-        if (!searchMainInput || !searchStickyInput || !archiveContainer || !searchInfo || !searchCount || !stickyHeader || !stickyTitle) {
-            console.error('Some archive search elements not found');
-            return;
-        }
-        
-        function updateStickyHeader() {
-            try {
-                const scrollTop = window.pageYOffset;
-                const searchMainRect = searchMainInput.getBoundingClientRect();
+# Generate the archive search JavaScript as a separate file
+cat > "public/archive/search-archive.js" << 'ARCHIVE_SEARCH_JS_EOF'
+(function() {
+    let originalArchive = null;
+    const searchMainInput = document.getElementById('search-main');
+    const searchStickyInput = document.getElementById('search-sticky');
+    const archiveContainer = document.getElementById('archive');
+    const searchInfo = document.getElementById('search-info');
+    const searchCount = document.getElementById('search-count');
+    const stickyHeader = document.getElementById('sticky-header');
+    const stickyTitle = document.getElementById('sticky-title');
+    
+    // Check if all elements exist
+    if (!searchMainInput || !searchStickyInput || !archiveContainer || !searchInfo || !searchCount || !stickyHeader || !stickyTitle) {
+        console.error('Some archive search elements not found');
+        return;
+    }
+    
+    function escapeRegExp(string) {
+        return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    }
+    
+    function highlightText(text, query) {
+        if (!query) return text;
+        const escapedQuery = escapeRegExp(query);
+        const regex = new RegExp('(' + escapedQuery + ')', 'gi');
+        return text.replace(regex, '<span class="search-highlight">$1</span>');
+    }
+    
+    function updateStickyHeader() {
+        try {
+            const scrollTop = window.pageYOffset;
+            const searchMainRect = searchMainInput.getBoundingClientRect();
+            
+            if (searchMainRect.bottom < 0) {
+                stickyHeader.style.display = 'block';
+                if (searchStickyInput.value !== searchMainInput.value) {
+                    searchStickyInput.value = searchMainInput.value;
+                }
+            } else {
+                stickyHeader.style.display = 'none';
+            }
+            
+            if (stickyHeader.style.display === 'block') {
+                const sections = document.querySelectorAll('.year-section, .month-section');
+                let currentSection = null;
                 
-                if (searchMainRect.bottom < 0) {
-                    stickyHeader.style.display = 'block';
-                    if (searchStickyInput.value !== searchMainInput.value) {
-                        searchStickyInput.value = searchMainInput.value;
+                for (let section of sections) {
+                    const rect = section.getBoundingClientRect();
+                    if (rect.top <= 150) {
+                        currentSection = section;
                     }
-                } else {
-                    stickyHeader.style.display = 'none';
                 }
                 
-                if (stickyHeader.style.display === 'block') {
-                    const sections = document.querySelectorAll('.year-section, .month-section');
-                    let currentSection = null;
+                if (currentSection) {
+                    const yearSection = currentSection.closest('.year-section');
+                    const monthSection = currentSection.classList.contains('month-section') ? currentSection : null;
                     
-                    for (let section of sections) {
-                        const rect = section.getBoundingClientRect();
-                        if (rect.top <= 150) {
-                            currentSection = section;
+                    let title = '';
+                    if (yearSection) {
+                        title = yearSection.dataset.year || '';
+                        if (monthSection && monthSection.dataset.yearMonth) {
+                            title = monthSection.dataset.yearMonth;
                         }
                     }
                     
-                    if (currentSection) {
-                        const yearSection = currentSection.closest('.year-section');
-                        const monthSection = currentSection.classList.contains('month-section') ? currentSection : null;
-                        
-                        let title = '';
-                        if (yearSection) {
-                            title = yearSection.dataset.year || '';
-                            if (monthSection && monthSection.dataset.yearMonth) {
-                                title = monthSection.dataset.yearMonth;
-                            }
-                        }
-                        
-                        if (title) {
-                            stickyTitle.textContent = title;
-                        } else {
-                            stickyTitle.textContent = 'Archive';
-                        }
+                    if (title) {
+                        stickyTitle.textContent = title;
                     } else {
                         stickyTitle.textContent = 'Archive';
                     }
-                }
-            } catch (error) {
-                console.error('Sticky header update error:', error);
-            }
-        }
-        
-        function searchArchive() {
-            const mainQuery = searchMainInput.value.toLowerCase().trim();
-            const stickyQuery = searchStickyInput.value.toLowerCase().trim();
-            const query = mainQuery || stickyQuery;
-            
-            // Sync both inputs
-            if (mainQuery !== stickyQuery) {
-                if (mainQuery) {
-                    searchStickyInput.value = searchMainInput.value;
                 } else {
-                    searchMainInput.value = searchStickyInput.value;
+                    stickyTitle.textContent = 'Archive';
                 }
             }
-            
-            // Store original content only once
-            if (originalArchive === null) {
-                originalArchive = archiveContainer.innerHTML;
-            }
-            
-            if (!query) {
-                archiveContainer.innerHTML = originalArchive;
-                searchInfo.style.display = 'none';
-                updateStickyHeader();
-                return;
-            }
-            
-            // Get all posts from original content
-            const tempDiv = document.createElement('div');
-            tempDiv.innerHTML = originalArchive;
-            const posts = Array.from(tempDiv.querySelectorAll('.post'));
-            
-            const filtered = posts.filter(post => {
-                const searchable = post.dataset.searchable || '';
-                return searchable.includes(query);
-            });
-            
-            if (filtered.length > 0) {
-                let html = '<div class="year-section"><div class="year-header"><h2>Search Results</h2></div><div class="month-section">';
-                html += filtered.map(post => {
-                    let postHtml = post.outerHTML;
-                    // Escape special regex characters
-                    const escapedQuery = query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-                    const regex = new RegExp('(' + escapedQuery + ')', 'gi');
-                    postHtml = postHtml.replace(regex, '<span class="search-highlight">$1</span>');
-                    return postHtml;
-                }).join('');
-                html += '</div></div>';
-                archiveContainer.innerHTML = html;
-                
-                if (stickyHeader.style.display === 'block') {
-                    stickyTitle.textContent = 'Search Results (' + filtered.length + ')';
-                }
+        } catch (error) {
+            console.error('Sticky header update error:', error);
+        }
+    }
+    
+    function searchArchive() {
+        const mainQuery = searchMainInput.value.toLowerCase().trim();
+        const stickyQuery = searchStickyInput.value.toLowerCase().trim();
+        const query = mainQuery || stickyQuery;
+        
+        // Sync both inputs
+        if (mainQuery !== stickyQuery) {
+            if (mainQuery) {
+                searchStickyInput.value = searchMainInput.value;
             } else {
-                archiveContainer.innerHTML = '<div class="no-results">No posts found matching your search.</div>';
-                if (stickyHeader.style.display === 'block') {
-                    stickyTitle.textContent = 'Search Results (0)';
-                }
+                searchMainInput.value = searchStickyInput.value;
             }
-            
-            searchCount.textContent = filtered.length;
-            searchInfo.style.display = 'block';
         }
         
-        // Use input event for real-time search including backspace
-        try {
-            searchMainInput.addEventListener('input', searchArchive);
-            searchStickyInput.addEventListener('input', searchArchive);
-            window.addEventListener('scroll', updateStickyHeader);
-            window.addEventListener('resize', updateStickyHeader);
-            
-            // Initialize on page load
-            updateStickyHeader();
-            
-            // Debug: Log that search is initialized
-            console.log('Archive search initialized successfully');
-        } catch (error) {
-            console.error('Failed to initialize archive search:', error);
+        // Store original content only once
+        if (originalArchive === null) {
+            originalArchive = archiveContainer.innerHTML;
         }
-    </script>
+        
+        if (!query) {
+            archiveContainer.innerHTML = originalArchive;
+            searchInfo.style.display = 'none';
+            updateStickyHeader();
+            return;
+        }
+        
+        // Get all posts from original content
+        const tempDiv = document.createElement('div');
+        tempDiv.innerHTML = originalArchive;
+        const posts = Array.from(tempDiv.querySelectorAll('.post'));
+        
+        const filtered = posts.filter(post => {
+            const searchable = post.dataset.searchable || '';
+            return searchable.includes(query);
+        });
+        
+        if (filtered.length > 0) {
+            let html = '<div class="year-section"><div class="year-header"><h2>Search Results</h2></div><div class="month-section">';
+            html += filtered.map(post => {
+                let postHtml = post.outerHTML;
+                postHtml = highlightText(postHtml, query);
+                return postHtml;
+            }).join('');
+            html += '</div></div>';
+            archiveContainer.innerHTML = html;
+            
+            if (stickyHeader.style.display === 'block') {
+                stickyTitle.textContent = 'Search Results (' + filtered.length + ')';
+            }
+        } else {
+            archiveContainer.innerHTML = '<div class="no-results">No posts found matching your search.</div>';
+            if (stickyHeader.style.display === 'block') {
+                stickyTitle.textContent = 'Search Results (0)';
+            }
+        }
+        
+        searchCount.textContent = filtered.length;
+        searchInfo.style.display = 'block';
+    }
+    
+    // Use input event for real-time search including backspace
+    try {
+        searchMainInput.addEventListener('input', searchArchive);
+        searchStickyInput.addEventListener('input', searchArchive);
+        window.addEventListener('scroll', updateStickyHeader);
+        window.addEventListener('resize', updateStickyHeader);
+        
+        // Initialize on page load
+        updateStickyHeader();
+        
+        console.log('Archive search initialized successfully');
+    } catch (error) {
+        console.error('Failed to initialize archive search:', error);
+    }
+})();
+ARCHIVE_SEARCH_JS_EOF
+
+cat >> public/archive/index.html << 'ARCHIVE_END_EOF'
+    </div>
+    <script src="search-archive.js"></script>
 </body>
 </html>
 ARCHIVE_END_EOF
@@ -775,3 +804,4 @@ echo "  - Syntax highlighting with Prism.js"
 echo "  - Table formatting and responsive design"
 echo "  - $total individual post pages with improved styling"
 echo "  - Real-time search with proper state management"
+echo "  - Separate JavaScript files for robust search functionality"
