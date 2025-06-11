@@ -74,7 +74,7 @@ kbd{background:#f0f0f0;border:1px solid #ccc;border-radius:3px;padding:2px 5px;f
 @media (max-width: 600px){.global-search-container{margin:1em;max-height:90vh}.search-trigger{width:50px;height:50px;font-size:1.3em}}
 EOF
 
-# Enhanced post page CSS with 3D code block effects
+# Enhanced post page CSS with subtle 3D code block effects
 cat > public/post.css << 'EOF'
 body{max-width:55em;margin:2em auto;padding:0 1em;font-family:system-ui,sans-serif;line-height:1.6;color:#333;background:#f0ece8}
 a{color:#0066cc;text-decoration:none}
@@ -88,45 +88,51 @@ small{color:#666;display:block;margin:0 0 .4em;font-size:.9em}
 strong{font-weight:600;color:#333}
 em{font-style:italic;color:#444}
 
-/* 3D code effect for inline code */
+/* Subtle 3D effect for inline code */
 code{
-  background:#e7e3de;
+  background:#e9e5e1;
   color:#e53e3e;
   padding:.2em .4em;
   border-radius:3px;
   font-family:"SF Mono",Monaco,Consolas,"Liberation Mono","Courier New",monospace;
   font-size:.85em;
-  border:1px solid #d4d0cb;
-  box-shadow:0 1px 0 #fff,0 2px 4px rgba(0,0,0,0.08);
-  text-shadow:0 1px 0 #fff,0 2px 4px rgba(0,0,0,0.1);
+  border:1px solid rgba(0,0,0,0.06);
+  box-shadow:0 1px 1px rgba(255,255,255,0.8),0 1px 3px rgba(0,0,0,0.05);
+  text-shadow:0 1px 0 rgba(255,255,255,0.5);
 }
 
-/* 3D code block styling */
+/* Minimal glass-like code block styling */
 pre{
   background:#e7e3de;
-  padding:1em 1.2em;
+  background:linear-gradient(to bottom,#e9e5e1,#e7e3de);
+  padding:1.5em 2em;
   margin:2em 0;
   border-radius:10px;
   overflow-x:auto;
-  border:1px solid #d4d0cb;
-  box-shadow:0 2px 12px rgba(0,0,0,0.08),0 1px 0 #fff;
+  border:1px solid rgba(0,0,0,0.06);
+  box-shadow:
+    0 2px 12px rgba(0,0,0,0.08),
+    0 1px 0 rgba(255,255,255,0.8),
+    inset 0 1px 0 rgba(255,255,255,0.3);
   position:relative;
+  min-width:420px;
+  width:fit-content;
 }
 
 pre::after{
   content:'';
   position:absolute;
   bottom:-1px;
-  left:0;
-  right:0;
+  left:10px;
+  right:10px;
   height:1px;
-  background:linear-gradient(to right,transparent,#fff 20%,#fff 80%,transparent);
+  background:linear-gradient(to right,transparent,rgba(255,255,255,0.8) 20%,rgba(255,255,255,0.8) 80%,transparent);
 }
 
 pre code{
   background:transparent;
   padding:0;
-  font-size:.9em;
+  font-size:1.15rem;
   color:#222;
   display:block;
   border:0;
@@ -134,11 +140,29 @@ pre code{
   box-shadow:none;
   font-family:'Fira Mono','Consolas',monospace;
   line-height:1.7;
+  text-shadow:none; /* No 3D effect on regular code text */
 }
 
-/* 3D text effect for all code content */
-pre code span,
-pre code{
+/* Subtle 3D text effect ONLY for syntax-highlighted elements */
+pre code .kw,
+pre code .fn,
+pre code .str,
+pre code .com,
+pre code .var,
+pre code .num,
+pre code .language-elixir .token.keyword,
+pre code .language-javascript .token.keyword,
+pre code .language-scheme .token.keyword,
+pre code .language-elixir .token.function,
+pre code .language-javascript .token.function,
+pre code .language-elixir .token.string,
+pre code .language-javascript .token.string,
+pre code .language-scheme .token.string,
+pre code .language-elixir .token.comment,
+pre code .language-javascript .token.comment,
+pre code .language-scheme .token.comment,
+pre code .language-elixir .token.number,
+pre code .language-javascript .token.number{
   text-shadow:
     0 2px 6px #fff,
     0 1px 0 #fff,
@@ -150,14 +174,16 @@ pre code{
 /* Remove 3D effect on selection/highlight for focus */
 pre code::selection,
 pre code span::selection,
+pre code *::selection,
 pre code::-moz-selection,
-pre code span::-moz-selection{
-  text-shadow:none;
+pre code span::-moz-selection,
+pre code *::-moz-selection{
+  text-shadow:none !important;
   background:#b3d4fc;
   color:#000;
 }
 
-/* Syntax highlighting colors with 3D effect */
+/* Syntax highlighting colors */
 .language-elixir .token.keyword,
 .language-javascript .token.keyword,
 .language-scheme .token.keyword,
@@ -190,9 +216,10 @@ blockquote h1,blockquote h2,blockquote h3,blockquote h4{color:#2d3748;font-style
 hr{border:0;height:1px;background:#e2e8f0;margin:3em 0}
 .post-meta{background:#f7fafc;padding:1.2em 1.5em;border-radius:8px;margin:2em 0;border-left:4px solid #0066cc;box-shadow:0 2px 6px rgba(0,0,0,.08)}
 .post-meta p{margin:.4em 0;font-size:.95em;color:#4a5568}
-.copy-btn{position:absolute;top:.8em;right:.8em;background:#0066cc;color:#fff;border:0;border-radius:4px;padding:.4em .8em;font-size:.8em;cursor:pointer;opacity:.8;transition:all 0.2s;z-index:10}
-.copy-btn:hover{opacity:1;background:#0052a3}
-.copy-btn.copied{background:#28a745}
+.copy-btn{position:absolute;top:1em;right:1.2em;background:#0066cc;color:#fff;border:0;border-radius:4px;padding:.4em .8em;font-size:.8em;cursor:pointer;opacity:0;transition:all 0.3s ease;z-index:10}
+pre:hover .copy-btn{opacity:0.8}
+.copy-btn:hover{opacity:1 !important;background:#0052a3;transform:translateY(-1px)}
+.copy-btn.copied{background:#28a745;opacity:1}
 .mermaid{background:#f7fafc;border:1px solid #e2e8f0;border-radius:8px;padding:1.5em;margin:2em 0;text-align:center;box-shadow:0 2px 6px rgba(0,0,0,.08)}
 .table-container{overflow-x:auto;margin:2em 0;border-radius:8px;box-shadow:0 2px 6px rgba(0,0,0,.08)}
 table{width:100%;border-collapse:collapse;background:#fff;border-radius:8px;overflow:hidden}
@@ -243,12 +270,29 @@ process_markdown() {
         next
     }
     
-    # Handle content inside code blocks
+    # Handle content inside code blocks with syntax highlighting
     in_code { 
         gsub(/&/, "\\&amp;")
         gsub(/</, "\\&lt;")
         gsub(/>/, "\\&gt;")
-        print
+        
+        # Add basic syntax highlighting classes for common patterns
+        line = $0
+        # Keywords
+        gsub(/\b(import|export|const|let|var|function|return|if|else|for|while|class|extends|from|as|async|await|try|catch|throw|new|this|super|typeof|instanceof|in|of|break|continue|switch|case|default|do|void|delete|yield|null|undefined|true|false)\b/, "<span class=\"kw\">\\&</span>", line)
+        # Functions (basic pattern)
+        gsub(/([a-zA-Z_][a-zA-Z0-9_]*)\(/, "<span class=\"fn\">\\1</span>(", line)
+        # Strings
+        gsub(/\x27[^\x27]*\x27/, "<span class=\"str\">\\&</span>", line)
+        gsub(/"[^"]*"/, "<span class=\"str\">\\&</span>", line)
+        # Comments
+        if (line ~ /^[ \t]*\/\//) {
+            gsub(/\/\/.*$/, "<span class=\"com\">\\&</span>", line)
+        }
+        # Numbers
+        gsub(/\b[0-9]+(\.[0-9]+)?\b/, "<span class=\"num\">\\&</span>", line)
+        
+        print line
         next 
     }
     
