@@ -241,7 +241,7 @@ tr:hover{background:#fafafa}
 .toc a{color:#0066cc;font-weight:normal}
 EOF
 
-# Improved markdown processor with better handling of complex content
+# Improved markdown processor with better handling of complex content and fixed copy button
 process_markdown() {
     local file="$1"
     
@@ -255,24 +255,27 @@ process_markdown() {
         code_lang = ""
         list_type = ""
         blockquote_content = ""
+        code_id = 0
     }
     
     # Handle code blocks
     /^```/ {
         if (in_code) {
-            if (code_lang != "") {
-                print "<button class=\"copy-btn\" onclick=\"copyCode(this)\">📋 Copy</button>"
-            }
-            print "</code></pre>"
+            print "</code>"
+            print "<button class=\"copy-btn\" onclick=\"copyCode(this)\" data-code-id=\"code-" code_id "\">📋 Copy</button>"
+            print "</pre>"
             in_code = 0
             code_lang = ""
         } else {
             gsub(/^```/, "")
             code_lang = $0
+            code_id++
             if (code_lang != "") {
-                print "<pre class=\"language-" code_lang "\"><code class=\"language-" code_lang "\">"
+                print "<pre class=\"language-" code_lang "\" data-code-id=\"code-" code_id "\">"
+                print "<code class=\"language-" code_lang "\">"
             } else {
-                print "<pre><code>"
+                print "<pre data-code-id=\"code-" code_id "\">"
+                print "<code>"
             }
             in_code = 1
         }
@@ -474,10 +477,9 @@ process_markdown() {
     # Clean up at end
     END {
         if (in_code) {
-            if (code_lang != "") {
-                print "<button class=\"copy-btn\" onclick=\"copyCode(this)\">📋 Copy</button>"
-            }
-            print "</code></pre>"
+            print "</code>"
+            print "<button class=\"copy-btn\" onclick=\"copyCode(this)\" data-code-id=\"code-" code_id "\">📋 Copy</button>"
+            print "</pre>"
         }
         if (in_list) {
             if (list_type == "ul") {
@@ -793,46 +795,76 @@ ${content}
         function copyCode(button) {
             const pre = button.closest('pre');
             const code = pre.querySelector('code');
-            const text = code.textContent;
+            if (!code) return;
             
-            navigator.clipboard.writeText(text).then(() => {
-                const originalText = button.textContent;
-                button.textContent = '✓ Copied!';
-                button.classList.add('copied');
-                setTimeout(() => {
-                    button.textContent = originalText;
-                    button.classList.remove('copied');
-                }, 2000);
-            }).catch(() => {
-                // Fallback for older browsers
-                const textarea = document.createElement('textarea');
-                textarea.value = text;
-                textarea.style.position = 'fixed';
-                textarea.style.opacity = '0';
-                document.body.appendChild(textarea);
-                textarea.select();
-                document.execCommand('copy');
-                document.body.removeChild(textarea);
-                
-                const originalText = button.textContent;
-                button.textContent = '✓ Copied!';
-                button.classList.add('copied');
-                setTimeout(() => {
-                    button.textContent = originalText;
-                    button.classList.remove('copied');
-                }, 2000);
-            });
+            // Get plain text without HTML tags
+            const textToCopy = code.textContent || code.innerText;
+            
+            // Copy to clipboard
+            if (navigator.clipboard && window.isSecureContext) {
+                navigator.clipboard.writeText(textToCopy).then(() => {
+                    const originalText = button.textContent;
+                    button.textContent = '✓ Copied!';
+                    button.classList.add('copied');
+                    setTimeout(() => {
+                        button.textContent = originalText;
+                        button.classList.remove('copied');
+                    }, 2000);
+                }).catch(err => {
+                    console.error('Failed to copy:', err);
+                    fallbackCopy(textToCopy, button);
+                });
+            } else {
+                // Fallback for older browsers or non-secure contexts
+                fallbackCopy(textToCopy, button);
+            }
         }
         
-        // Add copy buttons to all pre elements after page load
+        function fallbackCopy(text, button) {
+            const textarea = document.createElement('textarea');
+            textarea.value = text;
+            textarea.style.position = 'fixed';
+            textarea.style.top = '0';
+            textarea.style.left = '0';
+            textarea.style.width = '2em';
+            textarea.style.height = '2em';
+            textarea.style.padding = '0';
+            textarea.style.border = 'none';
+            textarea.style.outline = 'none';
+            textarea.style.boxShadow = 'none';
+            textarea.style.background = 'transparent';
+            document.body.appendChild(textarea);
+            textarea.focus();
+            textarea.select();
+            
+            try {
+                const successful = document.execCommand('copy');
+                if (successful) {
+                    const originalText = button.textContent;
+                    button.textContent = '✓ Copied!';
+                    button.classList.add('copied');
+                    setTimeout(() => {
+                        button.textContent = originalText;
+                        button.classList.remove('copied');
+                    }, 2000);
+                }
+            } catch (err) {
+                console.error('Fallback copy failed:', err);
+            }
+            
+            document.body.removeChild(textarea);
+        }
+        
+        // Ensure copy buttons are properly positioned
         document.addEventListener('DOMContentLoaded', function() {
+            // Already handled by markdown processor, but double-check positioning
             document.querySelectorAll('pre').forEach(pre => {
-                if (!pre.querySelector('.copy-btn')) {
-                    const button = document.createElement('button');
-                    button.className = 'copy-btn';
-                    button.innerHTML = '📋 Copy';
-                    button.onclick = () => copyCode(button);
-                    pre.appendChild(button);
+                const copyBtn = pre.querySelector('.copy-btn');
+                if (copyBtn) {
+                    // Ensure button is properly positioned
+                    copyBtn.style.position = 'absolute';
+                    copyBtn.style.top = '0.5em';
+                    copyBtn.style.right = '0.8em';
                 }
             });
         });
@@ -919,12 +951,7 @@ cat >> public/search-index.js << 'SEARCH_INDEX_END'
     let searchStatus = null;
     
     function escapeRegExp(string) {
-        return string.replace(/[.*+?^${}()|[\]\\]/g, '\\    function escapeRegExp(string) {
-        return string.replace(/[.*+?^${}()|[\]\\]/g, '\\echo "📄 Successfully processed $processed_count out of $total files"
-
-# Generate main page
-echo "🏠 Generating main page..."');
-    }');
+        return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
     }
     
     function highlightText(text, query) {
@@ -1672,6 +1699,7 @@ echo "  ✓ Built comprehensive archive with chronological organization"
 echo "  ✓ Character-by-character search with real-time highlighting"
 echo "  ✓ Fixed sticky navigation on archive page"
 echo "  ✓ Global search index with $search_index_count posts"
+echo "  ✓ Fixed copy button positioning and functionality"
 echo ""
 echo "🚀 Features included:"
 echo "  • 3D glassmorphic code blocks with smooth shadows"
@@ -1688,7 +1716,7 @@ echo "  • Visual search indicators and animations"
 echo "  • Clean design with subtle border hover effects"  
 echo "  • Code syntax highlighting with Prism.js"
 echo "  • Mermaid diagram rendering"
-echo "  • Copy-to-clipboard functionality"
+echo "  • Copy-to-clipboard functionality (now working!)"
 echo "  • Working sticky archive navigation"
 echo "  • SEO-optimized meta tags"
 echo "  • Reading time calculations"
@@ -1713,3 +1741,4 @@ echo "   - Multi-layered text shadows for depth"
 echo "   - Glass-like bottom highlight"
 echo "   - Selection removes 3D effect for readability"
 echo "   - Smooth visual hierarchy with shadows"
+echo "   - Copy button positioned at top-right (now functional!)"
