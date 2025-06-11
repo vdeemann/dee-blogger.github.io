@@ -87,6 +87,7 @@ p{margin:.8em 0}
 small{color:#666;display:block;margin:0 0 .4em;font-size:.9em}
 strong{font-weight:600;color:#333}
 em{font-style:italic;color:#444}
+main{max-width:55em;margin:0 auto}
 
 /* Subtle 3D effect for inline code */
 code{
@@ -96,37 +97,35 @@ code{
   border-radius:3px;
   font-family:"SF Mono",Monaco,Consolas,"Liberation Mono","Courier New",monospace;
   font-size:.85em;
-  border:1px solid rgba(0,0,0,0.06);
-  box-shadow:0 1px 1px rgba(255,255,255,0.8),0 1px 3px rgba(0,0,0,0.05);
-  text-shadow:0 1px 0 rgba(255,255,255,0.5);
+  box-shadow:0 1px 2px rgba(0,0,0,0.04),0 1px 0 rgba(255,255,255,0.6);
+  text-shadow:0 1px 0 rgba(255,255,255,0.4);
 }
 
 /* Minimal glass-like code block styling */
 pre{
   background:#e7e3de;
-  background:linear-gradient(to bottom,#e9e5e1,#e7e3de);
   padding:1.5em 2em;
   margin:2em 0;
   border-radius:10px;
   overflow-x:auto;
-  border:1px solid rgba(0,0,0,0.06);
-  box-shadow:
-    0 2px 12px rgba(0,0,0,0.08),
-    0 1px 0 rgba(255,255,255,0.8),
-    inset 0 1px 0 rgba(255,255,255,0.3);
+  box-shadow:0 2px 12px rgba(0,0,0,0.08),0 1px 0 #fff;
   position:relative;
-  min-width:420px;
-  width:fit-content;
+  width:100%;
+  max-width:55em;
+  box-sizing:border-box;
+  display:block;
 }
 
+/* Subtle bottom highlight for glass effect */
 pre::after{
   content:'';
   position:absolute;
-  bottom:-1px;
-  left:10px;
-  right:10px;
+  bottom:0;
+  left:0;
+  right:0;
   height:1px;
-  background:linear-gradient(to right,transparent,rgba(255,255,255,0.8) 20%,rgba(255,255,255,0.8) 80%,transparent);
+  background:rgba(255,255,255,0.8);
+  border-radius:0 0 10px 10px;
 }
 
 pre code{
@@ -140,7 +139,8 @@ pre code{
   box-shadow:none;
   font-family:'Fira Mono','Consolas',monospace;
   line-height:1.7;
-  text-shadow:none; /* No 3D effect on regular code text */
+  overflow-wrap:normal;
+  word-wrap:normal;
 }
 
 /* Subtle 3D text effect ONLY for syntax-highlighted elements */
@@ -149,20 +149,7 @@ pre code .fn,
 pre code .str,
 pre code .com,
 pre code .var,
-pre code .num,
-pre code .language-elixir .token.keyword,
-pre code .language-javascript .token.keyword,
-pre code .language-scheme .token.keyword,
-pre code .language-elixir .token.function,
-pre code .language-javascript .token.function,
-pre code .language-elixir .token.string,
-pre code .language-javascript .token.string,
-pre code .language-scheme .token.string,
-pre code .language-elixir .token.comment,
-pre code .language-javascript .token.comment,
-pre code .language-scheme .token.comment,
-pre code .language-elixir .token.number,
-pre code .language-javascript .token.number{
+pre code .num{
   text-shadow:
     0 2px 6px #fff,
     0 1px 0 #fff,
@@ -206,27 +193,49 @@ pre code *::-moz-selection{
 .language-javascript .token.number,
 .num{color:#b48ead}
 
-ul,ol{margin:1.5em 0;padding-left:2.2em}
+/* Apply 3D effect to Prism.js highlighted tokens as well */
+pre code .language-elixir .token.keyword,
+pre code .language-javascript .token.keyword,
+pre code .language-scheme .token.keyword,
+pre code .language-elixir .token.function,
+pre code .language-javascript .token.function,
+pre code .language-elixir .token.string,
+pre code .language-javascript .token.string,
+pre code .language-scheme .token.string,
+pre code .language-elixir .token.comment,
+pre code .language-javascript .token.comment,
+pre code .language-scheme .token.comment,
+pre code .language-elixir .token.number,
+pre code .language-javascript .token.number{
+  text-shadow:
+    0 2px 6px #fff,
+    0 1px 0 #fff,
+    0 4px 12px rgba(0,0,0,0.16),
+    1px 2px 2px rgba(0,0,0,0.10),
+    0 0.5px 0 #e5e5e5;
+}
+
+ul,ol{margin:1.5em 0;padding-left:2.2em;max-width:55em}
 li{margin:.6em 0;line-height:1.6}
 nav{margin:1.2em 0;padding:.6em 0;border-bottom:1px solid #eee}
 nav a{margin-right:1.2em;font-weight:500}
-blockquote{background:#f7fafc;border-left:4px solid #0066cc;margin:2em 0;padding:1.2em 1.8em;border-radius:0 8px 8px 0;color:#4a5568;font-style:italic;box-shadow:0 2px 6px rgba(0,0,0,.08)}
+blockquote{background:#f7fafc;border-left:4px solid #0066cc;margin:2em 0;padding:1.2em 1.8em;border-radius:0 8px 8px 0;color:#4a5568;font-style:italic;box-shadow:0 2px 6px rgba(0,0,0,.08);max-width:55em}
 blockquote p{margin:.6em 0}
 blockquote h1,blockquote h2,blockquote h3,blockquote h4{color:#2d3748;font-style:normal}
-hr{border:0;height:1px;background:#e2e8f0;margin:3em 0}
-.post-meta{background:#f7fafc;padding:1.2em 1.5em;border-radius:8px;margin:2em 0;border-left:4px solid #0066cc;box-shadow:0 2px 6px rgba(0,0,0,.08)}
+hr{border:0;height:1px;background:#e2e8f0;margin:3em 0;max-width:55em}
+.post-meta{background:#f7fafc;padding:1.2em 1.5em;border-radius:8px;margin:2em 0;border-left:4px solid #0066cc;box-shadow:0 2px 6px rgba(0,0,0,.08);max-width:55em}
 .post-meta p{margin:.4em 0;font-size:.95em;color:#4a5568}
-.copy-btn{position:absolute;top:1em;right:1.2em;background:#0066cc;color:#fff;border:0;border-radius:4px;padding:.4em .8em;font-size:.8em;cursor:pointer;opacity:0;transition:all 0.3s ease;z-index:10}
+.copy-btn{position:absolute;top:0.5em;right:0.8em;background:#0066cc;color:#fff;border:0;border-radius:4px;padding:.3em .6em;font-size:.75em;cursor:pointer;opacity:0;transition:all 0.3s ease;z-index:10}
 pre:hover .copy-btn{opacity:0.8}
 .copy-btn:hover{opacity:1 !important;background:#0052a3;transform:translateY(-1px)}
 .copy-btn.copied{background:#28a745;opacity:1}
-.mermaid{background:#f7fafc;border:1px solid #e2e8f0;border-radius:8px;padding:1.5em;margin:2em 0;text-align:center;box-shadow:0 2px 6px rgba(0,0,0,.08)}
-.table-container{overflow-x:auto;margin:2em 0;border-radius:8px;box-shadow:0 2px 6px rgba(0,0,0,.08)}
+.mermaid{background:#f7fafc;border:1px solid #e2e8f0;border-radius:8px;padding:1.5em;margin:2em 0;text-align:center;box-shadow:0 2px 6px rgba(0,0,0,.08);max-width:55em}
+.table-container{overflow-x:auto;margin:2em 0;border-radius:8px;box-shadow:0 2px 6px rgba(0,0,0,.08);max-width:55em}
 table{width:100%;border-collapse:collapse;background:#fff;border-radius:8px;overflow:hidden}
 th,td{padding:1em 1.2em;text-align:left;border-bottom:1px solid #e2e8f0}
 th{background:#f7fafc;font-weight:600;color:#2d3748}
 tr:hover{background:#fafafa}
-.toc{background:#f7fafc;border:1px solid #e2e8f0;border-radius:8px;padding:1.5em;margin:2em 0}
+.toc{background:#f7fafc;border:1px solid #e2e8f0;border-radius:8px;padding:1.5em;margin:2em 0;max-width:55em}
 .toc h3{margin:0 0 1em;color:#2d3748}
 .toc ul{margin:0;padding-left:1.5em}
 .toc a{color:#0066cc;font-weight:normal}
@@ -756,7 +765,10 @@ for i in "${!files[@]}"; do
         </header>
         
         <main>
+            <div class="content-wrapper">
 ${content}
+            </div>
+            </div>
         </main>
     </article>
     
