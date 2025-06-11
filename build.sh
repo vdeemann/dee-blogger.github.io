@@ -42,61 +42,32 @@ nav a{margin-right:1em;font-weight:500}
 .sticky-header{
   position:sticky;
   top:0;
-  background:rgba(240,236,232,0.75);
-  backdrop-filter:blur(20px) saturate(1.8);
-  -webkit-backdrop-filter:blur(20px) saturate(1.8);
-  border-bottom:1px solid rgba(255,255,255,0.2);
-  border-top:1px solid rgba(255,255,255,0.4);
-  padding:1em 0;
-  margin:0 0 1.2em;
-  z-index:100;
-  box-shadow:
-    0 1px 0 rgba(255,255,255,0.6) inset,
-    0 -1px 0 rgba(0,0,0,0.05) inset,
-    0 4px 20px rgba(0,0,0,0.08),
-    0 1px 3px rgba(0,0,0,0.1);
-  display:none;
-  transition:all 0.3s cubic-bezier(0.4,0,0.2,1);
-}
-.sticky-header::before{
-  content:'';
-  position:absolute;
-  top:0;
-  left:0;
-  right:0;
-  height:1px;
-  background:linear-gradient(90deg,transparent,rgba(255,255,255,0.8) 50%,transparent);
-  pointer-events:none;
-}
-.sticky-header::after{
-  content:'';
-  position:absolute;
-  bottom:0;
-  left:0;
-  right:0;
-  height:1px;
-  background:linear-gradient(90deg,transparent,rgba(0,102,204,0.3) 50%,transparent);
-  pointer-events:none;
-}
-.sticky-header h2{margin:0 0 .6em;font-size:1.1em;color:#0066cc;font-weight:700;text-shadow:0 1px 2px rgba(255,255,255,0.8)}
-.sticky-header input{
+  background:rgba(255,255,255,0.1);
+  backdrop-filter:blur(15px);
+  -webkit-backdrop-filter:blur(15px);
+  border-bottom:1px solid rgba(255,255,255,0.1);
+  padding:0.4em 0;
   margin:0;
-  padding:.6em;
-  font-size:.9em;
-  background:rgba(255,255,255,0.9);
-  backdrop-filter:blur(10px);
-  border:1px solid rgba(255,255,255,0.3);
-  box-shadow:
-    0 1px 3px rgba(0,0,0,0.1),
-    0 1px 0 rgba(255,255,255,0.8) inset;
+  z-index:100;
+  display:none;
+  transition:all 0.2s ease;
+  min-height:auto;
 }
-.sticky-header input:focus{
-  background:rgba(255,255,255,0.95);
-  border-color:rgba(0,102,204,0.5);
-  box-shadow:
-    0 0 0 3px rgba(0,102,204,0.1),
-    0 1px 3px rgba(0,0,0,0.1),
-    0 1px 0 rgba(255,255,255,0.8) inset;
+.sticky-header h2{
+  margin:0;
+  padding:0;
+  font-size:1em;
+  color:rgba(0,0,0,0.7);
+  font-weight:600;
+  line-height:1.2;
+}
+.sticky-header .sticky-month{
+  margin:0;
+  padding:0;
+  font-size:0.8em;
+  color:rgba(0,0,0,0.5);
+  font-weight:400;
+  line-height:1;
 }
 .archive-content{margin:2em 0}
 .year-section{margin:0 0 3em}
@@ -1256,15 +1227,10 @@ cat >> public/index.html << MAIN_META
 <body>
     <header>
         <h1>${SITE_TITLE}</h1>
-        <div class="stats">📊 ${processed_count} posts published | Press <kbd>Ctrl+K</kbd> to search</div>
+        <div class="stats">📊 ${processed_count} posts published | Press <kbd>Ctrl+K</kbd> or use floating search</div>
     </header>
     
     <main>
-        <input id="search" placeholder="🔍 Search posts by title or content..." autocomplete="off">
-        <div id="search-info" class="search-results" style="display:none">
-            Found <span id="search-count">0</span> posts matching "<span id="search-term"></span>"
-        </div>
-        
         <div id="posts">
 MAIN_META
 
@@ -1333,115 +1299,8 @@ cat >> public/index.html << 'MAIN_FOOTER'
     </main>
     
     <script>
-        (function() {
-            let originalPosts = null;
-            const searchInput = document.getElementById('search');
-            const postsContainer = document.getElementById('posts');
-            const searchInfo = document.getElementById('search-info');
-            const searchCount = document.getElementById('search-count');
-            const searchTerm = document.getElementById('search-term');
-            
-            if (!searchInput || !postsContainer || !searchInfo || !searchCount) {
-                console.error('Search elements not found');
-                return;
-            }
-            
-            function escapeRegExp(string) {
-                return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-            }
-            
-            function highlightText(text, query) {
-                if (!query) return text;
-                const escapedQuery = escapeRegExp(query);
-                const regex = new RegExp('(' + escapedQuery + ')', 'gi');
-                return text.replace(regex, '<span class="search-highlight">$1</span>');
-            }
-            
-            function searchPosts() {
-                const query = searchInput.value.toLowerCase().trim();
-                
-                if (originalPosts === null) {
-                    originalPosts = postsContainer.innerHTML;
-                }
-                
-                if (!query) {
-                    postsContainer.innerHTML = originalPosts;
-                    searchInfo.style.display = 'none';
-                    searchInput.classList.remove('searching');
-                    return;
-                }
-                
-                searchInput.classList.add('searching');
-                
-                const tempDiv = document.createElement('div');
-                tempDiv.innerHTML = originalPosts;
-                const posts = Array.from(tempDiv.children);
-                
-                console.log('Searching for:', query, 'in', posts.length, 'posts');
-                
-                const filtered = posts.filter(post => {
-                    const searchable = post.dataset.searchable || '';
-                    const titleData = post.dataset.title || '';
-                    const excerptData = post.dataset.excerpt || '';
-                    const dateData = post.dataset.date || '';
-                    
-                    // Search in all fields
-                    return searchable.includes(query) || 
-                           titleData.includes(query) || 
-                           excerptData.includes(query) ||
-                           dateData.includes(query);
-                });
-                
-                console.log('Found', filtered.length, 'matches');
-                
-                if (filtered.length > 0) {
-                    // Create highlighted posts
-                    const highlightedPosts = filtered.map(post => {
-                        const postClone = post.cloneNode(true);
-                        
-                        // Highlight in title
-                        const titleEl = postClone.querySelector('.post-title a');
-                        if (titleEl) {
-                            titleEl.innerHTML = highlightText(titleEl.textContent, query);
-                        }
-                        
-                        // Highlight in excerpt
-                        const excerptEl = postClone.querySelector('.excerpt');
-                        if (excerptEl) {
-                            excerptEl.innerHTML = highlightText(excerptEl.textContent, query);
-                        }
-                        
-                        // Highlight in date
-                        const dateEl = postClone.querySelector('.post-date');
-                        if (dateEl) {
-                            dateEl.innerHTML = highlightText(dateEl.textContent, query);
-                        }
-                        
-                        return postClone.outerHTML;
-                    }).join('');
-                    
-                    postsContainer.innerHTML = highlightedPosts;
-                } else {
-                    postsContainer.innerHTML = '<div class="no-results">No posts found matching your search. Try different keywords.</div>';
-                }
-                
-                searchCount.textContent = filtered.length;
-                searchTerm.textContent = query;
-                searchInfo.style.display = 'block';
-            }
-            
-            let searchTimeout;
-            searchInput.addEventListener('input', function() {
-                clearTimeout(searchTimeout);
-                if (!searchInput.value.trim()) {
-                    searchPosts();
-                    return;
-                }
-                searchTimeout = setTimeout(searchPosts, 50);
-            });
-            
-            console.log('Main page search initialized');
-        })();
+        // Main page with floating search only
+        console.log('Main page initialized with floating search');
     </script>
 </body>
 </html>
@@ -1465,22 +1324,17 @@ cat >> public/archive/index.html << ARCHIVE_META
     <script src="../search-index.js" defer></script>
 </head>
 <body>
-    <nav><a href="../">← Home</a> | Press <kbd>Ctrl+K</kbd> for global search</nav>
+    <nav><a href="../">← Home</a> | Press <kbd>Ctrl+K</kbd> or use floating search</nav>
     
     <header>
         <h1>Post Archive</h1>
-        <div class="stats">📊 All ${processed_count} posts in chronological order</div>
+        <div class="stats">📊 All ${processed_count} posts in chronological order | Press <kbd>Ctrl+K</kbd> for search</div>
     </header>
     
     <main>
-        <input id="search-main" placeholder="🔍 Search all posts..." autocomplete="off">
-        <div id="search-info" class="search-results" style="display:none">
-            Found <span id="search-count">0</span> of ${processed_count} posts matching "<span id="search-term"></span>"
-        </div>
-        
         <div id="sticky-header" class="sticky-header">
             <h2 id="sticky-title">Archive</h2>
-            <input id="search-sticky" placeholder="🔍 Search all posts..." autocomplete="off">
+            <div class="sticky-month" id="sticky-month"></div>
         </div>
         
         <div class="archive-content" id="archive">
@@ -1570,174 +1424,60 @@ cat >> public/archive/index.html << 'ARCHIVE_END'
     
     <script>
         (function() {
-            let originalArchive = null;
-            let isSearchActive = false;
-            
-            const searchMainInput = document.getElementById('search-main');
-            const searchStickyInput = document.getElementById('search-sticky');
-            const archiveContainer = document.getElementById('archive');
-            const searchInfo = document.getElementById('search-info');
-            const searchCount = document.getElementById('search-count');
-            const searchTerm = document.getElementById('search-term');
             const stickyHeader = document.getElementById('sticky-header');
             const stickyTitle = document.getElementById('sticky-title');
+            const stickyMonth = document.getElementById('sticky-month');
             
-            if (!searchMainInput || !searchStickyInput || !archiveContainer) {
-                console.error('Archive search elements not found');
+            if (!stickyHeader || !stickyTitle) {
+                console.error('Sticky header elements not found');
                 return;
             }
             
-            function escapeRegExp(string) {
-                return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-            }
-            
-            function highlightText(text, query) {
-                if (!query) return text;
-                const escapedQuery = escapeRegExp(query);
-                const regex = new RegExp('(' + escapedQuery + ')', 'gi');
-                return text.replace(regex, '<span class="search-highlight">$1</span>');
-            }
-            
             function updateStickyHeader() {
-                const searchMainRect = searchMainInput.getBoundingClientRect();
+                const scrollY = window.scrollY;
                 
-                if (searchMainRect.bottom < 0) {
+                // Show sticky header when scrolled past the main header
+                if (scrollY > 200) {
                     stickyHeader.style.display = 'block';
-                    if (!isSearchActive) {
-                        // Update title based on visible section
-                        const sections = document.querySelectorAll('.year-section, .month-section');
-                        let currentSection = null;
-                        
-                        for (let section of sections) {
-                            const rect = section.getBoundingClientRect();
-                            if (rect.top <= 150 && rect.bottom > 0) {
-                                currentSection = section;
-                                break;
+                    
+                    // Find the currently visible section
+                    const sections = document.querySelectorAll('.year-section, .month-section');
+                    let currentSection = null;
+                    let currentMonth = '';
+                    
+                    for (let section of sections) {
+                        const rect = section.getBoundingClientRect();
+                        if (rect.top <= 100 && rect.bottom > 0) {
+                            currentSection = section;
+                            
+                            // If it's a month section, extract the month
+                            if (section.classList.contains('month-section')) {
+                                const monthHeader = section.querySelector('.month-header h3');
+                                if (monthHeader) {
+                                    const monthText = monthHeader.textContent.trim();
+                                    // Extract just the month name (e.g., "September" from "September 2029")
+                                    currentMonth = monthText.split(' ')[0];
+                                }
                             }
+                            break;
                         }
-                        
-                        if (currentSection) {
-                            if (currentSection.dataset.yearMonth) {
-                                stickyTitle.textContent = currentSection.dataset.yearMonth;
-                            } else if (currentSection.dataset.year) {
-                                stickyTitle.textContent = currentSection.dataset.year;
-                            }
+                    }
+                    
+                    // Update the sticky header content
+                    if (currentSection) {
+                        if (currentSection.dataset.year) {
+                            stickyTitle.textContent = currentSection.dataset.year;
+                            stickyMonth.textContent = '';
+                        } else if (currentSection.dataset.yearMonth) {
+                            const parts = currentSection.dataset.yearMonth.split(' ');
+                            stickyTitle.textContent = parts[1] || ''; // Year
+                            stickyMonth.textContent = parts[0] || ''; // Month
                         }
                     }
                 } else {
                     stickyHeader.style.display = 'none';
                 }
             }
-            
-            function searchArchive() {
-                const mainQuery = searchMainInput.value.toLowerCase().trim();
-                const stickyQuery = searchStickyInput.value.toLowerCase().trim();
-                const query = mainQuery || stickyQuery;
-                
-                // Sync both inputs
-                if (document.activeElement === searchMainInput) {
-                    searchStickyInput.value = searchMainInput.value;
-                } else if (document.activeElement === searchStickyInput) {
-                    searchMainInput.value = searchStickyInput.value;
-                }
-                
-                // Store original content
-                if (originalArchive === null) {
-                    originalArchive = archiveContainer.innerHTML;
-                }
-                
-                if (!query) {
-                    archiveContainer.innerHTML = originalArchive;
-                    searchInfo.style.display = 'none';
-                    searchMainInput.classList.remove('searching');
-                    searchStickyInput.classList.remove('searching');
-                    isSearchActive = false;
-                    updateStickyHeader();
-                    return;
-                }
-                
-                isSearchActive = true;
-                searchMainInput.classList.add('searching');
-                searchStickyInput.classList.add('searching');
-                
-                // Search through posts
-                const tempDiv = document.createElement('div');
-                tempDiv.innerHTML = originalArchive;
-                const posts = Array.from(tempDiv.querySelectorAll('.post'));
-                
-                const filtered = posts.filter(post => {
-                    const searchable = post.dataset.searchable || '';
-                    const titleData = post.dataset.title || '';
-                    const excerptData = post.dataset.excerpt || '';
-                    const dateData = post.dataset.date || '';
-                    
-                    // Search in all fields
-                    return searchable.includes(query) || 
-                           titleData.includes(query) || 
-                           excerptData.includes(query) ||
-                           dateData.includes(query);
-                });
-                
-                if (filtered.length > 0) {
-                    // Create search results section
-                    let html = '<div class="year-section"><div class="year-header"><h2>Search Results</h2></div><div class="month-section">';
-                    
-                    // Add highlighted posts
-                    filtered.forEach(post => {
-                        const postClone = post.cloneNode(true);
-                        
-                        // Highlight in title
-                        const titleEl = postClone.querySelector('.post-title a');
-                        if (titleEl) {
-                            titleEl.innerHTML = highlightText(titleEl.textContent, query);
-                        }
-                        
-                        // Highlight in excerpt
-                        const excerptEl = postClone.querySelector('.excerpt');
-                        if (excerptEl) {
-                            excerptEl.innerHTML = highlightText(excerptEl.textContent, query);
-                        }
-                        
-                        // Highlight in date
-                        const dateEl = postClone.querySelector('.post-date');
-                        if (dateEl) {
-                            dateEl.innerHTML = highlightText(dateEl.textContent, query);
-                        }
-                        
-                        html += postClone.outerHTML;
-                    });
-                    
-                    html += '</div></div>';
-                    archiveContainer.innerHTML = html;
-                    
-                    if (stickyHeader.style.display === 'block') {
-                        stickyTitle.textContent = 'Search Results (' + filtered.length + ')';
-                    }
-                } else {
-                    archiveContainer.innerHTML = '<div class="no-results">No posts found matching your search. Try different keywords.</div>';
-                    if (stickyHeader.style.display === 'block') {
-                        stickyTitle.textContent = 'Search Results (0)';
-                    }
-                }
-                
-                searchCount.textContent = filtered.length;
-                searchTerm.textContent = query;
-                searchInfo.style.display = 'block';
-            }
-            
-            // Event listeners
-            let searchTimeout;
-            function handleSearch() {
-                clearTimeout(searchTimeout);
-                if (!this.value.trim()) {
-                    searchArchive();
-                    return;
-                }
-                searchTimeout = setTimeout(searchArchive, 50);
-            }
-            
-            searchMainInput.addEventListener('input', handleSearch);
-            searchStickyInput.addEventListener('input', handleSearch);
             
             // Scroll event for sticky header
             let scrollTimeout = null;
@@ -1754,7 +1494,7 @@ cat >> public/archive/index.html << 'ARCHIVE_END'
             
             // Initialize
             updateStickyHeader();
-            console.log('Archive search and sticky header initialized');
+            console.log('Archive with minimal sticky header initialized');
         })();
     </script>
 </body>
@@ -1769,17 +1509,19 @@ echo "  ✓ Processed $processed_count markdown files"
 echo "  ✓ Generated individual post pages with 3D code block effects"
 echo "  ✓ Created main page with recent posts and search"
 echo "  ✓ Built comprehensive archive with chronological organization"
-echo "  ✓ Character-by-character search with real-time highlighting"
-echo "  ✓ Enhanced glass-effect sticky navigation on archive page"
+echo "  ✓ Minimal translucent sticky navigation (JSFiddle-style)"
+echo "  ✓ Removed search bars, kept floating search functionality"
+echo "  ✓ Dynamic year/month display in compact sticky header"
 echo "  ✓ Global search index with $search_index_count posts"
 echo "  ✓ Fixed copy button positioning and functionality"
 echo ""
 echo "🚀 Features included:"
-echo "  • Enhanced translucent glass effect sticky header"
-echo "  • Improved backdrop blur with saturation boost"
-echo "  • Subtle top/bottom glass highlight lines"
-echo "  • Enhanced box shadows for depth"
-echo "  • Improved translucent search modal overlay"
+echo "  • Minimal translucent sticky header (JSFiddle-inspired)"
+echo "  • Removed search bars from main/archive pages"
+echo "  • Floating search button for all search functionality"
+echo "  • Dynamic year/month display in minimal sticky header"
+echo "  • Ultra-compact sticky component with minimal height"
+echo "  • Clear translucent background with subtle blur"
 echo "  • 3D glassmorphic code blocks with smooth shadows"
 echo "  • Subtle embossed text effect for code syntax"
 echo "  • White bottom highlight line for glass effect"
@@ -1795,7 +1537,6 @@ echo "  • Clean design with subtle border hover effects"
 echo "  • Code syntax highlighting with Prism.js"
 echo "  • Mermaid diagram rendering"
 echo "  • Copy-to-clipboard functionality (now working!)"
-echo "  • Working sticky archive navigation with glass effect"
 echo "  • SEO-optimized meta tags"
 echo "  • Reading time calculations"
 echo "  • Chronological post organization"
@@ -1803,21 +1544,21 @@ echo ""
 echo "📁 Output structure:"
 echo "  public/"
 echo "  ├── index.html (main page with recent posts)"
-echo "  ├── shared.css (shared styles with enhanced glass effects)"
+echo "  ├── shared.css (shared styles with minimal sticky effects)"
 echo "  ├── post.css (post-specific styles with 3D effects)"
 echo "  ├── search-index.js (global search index with $search_index_count posts)"
 echo "  ├── archive/"
-echo "  │   └── index.html (complete archive with glass sticky header)"
+echo "  │   └── index.html (complete archive with minimal sticky header)"
 echo "  └── p/"
 echo "      ├── 1.html"
 echo "      ├── 2.html"
 echo "      └── ... (individual post pages)"
 echo ""
-echo "🎨 Enhanced Glass Effects:"
-echo "   - Translucent sticky header with improved backdrop blur"
-echo "   - Enhanced saturation (1.8x) for richer glass appearance"
-echo "   - Gradient highlight lines for premium glass look"
-echo "   - Multiple layered shadows for realistic depth"
-echo "   - Smooth transitions with cubic-bezier easing"
-echo "   - Enhanced global search modal with glass container"
-echo "   - JSFiddle-inspired sticky navigation appearance"
+echo "🎨 Minimal Sticky UI Effects:"
+echo "   - Ultra-minimal translucent sticky header"
+echo "   - JSFiddle-inspired clear see-through appearance"
+echo "   - Dynamic year/month display while scrolling"
+echo "   - Compact height for minimal visual interference"
+echo "   - Subtle backdrop blur without color distractions"
+echo "   - Year positioned at top margin, month below"
+echo "   - All search functionality moved to floating button"
