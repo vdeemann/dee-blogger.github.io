@@ -12,7 +12,7 @@ mkdir -p public/p public/archive
 
 # Enhanced shared CSS for consistent styling across all pages (hover effects removed)
 cat > public/shared.css << 'EOF'
-body{max-width:55em;margin:2em auto;padding:0 1em;font-family:system-ui,sans-serif;line-height:1.6;color:#333;background:#fff;position:relative}
+body{max-width:55em;margin:2em auto;padding:0 1em;font-family:system-ui,sans-serif;line-height:1.6;color:#333;background:#f0ece8;position:relative}
 a{color:#0066cc;text-decoration:none}
 a:hover{text-decoration:underline}
 h1{font-size:1.9em;margin:0 0 .5em;color:#1a1a1a;font-weight:700}
@@ -39,7 +39,7 @@ nav a{margin-right:1em;font-weight:500}
 .search-term{font-weight:600;color:#0066cc}
 .no-results{text-align:center;color:#666;padding:2em;font-style:italic}
 .search-count{font-weight:600;color:#0066cc}
-.sticky-header{position:sticky;top:0;background:rgba(255,255,255,0.95);backdrop-filter:blur(10px);border-bottom:2px solid #0066cc;padding:1em 0;margin:0 0 1.2em;z-index:100;box-shadow:0 2px 10px rgba(0,0,0,.1);display:none}
+.sticky-header{position:sticky;top:0;background:rgba(240,236,232,0.95);backdrop-filter:blur(10px);border-bottom:2px solid #0066cc;padding:1em 0;margin:0 0 1.2em;z-index:100;box-shadow:0 2px 10px rgba(0,0,0,.1);display:none}
 .sticky-header h2{margin:0 0 .6em;font-size:1.1em;color:#0066cc;font-weight:700}
 .sticky-header input{margin:0;padding:.6em;font-size:.9em}
 .archive-content{margin:2em 0}
@@ -50,11 +50,33 @@ nav a{margin-right:1em;font-weight:500}
 .post-date{font-size:.85em;color:#888;margin-bottom:.3em}
 .post-title{margin:0 0 .3em;font-size:1.05em}
 .post-title a{color:#333;font-weight:500}
+.global-search{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.8);z-index:1000;display:none;animation:fadeIn 0.2s ease-out}
+.global-search.active{display:flex;align-items:flex-start;justify-content:center;padding:3em 1em}
+.global-search-container{background:#fff;border-radius:12px;width:100%;max-width:45em;max-height:80vh;display:flex;flex-direction:column;box-shadow:0 20px 60px rgba(0,0,0,0.3);animation:slideDown 0.3s ease-out}
+@keyframes slideDown{from{transform:translateY(-30px);opacity:0}to{transform:translateY(0);opacity:1}}
+.global-search-header{padding:1.5em;border-bottom:1px solid #e8e8e8;position:relative}
+.global-search-header h2{margin:0;font-size:1.3em;color:#333}
+.global-search-close{position:absolute;top:1.5em;right:1.5em;background:none;border:none;font-size:1.5em;color:#666;cursor:pointer;padding:0;width:32px;height:32px;display:flex;align-items:center;justify-content:center;border-radius:50%;transition:all 0.2s}
+.global-search-close:hover{background:#f0f0f0;color:#333}
+.global-search-input{width:100%;padding:1em 3em 1em 1.2em;border:2px solid #0066cc;border-radius:8px;font-size:1.1em;margin-top:1em;background:#fff url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="%230066cc" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>') no-repeat right 12px center;background-size:24px}
+.global-search-input:focus{outline:none;box-shadow:0 0 0 4px rgba(0,102,204,0.15)}
+.global-search-results{flex:1;overflow-y:auto;padding:1.5em}
+.global-search-status{padding:1em;text-align:center;color:#666;font-style:italic}
+.search-result-item{margin-bottom:1.5em;padding:1em;background:#fafafa;border-radius:8px;border:1px solid #e8e8e8;cursor:pointer;transition:all 0.2s}
+.search-result-item:hover{border-color:#0066cc;transform:translateY(-2px);box-shadow:0 4px 12px rgba(0,0,0,0.1)}
+.search-result-title{font-size:1.1em;font-weight:600;margin-bottom:0.3em}
+.search-result-title a{color:#333}
+.search-result-date{font-size:0.85em;color:#888;margin-bottom:0.5em}
+.search-result-excerpt{font-size:0.9em;color:#666;line-height:1.5}
+.search-trigger{position:fixed;bottom:2em;right:2em;background:#0066cc;color:#fff;border:none;border-radius:50%;width:60px;height:60px;display:flex;align-items:center;justify-content:center;font-size:1.5em;cursor:pointer;box-shadow:0 4px 12px rgba(0,102,204,0.3);transition:all 0.2s;z-index:999}
+.search-trigger:hover{transform:scale(1.1);box-shadow:0 6px 20px rgba(0,102,204,0.4)}
+kbd{background:#f0f0f0;border:1px solid #ccc;border-radius:3px;padding:2px 5px;font-family:monospace;font-size:0.9em;box-shadow:0 1px 2px rgba(0,0,0,0.1)}
+@media (max-width: 600px){.global-search-container{margin:1em;max-height:90vh}.search-trigger{width:50px;height:50px;font-size:1.3em}}
 EOF
 
-# Enhanced post page CSS
+# Enhanced post page CSS with subtle 3D code block effects
 cat > public/post.css << 'EOF'
-body{max-width:55em;margin:2em auto;padding:0 1em;font-family:system-ui,sans-serif;line-height:1.6;color:#333;background:#fff}
+body{max-width:55em;margin:2em auto;padding:0 1em;font-family:system-ui,sans-serif;line-height:1.6;color:#333;background:#f0ece8}
 a{color:#0066cc;text-decoration:none}
 a:hover{text-decoration:underline}
 h1{font-size:2.2em;margin:0 0 .6em;color:#1a1a1a;font-weight:700;line-height:1.2}
@@ -65,35 +87,161 @@ p{margin:.8em 0}
 small{color:#666;display:block;margin:0 0 .4em;font-size:.9em}
 strong{font-weight:600;color:#333}
 em{font-style:italic;color:#444}
-code{background:#f7fafc;color:#e53e3e;padding:.2em .4em;border-radius:3px;font-family:"SF Mono",Monaco,Consolas,"Liberation Mono","Courier New",monospace;font-size:.85em;border:1px solid #e2e8f0}
-pre{background:#f7fafc;padding:1em 1.2em;margin:2em 0;border-radius:8px;overflow-x:auto;border:1px solid #e2e8f0;box-shadow:0 2px 6px rgba(0,0,0,.08);position:relative}
-pre code{background:transparent;padding:0;font-size:.9em;color:#2d3748;display:block;border:0;white-space:pre}
-ul,ol{margin:1.5em 0;padding-left:2.2em}
+main{max-width:55em;margin:0 auto}
+
+/* Subtle 3D effect for inline code */
+code{
+  background:#e9e5e1;
+  color:#e53e3e;
+  padding:.2em .4em;
+  border-radius:3px;
+  font-family:"SF Mono",Monaco,Consolas,"Liberation Mono","Courier New",monospace;
+  font-size:.85em;
+  box-shadow:0 1px 2px rgba(0,0,0,0.04),0 1px 0 rgba(255,255,255,0.6);
+  text-shadow:0 1px 0 rgba(255,255,255,0.4);
+}
+
+/* Minimal glass-like code block styling */
+pre{
+  background:#e7e3de;
+  padding:1.5em 2em;
+  margin:2em 0;
+  border-radius:10px;
+  overflow-x:auto;
+  box-shadow:0 2px 12px rgba(0,0,0,0.08),0 1px 0 #fff;
+  position:relative;
+  width:100%;
+  max-width:55em;
+  box-sizing:border-box;
+  display:block;
+}
+
+/* Subtle bottom highlight for glass effect */
+pre::after{
+  content:'';
+  position:absolute;
+  bottom:0;
+  left:0;
+  right:0;
+  height:1px;
+  background:rgba(255,255,255,0.8);
+  border-radius:0 0 10px 10px;
+}
+
+pre code{
+  background:transparent;
+  padding:0;
+  font-size:1.15rem;
+  color:#222;
+  display:block;
+  border:0;
+  white-space:pre;
+  box-shadow:none;
+  font-family:'Fira Mono','Consolas',monospace;
+  line-height:1.7;
+  overflow-wrap:normal;
+  word-wrap:normal;
+}
+
+/* Subtle 3D text effect ONLY for syntax-highlighted elements */
+pre code .kw,
+pre code .fn,
+pre code .str,
+pre code .com,
+pre code .var,
+pre code .num{
+  text-shadow:
+    0 2px 6px #fff,
+    0 1px 0 #fff,
+    0 4px 12px rgba(0,0,0,0.16),
+    1px 2px 2px rgba(0,0,0,0.10),
+    0 0.5px 0 #e5e5e5;
+}
+
+/* Remove 3D effect on selection/highlight for focus */
+pre code::selection,
+pre code span::selection,
+pre code *::selection,
+pre code::-moz-selection,
+pre code span::-moz-selection,
+pre code *::-moz-selection{
+  text-shadow:none !important;
+  background:#b3d4fc;
+  color:#000;
+}
+
+/* Syntax highlighting colors */
+.language-elixir .token.keyword,
+.language-javascript .token.keyword,
+.language-scheme .token.keyword,
+.kw{color:#2b7bb9;font-weight:bold}
+.language-elixir .token.function,
+.language-javascript .token.function,
+.fn{color:#d72660}
+.language-elixir .token.string,
+.language-javascript .token.string,
+.language-scheme .token.string,
+.str{color:#399f4a}
+.language-elixir .token.comment,
+.language-javascript .token.comment,
+.language-scheme .token.comment,
+.com{color:#8d99ae;font-style:italic}
+.language-elixir .token.variable,
+.language-javascript .token.variable,
+.var{color:#222}
+.language-elixir .token.number,
+.language-javascript .token.number,
+.num{color:#b48ead}
+
+/* Apply 3D effect to Prism.js highlighted tokens as well */
+pre code .language-elixir .token.keyword,
+pre code .language-javascript .token.keyword,
+pre code .language-scheme .token.keyword,
+pre code .language-elixir .token.function,
+pre code .language-javascript .token.function,
+pre code .language-elixir .token.string,
+pre code .language-javascript .token.string,
+pre code .language-scheme .token.string,
+pre code .language-elixir .token.comment,
+pre code .language-javascript .token.comment,
+pre code .language-scheme .token.comment,
+pre code .language-elixir .token.number,
+pre code .language-javascript .token.number{
+  text-shadow:
+    0 2px 6px #fff,
+    0 1px 0 #fff,
+    0 4px 12px rgba(0,0,0,0.16),
+    1px 2px 2px rgba(0,0,0,0.10),
+    0 0.5px 0 #e5e5e5;
+}
+
+ul,ol{margin:1.5em 0;padding-left:2.2em;max-width:55em}
 li{margin:.6em 0;line-height:1.6}
 nav{margin:1.2em 0;padding:.6em 0;border-bottom:1px solid #eee}
 nav a{margin-right:1.2em;font-weight:500}
-blockquote{background:#f7fafc;border-left:4px solid #0066cc;margin:2em 0;padding:1.2em 1.8em;border-radius:0 8px 8px 0;color:#4a5568;font-style:italic;box-shadow:0 2px 6px rgba(0,0,0,.08)}
+blockquote{background:#f7fafc;border-left:4px solid #0066cc;margin:2em 0;padding:1.2em 1.8em;border-radius:0 8px 8px 0;color:#4a5568;font-style:italic;box-shadow:0 2px 6px rgba(0,0,0,.08);max-width:55em}
 blockquote p{margin:.6em 0}
 blockquote h1,blockquote h2,blockquote h3,blockquote h4{color:#2d3748;font-style:normal}
-hr{border:0;height:1px;background:#e2e8f0;margin:3em 0}
-.post-meta{background:#f7fafc;padding:1.2em 1.5em;border-radius:8px;margin:2em 0;border-left:4px solid #0066cc;box-shadow:0 2px 6px rgba(0,0,0,.08)}
+hr{border:0;height:1px;background:#e2e8f0;margin:3em 0;max-width:55em}
+.post-meta{background:#f7fafc;padding:1.2em 1.5em;border-radius:8px;margin:2em 0;border-left:4px solid #0066cc;box-shadow:0 2px 6px rgba(0,0,0,.08);max-width:55em}
 .post-meta p{margin:.4em 0;font-size:.95em;color:#4a5568}
-.copy-btn{position:absolute;top:.8em;right:.8em;background:#0066cc;color:#fff;border:0;border-radius:4px;padding:.4em .8em;font-size:.8em;cursor:pointer;opacity:.8}
-.copy-btn:hover{opacity:1;background:#0052a3}
-.copy-btn.copied{background:#28a745}
-.mermaid{background:#f7fafc;border:1px solid #e2e8f0;border-radius:8px;padding:1.5em;margin:2em 0;text-align:center;box-shadow:0 2px 6px rgba(0,0,0,.08)}
-.table-container{overflow-x:auto;margin:2em 0;border-radius:8px;box-shadow:0 2px 6px rgba(0,0,0,.08)}
+.copy-btn{position:absolute;top:0.5em;right:0.8em;background:#0066cc;color:#fff;border:0;border-radius:4px;padding:.3em .6em;font-size:.75em;cursor:pointer;opacity:0;transition:all 0.3s ease;z-index:10}
+pre:hover .copy-btn{opacity:0.8}
+.copy-btn:hover{opacity:1 !important;background:#0052a3;transform:translateY(-1px)}
+.copy-btn.copied{background:#28a745;opacity:1}
+.mermaid{background:#f7fafc;border:1px solid #e2e8f0;border-radius:8px;padding:1.5em;margin:2em 0;text-align:center;box-shadow:0 2px 6px rgba(0,0,0,.08);max-width:55em}
+.table-container{overflow-x:auto;margin:2em 0;border-radius:8px;box-shadow:0 2px 6px rgba(0,0,0,.08);max-width:55em}
 table{width:100%;border-collapse:collapse;background:#fff;border-radius:8px;overflow:hidden}
 th,td{padding:1em 1.2em;text-align:left;border-bottom:1px solid #e2e8f0}
 th{background:#f7fafc;font-weight:600;color:#2d3748}
 tr:hover{background:#fafafa}
-.toc{background:#f7fafc;border:1px solid #e2e8f0;border-radius:8px;padding:1.5em;margin:2em 0}
+.toc{background:#f7fafc;border:1px solid #e2e8f0;border-radius:8px;padding:1.5em;margin:2em 0;max-width:55em}
 .toc h3{margin:0 0 1em;color:#2d3748}
 .toc ul{margin:0;padding-left:1.5em}
 .toc a{color:#0066cc;font-weight:normal}
 EOF
 
-# Improved markdown processor with better handling of complex content
+# Improved markdown processor with better handling of complex content and fixed copy button
 process_markdown() {
     local file="$1"
     
@@ -107,36 +255,56 @@ process_markdown() {
         code_lang = ""
         list_type = ""
         blockquote_content = ""
+        code_id = 0
     }
     
     # Handle code blocks
     /^```/ {
         if (in_code) {
-            if (code_lang != "") {
-                print "<button class=\"copy-btn\" onclick=\"copyCode(this)\">📋 Copy</button>"
-            }
-            print "</code></pre>"
+            print "</code>"
+            print "<button class=\"copy-btn\" onclick=\"copyCode(this)\" data-code-id=\"code-" code_id "\">📋 Copy</button>"
+            print "</pre>"
             in_code = 0
             code_lang = ""
         } else {
             gsub(/^```/, "")
             code_lang = $0
+            code_id++
             if (code_lang != "") {
-                print "<pre class=\"language-" code_lang "\"><code class=\"language-" code_lang "\">"
+                print "<pre class=\"language-" code_lang "\" data-code-id=\"code-" code_id "\">"
+                print "<code class=\"language-" code_lang "\">"
             } else {
-                print "<pre><code>"
+                print "<pre data-code-id=\"code-" code_id "\">"
+                print "<code>"
             }
             in_code = 1
         }
         next
     }
     
-    # Handle content inside code blocks
+    # Handle content inside code blocks with syntax highlighting
     in_code { 
         gsub(/&/, "\\&amp;")
         gsub(/</, "\\&lt;")
         gsub(/>/, "\\&gt;")
-        print
+        
+        # Add basic syntax highlighting classes for common patterns
+        line = $0
+        # Keywords
+        gsub(/\b(import|export|const|let|var|function|return|if|else|for|while|class|extends|from|as|async|await|try|catch|throw|new|this|super|typeof|instanceof|in|of|break|continue|switch|case|default|do|void|delete|yield|null|undefined|true|false)\b/, "<span class=\"kw\">\\&</span>", line)
+        # Functions (basic pattern)
+        gsub(/([a-zA-Z_][a-zA-Z0-9_]*)\(/, "<span class=\"fn\">\\1</span>(", line)
+        # Strings
+        gsub(/\x27[^\x27]*\x27/, "<span class=\"str\">\\&</span>", line)
+        gsub(/"[^"]*"/, "<span class=\"str\">\\&</span>", line)
+        # Comments
+        if (line ~ /^[ \t]*\/\//) {
+            gsub(/\/\/.*$/, "<span class=\"com\">\\&</span>", line)
+        }
+        # Numbers
+        gsub(/\b[0-9]+(\.[0-9]+)?\b/, "<span class=\"num\">\\&</span>", line)
+        
+        print line
         next 
     }
     
@@ -309,10 +477,9 @@ process_markdown() {
     # Clean up at end
     END {
         if (in_code) {
-            if (code_lang != "") {
-                print "<button class=\"copy-btn\" onclick=\"copyCode(this)\">📋 Copy</button>"
-            }
-            print "</code></pre>"
+            print "</code>"
+            print "<button class=\"copy-btn\" onclick=\"copyCode(this)\" data-code-id=\"code-" code_id "\">📋 Copy</button>"
+            print "</pre>"
         }
         if (in_list) {
             if (list_type == "ul") {
@@ -576,12 +743,15 @@ for i in "${!files[@]}"; do
     <meta property="og:type" content="article">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism.min.css">
     <link rel="stylesheet" href="../post.css">
+    <link rel="stylesheet" href="../shared.css">
+    <script src="../search-index.js" defer></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/mermaid/10.6.1/mermaid.min.js"></script>
 </head>
 <body>
     <nav>
         <a href="../">← Blog Home</a>
         <a href="../archive/">Archive</a>
+        <span style="float:right">Press <kbd>Ctrl+K</kbd> to search</span>
     </nav>
     
     <article>
@@ -597,7 +767,10 @@ for i in "${!files[@]}"; do
         </header>
         
         <main>
+            <div class="content-wrapper">
 ${content}
+            </div>
+            </div>
         </main>
     </article>
     
@@ -622,46 +795,76 @@ ${content}
         function copyCode(button) {
             const pre = button.closest('pre');
             const code = pre.querySelector('code');
-            const text = code.textContent;
+            if (!code) return;
             
-            navigator.clipboard.writeText(text).then(() => {
-                const originalText = button.textContent;
-                button.textContent = '✓ Copied!';
-                button.classList.add('copied');
-                setTimeout(() => {
-                    button.textContent = originalText;
-                    button.classList.remove('copied');
-                }, 2000);
-            }).catch(() => {
-                // Fallback for older browsers
-                const textarea = document.createElement('textarea');
-                textarea.value = text;
-                textarea.style.position = 'fixed';
-                textarea.style.opacity = '0';
-                document.body.appendChild(textarea);
-                textarea.select();
-                document.execCommand('copy');
-                document.body.removeChild(textarea);
-                
-                const originalText = button.textContent;
-                button.textContent = '✓ Copied!';
-                button.classList.add('copied');
-                setTimeout(() => {
-                    button.textContent = originalText;
-                    button.classList.remove('copied');
-                }, 2000);
-            });
+            // Get plain text without HTML tags
+            const textToCopy = code.textContent || code.innerText;
+            
+            // Copy to clipboard
+            if (navigator.clipboard && window.isSecureContext) {
+                navigator.clipboard.writeText(textToCopy).then(() => {
+                    const originalText = button.textContent;
+                    button.textContent = '✓ Copied!';
+                    button.classList.add('copied');
+                    setTimeout(() => {
+                        button.textContent = originalText;
+                        button.classList.remove('copied');
+                    }, 2000);
+                }).catch(err => {
+                    console.error('Failed to copy:', err);
+                    fallbackCopy(textToCopy, button);
+                });
+            } else {
+                // Fallback for older browsers or non-secure contexts
+                fallbackCopy(textToCopy, button);
+            }
         }
         
-        // Add copy buttons to all pre elements after page load
+        function fallbackCopy(text, button) {
+            const textarea = document.createElement('textarea');
+            textarea.value = text;
+            textarea.style.position = 'fixed';
+            textarea.style.top = '0';
+            textarea.style.left = '0';
+            textarea.style.width = '2em';
+            textarea.style.height = '2em';
+            textarea.style.padding = '0';
+            textarea.style.border = 'none';
+            textarea.style.outline = 'none';
+            textarea.style.boxShadow = 'none';
+            textarea.style.background = 'transparent';
+            document.body.appendChild(textarea);
+            textarea.focus();
+            textarea.select();
+            
+            try {
+                const successful = document.execCommand('copy');
+                if (successful) {
+                    const originalText = button.textContent;
+                    button.textContent = '✓ Copied!';
+                    button.classList.add('copied');
+                    setTimeout(() => {
+                        button.textContent = originalText;
+                        button.classList.remove('copied');
+                    }, 2000);
+                }
+            } catch (err) {
+                console.error('Fallback copy failed:', err);
+            }
+            
+            document.body.removeChild(textarea);
+        }
+        
+        // Ensure copy buttons are properly positioned
         document.addEventListener('DOMContentLoaded', function() {
+            // Already handled by markdown processor, but double-check positioning
             document.querySelectorAll('pre').forEach(pre => {
-                if (!pre.querySelector('.copy-btn')) {
-                    const button = document.createElement('button');
-                    button.className = 'copy-btn';
-                    button.innerHTML = '📋 Copy';
-                    button.onclick = () => copyCode(button);
-                    pre.appendChild(button);
+                const copyBtn = pre.querySelector('.copy-btn');
+                if (copyBtn) {
+                    // Ensure button is properly positioned
+                    copyBtn.style.position = 'absolute';
+                    copyBtn.style.top = '0.5em';
+                    copyBtn.style.right = '0.8em';
                 }
             });
         });
@@ -678,6 +881,285 @@ HTML_END
 done
 
 echo "📄 Successfully processed $processed_count out of $total files"
+
+# Get all posts sorted by date (newest first) - MOVED HERE FROM LATER
+echo "📊 Sorting posts by date..."
+all_nums=()
+for ((i=1; i<=processed_count; i++)); do
+    sort_date="${post_data["$i,sort_date"]}"
+    if [ -n "$sort_date" ]; then
+        all_nums+=("$sort_date $i")
+    else
+        echo "  ⚠️ Warning: No sort date for post $i"
+        all_nums+=("99999999 $i")  # Put at end if no date
+    fi
+done
+
+# Sort by date (newest first) and extract post numbers
+sorted_nums=($(printf '%s\n' "${all_nums[@]}" | sort -rn | cut -d' ' -f2))
+
+echo "📋 Posts sorted in order: ${sorted_nums[*]:0:10}..." # Show first 10
+
+# Generate search index for global search
+echo "🔍 Generating search index..."
+cat > public/search-index.js << 'SEARCH_INDEX_START'
+window.searchIndex = [
+SEARCH_INDEX_START
+
+# Add all posts to search index
+search_index_count=0
+for num in "${sorted_nums[@]}"; do
+    title="${post_data["$num,title"]}"
+    date="${post_data["$num,date"]}"
+    excerpt="${post_data["$num,excerpt"]}"
+    slug="${post_data["$num,slug"]}"
+    
+    if [ -z "$title" ]; then
+        echo "  ⚠️ Skipping post $num in search index - no title"
+        continue
+    fi
+    
+    # Escape for JavaScript - ensure no line breaks
+    title_js=$(echo "$title" | sed 's/\\/\\\\/g' | sed 's/"/\\"/g' | sed "s/'/\\\\'/g" | tr -d '\n\r')
+    excerpt_js=$(echo "$excerpt" | sed 's/\\/\\\\/g' | sed 's/"/\\"/g' | sed "s/'/\\\\'/g" | tr -d '\n\r')
+    date_js=$(echo "$date" | sed 's/\\/\\\\/g' | sed 's/"/\\"/g' | tr -d '\n\r')
+    
+    cat >> public/search-index.js << SEARCH_ENTRY
+{
+    id: ${num},
+    title: "${title_js}",
+    excerpt: "${excerpt_js}",
+    date: "${date_js}",
+    url: "p/${num}.html"
+},
+SEARCH_ENTRY
+    
+    search_index_count=$((search_index_count + 1))
+done
+
+echo "  ✅ Added $search_index_count posts to search index"
+
+# Close search index
+cat >> public/search-index.js << 'SEARCH_INDEX_END'
+];
+
+// Global search functionality
+(function() {
+    let searchOverlay = null;
+    let searchInput = null;
+    let searchResults = null;
+    let searchStatus = null;
+    
+    function escapeRegExp(string) {
+        return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    }
+    
+    function highlightText(text, query) {
+        if (!query || query.length === 0) return text;
+        
+        // Escape the query for regex
+        const escapedQuery = escapeRegExp(query);
+        
+        // Create a case-insensitive regex for the exact query
+        const regex = new RegExp('(' + escapedQuery + ')', 'gi');
+        
+        // Replace matches with highlighted version
+        return text.replace(regex, '<span class="search-highlight">$1</span>');
+    }
+    
+    function performGlobalSearch(query) {
+        if (!query || query.trim().length === 0) {
+            searchResults.innerHTML = '';
+            searchStatus.textContent = 'Type to search across all ' + window.searchIndex.length + ' posts...';
+            return;
+        }
+        
+        const queryLower = query.toLowerCase().trim();
+        
+        // Search through all posts character by character
+        const matches = window.searchIndex.filter(post => {
+            const titleLower = post.title.toLowerCase();
+            const excerptLower = post.excerpt.toLowerCase();
+            const dateLower = post.date.toLowerCase();
+            
+            // Check if query appears in any field
+            return titleLower.includes(queryLower) || 
+                   excerptLower.includes(queryLower) || 
+                   dateLower.includes(queryLower);
+        });
+        
+        if (matches.length === 0) {
+            searchResults.innerHTML = '';
+            searchStatus.innerHTML = '<div class="no-results">No posts found matching "<span class="search-term">' + escapeHtml(query) + '</span>"</div>';
+            return;
+        }
+        
+        // Sort by relevance
+        matches.sort((a, b) => {
+            const aTitle = a.title.toLowerCase();
+            const bTitle = b.title.toLowerCase();
+            const aExcerpt = a.excerpt.toLowerCase();
+            const bExcerpt = b.excerpt.toLowerCase();
+            
+            // Title matches are most important
+            const aTitleIndex = aTitle.indexOf(queryLower);
+            const bTitleIndex = bTitle.indexOf(queryLower);
+            
+            if (aTitleIndex !== -1 && bTitleIndex === -1) return -1;
+            if (aTitleIndex === -1 && bTitleIndex !== -1) return 1;
+            
+            // If both have title matches, prefer matches at the beginning
+            if (aTitleIndex !== -1 && bTitleIndex !== -1) {
+                if (aTitleIndex !== bTitleIndex) return aTitleIndex - bTitleIndex;
+            }
+            
+            // Then check excerpt matches
+            const aExcerptIndex = aExcerpt.indexOf(queryLower);
+            const bExcerptIndex = bExcerpt.indexOf(queryLower);
+            
+            if (aExcerptIndex !== -1 && bExcerptIndex === -1) return -1;
+            if (aExcerptIndex === -1 && bExcerptIndex !== -1) return 1;
+            
+            // Finally, sort by date (newest first)
+            return b.id - a.id;
+        });
+        
+        // Display results
+        searchStatus.innerHTML = 'Found <span class="search-count">' + matches.length + '</span> posts matching "<span class="search-term">' + escapeHtml(query) + '</span>"';
+        
+        searchResults.innerHTML = matches.map(post => {
+            const highlightedTitle = highlightText(escapeHtml(post.title), query);
+            const highlightedExcerpt = highlightText(escapeHtml(post.excerpt), query);
+            const highlightedDate = highlightText(escapeHtml(post.date), query);
+            
+            return '<div class="search-result-item" onclick="window.location.href=\'' + getRelativePath() + post.url + '\'">' +
+                '<div class="search-result-date">' + highlightedDate + '</div>' +
+                '<div class="search-result-title"><a href="' + getRelativePath() + post.url + '">' + highlightedTitle + '</a></div>' +
+                '<div class="search-result-excerpt">' + highlightedExcerpt + '</div>' +
+                '</div>';
+        }).join('');
+    }
+    
+    function escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+    
+    function getRelativePath() {
+        // Determine relative path based on current location
+        if (window.location.pathname.includes('/p/')) {
+            return '../';
+        } else if (window.location.pathname.includes('/archive/')) {
+            return '../';
+        }
+        return '';
+    }
+    
+    function createSearchOverlay() {
+        // Create overlay HTML
+        const overlay = document.createElement('div');
+        overlay.className = 'global-search';
+        overlay.innerHTML = 
+            '<div class="global-search-container">' +
+                '<div class="global-search-header">' +
+                    '<h2>Search All Posts</h2>' +
+                    '<button class="global-search-close">×</button>' +
+                    '<input type="text" class="global-search-input" placeholder="Search titles, content, and dates..." autofocus>' +
+                '</div>' +
+                '<div class="global-search-status">Type to search across all ' + window.searchIndex.length + ' posts...</div>' +
+                '<div class="global-search-results"></div>' +
+            '</div>';
+        
+        document.body.appendChild(overlay);
+        
+        searchOverlay = overlay;
+        searchInput = overlay.querySelector('.global-search-input');
+        searchResults = overlay.querySelector('.global-search-results');
+        searchStatus = overlay.querySelector('.global-search-status');
+        
+        // Event listeners
+        overlay.querySelector('.global-search-close').addEventListener('click', closeSearch);
+        
+        overlay.addEventListener('click', function(e) {
+            if (e.target === overlay) {
+                closeSearch();
+            }
+        });
+        
+        // Character-by-character search
+        let searchTimeout;
+        searchInput.addEventListener('input', function() {
+            clearTimeout(searchTimeout);
+            const query = this.value;
+            
+            if (query.length === 0) {
+                performGlobalSearch('');
+                return;
+            }
+            
+            // Small delay for performance
+            searchTimeout = setTimeout(() => performGlobalSearch(query), 50);
+        });
+        
+        // Handle escape key
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape' && searchOverlay.classList.contains('active')) {
+                closeSearch();
+            }
+        });
+    }
+    
+    function openSearch() {
+        if (!searchOverlay) {
+            createSearchOverlay();
+        }
+        searchOverlay.classList.add('active');
+        searchInput.focus();
+        searchInput.value = '';
+        performGlobalSearch('');
+    }
+    
+    function closeSearch() {
+        if (searchOverlay) {
+            searchOverlay.classList.remove('active');
+        }
+    }
+    
+    // Create search trigger button
+    function createSearchTrigger() {
+        const trigger = document.createElement('button');
+        trigger.className = 'search-trigger';
+        trigger.innerHTML = '🔍';
+        trigger.title = 'Search all posts';
+        trigger.addEventListener('click', openSearch);
+        document.body.appendChild(trigger);
+    }
+    
+    // Initialize when DOM is ready
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', createSearchTrigger);
+    } else {
+        createSearchTrigger();
+    }
+    
+    // Keyboard shortcut (Ctrl/Cmd + K)
+    document.addEventListener('keydown', function(e) {
+        if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+            e.preventDefault();
+            openSearch();
+        }
+    });
+    
+    // Expose globally for programmatic access
+    window.globalSearch = {
+        open: openSearch,
+        close: closeSearch
+    };
+})();
+SEARCH_INDEX_END
+
+echo "✅ Search index generated with $search_index_count posts"
 
 # Generate main page
 echo "🏠 Generating main page..."
@@ -696,11 +1178,12 @@ cat >> public/index.html << MAIN_META
     <meta name="description" content="Technical blog with ${processed_count} posts covering software architecture, development, and technology insights">
     <meta name="author" content="${SITE_TITLE}">
     <link rel="stylesheet" href="shared.css">
+    <script src="search-index.js" defer></script>
 </head>
 <body>
     <header>
         <h1>${SITE_TITLE}</h1>
-        <div class="stats">📊 ${processed_count} posts published</div>
+        <div class="stats">📊 ${processed_count} posts published | Press <kbd>Ctrl+K</kbd> to search</div>
     </header>
     
     <main>
@@ -711,24 +1194,6 @@ cat >> public/index.html << MAIN_META
         
         <div id="posts">
 MAIN_META
-
-# Get all posts sorted by date (newest first)
-echo "📊 Sorting posts by date..."
-all_nums=()
-for ((i=1; i<=processed_count; i++)); do
-    sort_date="${post_data["$i,sort_date"]}"
-    if [ -n "$sort_date" ]; then
-        all_nums+=("$sort_date $i")
-    else
-        echo "  ⚠️ Warning: No sort date for post $i"
-        all_nums+=("99999999 $i")  # Put at end if no date
-    fi
-done
-
-# Sort by date (newest first) and extract post numbers
-sorted_nums=($(printf '%s\n' "${all_nums[@]}" | sort -rn | cut -d' ' -f2))
-
-echo "📋 Posts sorted in order: ${sorted_nums[*]:0:10}..." # Show first 10
 
 # Show recent posts on main page (latest 15)
 recent_count=0
@@ -754,12 +1219,13 @@ for num in "${sorted_nums[@]}"; do
     # Prepare data for search and display (properly escaped)
     title_lower=$(echo "${title}" | tr '[:upper:]' '[:lower:]' | html_escape)
     excerpt_lower=$(echo "${excerpt}" | tr '[:upper:]' '[:lower:]' | html_escape)
-    searchable_lower=$(echo "${title} ${excerpt}" | tr '[:upper:]' '[:lower:]' | html_escape)
+    date_lower=$(echo "${date}" | tr '[:upper:]' '[:lower:]')
+    searchable_lower=$(echo "${title} ${excerpt} ${date}" | tr '[:upper:]' '[:lower:]' | html_escape)
     title_display=$(html_escape "$title")
     excerpt_display=$(html_escape "$excerpt")
     
     cat >> public/index.html << POST_ENTRY_END
-            <div class="post" data-title="${title_lower}" data-excerpt="${excerpt_lower}" data-searchable="${searchable_lower}" onclick="window.location.href='p/${num}.html'">
+            <div class="post" data-title="${title_lower}" data-excerpt="${excerpt_lower}" data-date="${date_lower}" data-searchable="${searchable_lower}" onclick="window.location.href='p/${num}.html'">
                 <div class="post-date">${date}</div>
                 <div class="post-title">
                     <a href="p/${num}.html">${title_display}</a>
@@ -795,45 +1261,12 @@ cat >> public/index.html << 'MAIN_FOOTER'
     
     <script>
         (function() {
-            let postsData = [];
-            const searchInput = document.getElementById('search');
-            const postsContainer = document.getElementById('posts');
-            const searchInfo = document.getElementById('search-info');
-            const searchCount = document.getElementById('search-count');
-            
-            if (!searchInput || !postsContainer || !searchInfo || !searchCount) {
-                console.error('Search elements not found');
-                return;
-            }
-            
-            // Initialize posts data on load
-            function initializePosts() {
-                const posts = postsContainer.querySelectorAll('.post');
-                postsData = Array.from(posts).map(post => {
-                    const titleEl = post.querySelector('.post-title a');
-                    const excerptEl = post.querySelector('.excerpt');
-                    const dateEl = post.querySelector('.post-date');
-                    
-                    return {
-                        element: post,
-                        title: titleEl ? titleEl.textContent : '',
-                        excerpt: excerptEl ? excerptEl.textContent : '',
-                        date: dateEl ? dateEl.textContent : '',
-                        url: titleEl ? titleEl.getAttribute('href') : '',
-                        originalHTML: post.innerHTML
-                    };
-                });
-            }
-            
-            // Escape special regex characters
-            function escapeRegExp(string) {
-                return string.replace(/[.*+?^${}()|[\]\\]/g, '\\    <script>
-        (function() {
             let originalPosts = null;
             const searchInput = document.getElementById('search');
             const postsContainer = document.getElementById('posts');
             const searchInfo = document.getElementById('search-info');
             const searchCount = document.getElementById('search-count');
+            const searchTerm = document.getElementById('search-term');
             
             if (!searchInput || !postsContainer || !searchInfo || !searchCount) {
                 console.error('Search elements not found');
@@ -861,17 +1294,32 @@ cat >> public/index.html << 'MAIN_FOOTER'
                 if (!query) {
                     postsContainer.innerHTML = originalPosts;
                     searchInfo.style.display = 'none';
+                    searchInput.classList.remove('searching');
                     return;
                 }
+                
+                searchInput.classList.add('searching');
                 
                 const tempDiv = document.createElement('div');
                 tempDiv.innerHTML = originalPosts;
                 const posts = Array.from(tempDiv.children);
                 
+                console.log('Searching for:', query, 'in', posts.length, 'posts');
+                
                 const filtered = posts.filter(post => {
                     const searchable = post.dataset.searchable || '';
-                    return searchable.includes(query);
+                    const titleData = post.dataset.title || '';
+                    const excerptData = post.dataset.excerpt || '';
+                    const dateData = post.dataset.date || '';
+                    
+                    // Search in all fields
+                    return searchable.includes(query) || 
+                           titleData.includes(query) || 
+                           excerptData.includes(query) ||
+                           dateData.includes(query);
                 });
+                
+                console.log('Found', filtered.length, 'matches');
                 
                 if (filtered.length > 0) {
                     // Create highlighted posts
@@ -890,6 +1338,12 @@ cat >> public/index.html << 'MAIN_FOOTER'
                             excerptEl.innerHTML = highlightText(excerptEl.textContent, query);
                         }
                         
+                        // Highlight in date
+                        const dateEl = postClone.querySelector('.post-date');
+                        if (dateEl) {
+                            dateEl.innerHTML = highlightText(dateEl.textContent, query);
+                        }
+                        
                         return postClone.outerHTML;
                     }).join('');
                     
@@ -899,127 +1353,21 @@ cat >> public/index.html << 'MAIN_FOOTER'
                 }
                 
                 searchCount.textContent = filtered.length;
+                searchTerm.textContent = query;
                 searchInfo.style.display = 'block';
             }
             
-            searchInput.addEventListener('input', searchPosts);
-            console.log('Main page search initialized');
-        })();
-    </script>');
-            }
-            
-            // Highlight matching text with proper HTML escaping
-            function highlightMatches(text, query) {
-                if (!query || !text) return text;
-                
-                // First, HTML escape the text
-                const div = document.createElement('div');
-                div.textContent = text;
-                const escapedText = div.innerHTML;
-                
-                // Then apply highlighting
-                const escapedQuery = escapeRegExp(query);
-                const regex = new RegExp('(' + escapedQuery + ')', 'gi');
-                return escapedText.replace(regex, '<span class="search-highlight">$1</span>');
-            }
-            
-            // Perform character-by-character search
-            function performSearch() {
-                const query = searchInput.value.trim();
-                
-                if (!query) {
-                    // Reset to original state
-                    searchInput.classList.remove('searching');
-                    postsData.forEach(post => {
-                        post.element.innerHTML = post.originalHTML;
-                        post.element.style.display = 'block';
-                    });
-                    searchInfo.style.display = 'none';
-                    return;
-                }
-                
-                // Add searching indicator
-                searchInput.classList.add('searching');
-                
-                let matchCount = 0;
-                
-                postsData.forEach(post => {
-                    const titleLower = post.title.toLowerCase();
-                    const excerptLower = post.excerpt.toLowerCase();
-                    const dateLower = post.date.toLowerCase();
-                    const queryLower = query.toLowerCase();
-                    
-                    // Check if post matches the search query
-                    const matches = titleLower.includes(queryLower) || 
-                                  excerptLower.includes(queryLower) || 
-                                  dateLower.includes(queryLower);
-                    
-                    if (matches) {
-                        matchCount++;
-                        post.element.style.display = 'block';
-                        
-                        // Rebuild the post HTML with highlighting
-                        const highlightedDate = highlightMatches(post.date, query);
-                        const highlightedTitle = highlightMatches(post.title, query);
-                        const highlightedExcerpt = highlightMatches(post.excerpt, query);
-                        
-                        post.element.innerHTML = 
-                            '<div class="post-date">' + highlightedDate + '</div>' +
-                            '<div class="post-title">' +
-                            '<a href="' + post.url + '">' + highlightedTitle + '</a>' +
-                            '</div>' +
-                            '<div class="excerpt">' + highlightedExcerpt + '</div>';
-                    } else {
-                        post.element.style.display = 'none';
-                    }
-                });
-                
-                // Update search info
-                searchCount.textContent = matchCount;
-                searchInfo.style.display = 'block';
-                
-                // Show no results message if needed
-                if (matchCount === 0) {
-                    const noResults = document.createElement('div');
-                    noResults.className = 'no-results';
-                    noResults.textContent = 'No posts found matching "' + query + '". Try different keywords.';
-                    postsContainer.appendChild(noResults);
-                } else {
-                    // Remove any existing no results message
-                    const existingNoResults = postsContainer.querySelector('.no-results');
-                    if (existingNoResults) {
-                        existingNoResults.remove();
-                    }
-                }
-            }
-            
-            // Initialize posts data
-            initializePosts();
-            
-            // Add input event listener for real-time search
             let searchTimeout;
             searchInput.addEventListener('input', function() {
                 clearTimeout(searchTimeout);
-                
-                // If search is empty, clear immediately
                 if (!searchInput.value.trim()) {
-                    performSearch();
+                    searchPosts();
                     return;
                 }
-                
-                // Small delay to improve performance on fast typing
-                searchTimeout = setTimeout(performSearch, 50);
+                searchTimeout = setTimeout(searchPosts, 50);
             });
             
-            // Also search immediately on certain keys
-            searchInput.addEventListener('keyup', function(e) {
-                if (e.key === 'Enter' || e.key === ' ') {
-                    clearTimeout(searchTimeout);
-                    performSearch();
-                }
-            });
-            
-            console.log('Enhanced character-by-character search initialized');
+            console.log('Main page search initialized');
         })();
     </script>
 </body>
@@ -1041,9 +1389,10 @@ cat >> public/archive/index.html << ARCHIVE_META
     <title>Archive - ${SITE_TITLE}</title>
     <meta name="description" content="Complete chronological archive of all ${processed_count} posts">
     <link rel="stylesheet" href="../shared.css">
+    <script src="../search-index.js" defer></script>
 </head>
 <body>
-    <nav><a href="../">← Home</a></nav>
+    <nav><a href="../">← Home</a> | Press <kbd>Ctrl+K</kbd> for global search</nav>
     
     <header>
         <h1>Post Archive</h1>
@@ -1121,12 +1470,13 @@ MONTH_SECTION
         # Prepare data safely
         title_lower=$(echo "${title}" | tr '[:upper:]' '[:lower:]' | html_escape)
         excerpt_lower=$(echo "${excerpt}" | tr '[:upper:]' '[:lower:]' | html_escape)
-        searchable_lower=$(echo "${title} ${excerpt}" | tr '[:upper:]' '[:lower:]' | html_escape)
+        date_lower=$(echo "${date}" | tr '[:upper:]' '[:lower:]')
+        searchable_lower=$(echo "${title} ${excerpt} ${date}" | tr '[:upper:]' '[:lower:]' | html_escape)
         title_display=$(html_escape "$title")
         excerpt_display=$(html_escape "$excerpt")
         
         cat >> public/archive/index.html << ARCHIVE_POST
-                <div class="post" data-title="${title_lower}" data-excerpt="${excerpt_lower}" data-searchable="${searchable_lower}" onclick="window.location.href='../p/${num}.html'">
+                <div class="post" data-title="${title_lower}" data-excerpt="${excerpt_lower}" data-date="${date_lower}" data-searchable="${searchable_lower}" onclick="window.location.href='../p/${num}.html'">
                     <div class="post-date">${date}</div>
                     <div class="post-title">
                         <a href="../p/${num}.html">${title_display}</a>
@@ -1147,57 +1497,6 @@ cat >> public/archive/index.html << 'ARCHIVE_END'
     
     <script>
         (function() {
-            let postsData = [];
-            let yearSections = [];
-            let isSearchActive = false;
-            
-            const searchMainInput = document.getElementById('search-main');
-            const searchStickyInput = document.getElementById('search-sticky');
-            const archiveContainer = document.getElementById('archive');
-            const searchInfo = document.getElementById('search-info');
-            const searchCount = document.getElementById('search-count');
-            const searchTerm = document.getElementById('search-term');
-            const stickyHeader = document.getElementById('sticky-header');
-            const stickyTitle = document.getElementById('sticky-title');
-            
-            if (!searchMainInput || !searchStickyInput || !archiveContainer) {
-                console.error('Archive search elements not found');
-                return;
-            }
-            
-            // Initialize archive data
-            function initializeArchive() {
-                // Store year sections structure
-                const sections = archiveContainer.querySelectorAll('.year-section');
-                yearSections = Array.from(sections).map(section => ({
-                    element: section,
-                    originalHTML: section.innerHTML
-                }));
-                
-                // Store all posts data
-                const posts = archiveContainer.querySelectorAll('.post');
-                postsData = Array.from(posts).map(post => {
-                    const titleEl = post.querySelector('.post-title a');
-                    const excerptEl = post.querySelector('.excerpt');
-                    const dateEl = post.querySelector('.post-date');
-                    
-                    return {
-                        element: post,
-                        title: titleEl ? titleEl.textContent : '',
-                        excerpt: excerptEl ? excerptEl.textContent : '',
-                        date: dateEl ? dateEl.textContent : '',
-                        url: titleEl ? titleEl.getAttribute('href') : '',
-                        originalHTML: post.innerHTML,
-                        parentSection: post.closest('.month-section'),
-                        yearSection: post.closest('.year-section')
-                    };
-                });
-            }
-            
-            // Escape special regex characters
-            function escapeRegExp(string) {
-                return string.replace(/[.*+?^${}()|[\]\\]/g, '\\    <script>
-        (function() {
             let originalArchive = null;
             let isSearchActive = false;
             
@@ -1206,6 +1505,7 @@ cat >> public/archive/index.html << 'ARCHIVE_END'
             const archiveContainer = document.getElementById('archive');
             const searchInfo = document.getElementById('search-info');
             const searchCount = document.getElementById('search-count');
+            const searchTerm = document.getElementById('search-term');
             const stickyHeader = document.getElementById('sticky-header');
             const stickyTitle = document.getElementById('sticky-title');
             
@@ -1276,12 +1576,16 @@ cat >> public/archive/index.html << 'ARCHIVE_END'
                 if (!query) {
                     archiveContainer.innerHTML = originalArchive;
                     searchInfo.style.display = 'none';
+                    searchMainInput.classList.remove('searching');
+                    searchStickyInput.classList.remove('searching');
                     isSearchActive = false;
                     updateStickyHeader();
                     return;
                 }
                 
                 isSearchActive = true;
+                searchMainInput.classList.add('searching');
+                searchStickyInput.classList.add('searching');
                 
                 // Search through posts
                 const tempDiv = document.createElement('div');
@@ -1290,7 +1594,15 @@ cat >> public/archive/index.html << 'ARCHIVE_END'
                 
                 const filtered = posts.filter(post => {
                     const searchable = post.dataset.searchable || '';
-                    return searchable.includes(query);
+                    const titleData = post.dataset.title || '';
+                    const excerptData = post.dataset.excerpt || '';
+                    const dateData = post.dataset.date || '';
+                    
+                    // Search in all fields
+                    return searchable.includes(query) || 
+                           titleData.includes(query) || 
+                           excerptData.includes(query) ||
+                           dateData.includes(query);
                 });
                 
                 if (filtered.length > 0) {
@@ -1313,6 +1625,12 @@ cat >> public/archive/index.html << 'ARCHIVE_END'
                             excerptEl.innerHTML = highlightText(excerptEl.textContent, query);
                         }
                         
+                        // Highlight in date
+                        const dateEl = postClone.querySelector('.post-date');
+                        if (dateEl) {
+                            dateEl.innerHTML = highlightText(dateEl.textContent, query);
+                        }
+                        
                         html += postClone.outerHTML;
                     });
                     
@@ -1330,12 +1648,23 @@ cat >> public/archive/index.html << 'ARCHIVE_END'
                 }
                 
                 searchCount.textContent = filtered.length;
+                searchTerm.textContent = query;
                 searchInfo.style.display = 'block';
             }
             
             // Event listeners
-            searchMainInput.addEventListener('input', searchArchive);
-            searchStickyInput.addEventListener('input', searchArchive);
+            let searchTimeout;
+            function handleSearch() {
+                clearTimeout(searchTimeout);
+                if (!this.value.trim()) {
+                    searchArchive();
+                    return;
+                }
+                searchTimeout = setTimeout(searchArchive, 50);
+            }
+            
+            searchMainInput.addEventListener('input', handleSearch);
+            searchStickyInput.addEventListener('input', handleSearch);
             
             // Scroll event for sticky header
             let scrollTimeout = null;
@@ -1354,207 +1683,6 @@ cat >> public/archive/index.html << 'ARCHIVE_END'
             updateStickyHeader();
             console.log('Archive search and sticky header initialized');
         })();
-    </script>');
-            }
-            
-            // Highlight matching text
-            function highlightMatches(text, query) {
-                if (!query || !text) return text;
-                
-                // HTML escape the text first
-                const div = document.createElement('div');
-                div.textContent = text;
-                const escapedText = div.innerHTML;
-                
-                // Apply highlighting
-                const escapedQuery = escapeRegExp(query);
-                const regex = new RegExp('(' + escapedQuery + ')', 'gi');
-                return escapedText.replace(regex, '<span class="search-highlight">$1</span>');
-            }
-            
-            // Update sticky header
-            function updateStickyHeader() {
-                const searchMainRect = searchMainInput.getBoundingClientRect();
-                
-                if (searchMainRect.bottom < 0) {
-                    stickyHeader.style.display = 'block';
-                    if (!isSearchActive) {
-                        // Update title based on visible section
-                        const sections = document.querySelectorAll('.year-section, .month-section');
-                        let currentSection = null;
-                        
-                        for (let section of sections) {
-                            const rect = section.getBoundingClientRect();
-                            if (rect.top <= 150 && rect.bottom > 0) {
-                                currentSection = section;
-                                break;
-                            }
-                        }
-                        
-                        if (currentSection) {
-                            if (currentSection.dataset.yearMonth) {
-                                stickyTitle.textContent = currentSection.dataset.yearMonth;
-                            } else if (currentSection.dataset.year) {
-                                stickyTitle.textContent = currentSection.dataset.year;
-                            }
-                        }
-                    }
-                } else {
-                    stickyHeader.style.display = 'none';
-                }
-            }
-            
-            // Perform search
-            function performSearch() {
-                const mainQuery = searchMainInput.value.trim();
-                const stickyQuery = searchStickyInput.value.trim();
-                const query = mainQuery || stickyQuery;
-                
-                // Sync inputs
-                if (document.activeElement === searchMainInput) {
-                    searchStickyInput.value = searchMainInput.value;
-                } else if (document.activeElement === searchStickyInput) {
-                    searchMainInput.value = searchStickyInput.value;
-                }
-                
-                if (!query) {
-                    // Reset to original state
-                    searchMainInput.classList.remove('searching');
-                    searchStickyInput.classList.remove('searching');
-                    isSearchActive = false;
-                    yearSections.forEach(section => {
-                        section.element.innerHTML = section.originalHTML;
-                        section.element.style.display = 'block';
-                    });
-                    searchInfo.style.display = 'none';
-                    updateStickyHeader();
-                    return;
-                }
-                
-                // Add searching indicators
-                searchMainInput.classList.add('searching');
-                searchStickyInput.classList.add('searching');
-                isSearchActive = true;
-                let matchingPosts = [];
-                
-                // Search through all posts
-                postsData.forEach(post => {
-                    const titleLower = post.title.toLowerCase();
-                    const excerptLower = post.excerpt.toLowerCase();
-                    const dateLower = post.date.toLowerCase();
-                    const queryLower = query.toLowerCase();
-                    
-                    if (titleLower.includes(queryLower) || 
-                        excerptLower.includes(queryLower) || 
-                        dateLower.includes(queryLower)) {
-                        
-                        // Create highlighted version
-                        const highlightedPost = {
-                            date: highlightMatches(post.date, query),
-                            title: highlightMatches(post.title, query),
-                            excerpt: highlightMatches(post.excerpt, query),
-                            url: post.url
-                        };
-                        matchingPosts.push(highlightedPost);
-                    }
-                });
-                
-                // Clear archive and show results
-                archiveContainer.innerHTML = '';
-                
-                if (matchingPosts.length > 0) {
-                    // Create search results section
-                    const resultsSection = document.createElement('div');
-                    resultsSection.className = 'year-section';
-                    resultsSection.innerHTML = 
-                        '<div class="year-header"><h2>Search Results</h2></div>' +
-                        '<div class="month-section">';
-                    
-                    // Add matching posts
-                    matchingPosts.forEach(post => {
-                        const postDiv = document.createElement('div');
-                        postDiv.className = 'post';
-                        postDiv.onclick = function() { window.location.href = post.url; };
-                        postDiv.innerHTML = 
-                            '<div class="post-date">' + post.date + '</div>' +
-                            '<div class="post-title">' +
-                            '<a href="' + post.url + '">' + post.title + '</a>' +
-                            '</div>' +
-                            '<div class="excerpt">' + post.excerpt + '</div>';
-                        resultsSection.querySelector('.month-section').appendChild(postDiv);
-                    });
-                    
-                    resultsSection.innerHTML += '</div>';
-                    archiveContainer.appendChild(resultsSection);
-                    
-                    if (stickyHeader.style.display === 'block') {
-                        stickyTitle.textContent = 'Search Results (' + matchingPosts.length + ')';
-                    }
-                } else {
-                    const noResults = document.createElement('div');
-                    noResults.className = 'no-results';
-                    noResults.textContent = 'No posts found matching "' + query + '". Try different keywords.';
-                    archiveContainer.appendChild(noResults);
-                    
-                    if (stickyHeader.style.display === 'block') {
-                        stickyTitle.textContent = 'Search Results (0)';
-                    }
-                }
-                
-                searchCount.textContent = matchingPosts.length;
-                const searchTermEl = document.getElementById('search-term');
-                if (searchTermEl) searchTermEl.textContent = query;
-                searchInfo.style.display = 'block';
-            }
-            
-            // Initialize
-            initializeArchive();
-            
-            // Event listeners
-            let searchTimeout;
-            function handleSearch() {
-                clearTimeout(searchTimeout);
-                
-                // If search is empty, clear immediately
-                const activeInput = document.activeElement;
-                if (activeInput && !activeInput.value.trim()) {
-                    performSearch();
-                    return;
-                }
-                
-                searchTimeout = setTimeout(performSearch, 50);
-            }
-            
-            searchMainInput.addEventListener('input', handleSearch);
-            searchStickyInput.addEventListener('input', handleSearch);
-            
-            // Immediate search on enter/space
-            [searchMainInput, searchStickyInput].forEach(input => {
-                input.addEventListener('keyup', function(e) {
-                    if (e.key === 'Enter' || e.key === ' ') {
-                        clearTimeout(searchTimeout);
-                        performSearch();
-                    }
-                });
-            });
-            
-            // Scroll event for sticky header
-            let scrollTimeout = null;
-            window.addEventListener('scroll', function() {
-                if (!scrollTimeout) {
-                    scrollTimeout = setTimeout(function() {
-                        updateStickyHeader();
-                        scrollTimeout = null;
-                    }, 10);
-                }
-            });
-            
-            window.addEventListener('resize', updateStickyHeader);
-            
-            // Initialize sticky header
-            updateStickyHeader();
-            console.log('Enhanced archive search initialized');
-        })();
     </script>
 </body>
 </html>
@@ -1565,21 +1693,30 @@ echo "✅ Enhanced blog build completed successfully!"
 echo ""
 echo "📊 Summary:"
 echo "  ✓ Processed $processed_count markdown files"
-echo "  ✓ Generated individual post pages with enhanced styling"
+echo "  ✓ Generated individual post pages with 3D code block effects"
 echo "  ✓ Created main page with recent posts and search"
 echo "  ✓ Built comprehensive archive with chronological organization"
 echo "  ✓ Character-by-character search with real-time highlighting"
 echo "  ✓ Fixed sticky navigation on archive page"
-echo "  ✓ Removed hover effects while maintaining visual appeal"
+echo "  ✓ Global search index with $search_index_count posts"
+echo "  ✓ Fixed copy button positioning and functionality"
 echo ""
 echo "🚀 Features included:"
-echo "  • Character-by-character real-time search with highlighting"
-echo "  • Case-insensitive search across titles, excerpts, and dates"
+echo "  • 3D glassmorphic code blocks with smooth shadows"
+echo "  • Subtle embossed text effect for code syntax"
+echo "  • White bottom highlight line for glass effect"
+echo "  • Text selection removes 3D effect for focus"
+echo "  • Global character-by-character search (Ctrl+K)"
+echo "  • Real-time search with yellow highlighting"
+echo "  • Search across titles, excerpts, and dates"
+echo "  • Floating search button on all pages"
+echo "  • Relevance-based search results"
+echo "  • Case-insensitive search across all posts"
 echo "  • Visual search indicators and animations"
 echo "  • Clean design with subtle border hover effects"  
 echo "  • Code syntax highlighting with Prism.js"
 echo "  • Mermaid diagram rendering"
-echo "  • Copy-to-clipboard functionality"
+echo "  • Copy-to-clipboard functionality (now working!)"
 echo "  • Working sticky archive navigation"
 echo "  • SEO-optimized meta tags"
 echo "  • Reading time calculations"
@@ -1589,7 +1726,8 @@ echo "📁 Output structure:"
 echo "  public/"
 echo "  ├── index.html (main page with recent posts)"
 echo "  ├── shared.css (shared styles)"
-echo "  ├── post.css (post-specific styles)"
+echo "  ├── post.css (post-specific styles with 3D effects)"
+echo "  ├── search-index.js (global search index with $search_index_count posts)"
 echo "  ├── archive/"
 echo "  │   └── index.html (complete archive)"
 echo "  └── p/"
@@ -1597,4 +1735,10 @@ echo "      ├── 1.html"
 echo "      ├── 2.html"
 echo "      └── ... (individual post pages)"
 echo ""
-echo "🎯 All issues have been fixed! Search now works character-by-character with highlighting."
+echo "🎨 3D Code Block Effects:"
+echo "   - Beige tinted background (#e7e3de)"
+echo "   - Multi-layered text shadows for depth"
+echo "   - Glass-like bottom highlight"
+echo "   - Selection removes 3D effect for readability"
+echo "   - Smooth visual hierarchy with shadows"
+echo "   - Copy button positioned at top-right (now functional!)"
