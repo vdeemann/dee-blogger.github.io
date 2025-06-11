@@ -12,7 +12,7 @@ mkdir -p public/p public/archive
 
 # Enhanced shared CSS for consistent styling across all pages (hover effects removed)
 cat > public/shared.css << 'EOF'
-body{max-width:55em;margin:2em auto;padding:0 1em;font-family:system-ui,sans-serif;line-height:1.6;color:#333;background:#fff;position:relative}
+body{max-width:55em;margin:2em auto;padding:0 1em;font-family:system-ui,sans-serif;line-height:1.6;color:#333;background:#f0ece8;position:relative}
 a{color:#0066cc;text-decoration:none}
 a:hover{text-decoration:underline}
 h1{font-size:1.9em;margin:0 0 .5em;color:#1a1a1a;font-weight:700}
@@ -39,7 +39,7 @@ nav a{margin-right:1em;font-weight:500}
 .search-term{font-weight:600;color:#0066cc}
 .no-results{text-align:center;color:#666;padding:2em;font-style:italic}
 .search-count{font-weight:600;color:#0066cc}
-.sticky-header{position:sticky;top:0;background:rgba(255,255,255,0.95);backdrop-filter:blur(10px);border-bottom:2px solid #0066cc;padding:1em 0;margin:0 0 1.2em;z-index:100;box-shadow:0 2px 10px rgba(0,0,0,.1);display:none}
+.sticky-header{position:sticky;top:0;background:rgba(240,236,232,0.95);backdrop-filter:blur(10px);border-bottom:2px solid #0066cc;padding:1em 0;margin:0 0 1.2em;z-index:100;box-shadow:0 2px 10px rgba(0,0,0,.1);display:none}
 .sticky-header h2{margin:0 0 .6em;font-size:1.1em;color:#0066cc;font-weight:700}
 .sticky-header input{margin:0;padding:.6em;font-size:.9em}
 .archive-content{margin:2em 0}
@@ -74,9 +74,9 @@ kbd{background:#f0f0f0;border:1px solid #ccc;border-radius:3px;padding:2px 5px;f
 @media (max-width: 600px){.global-search-container{margin:1em;max-height:90vh}.search-trigger{width:50px;height:50px;font-size:1.3em}}
 EOF
 
-# Enhanced post page CSS
+# Enhanced post page CSS with 3D code block effects
 cat > public/post.css << 'EOF'
-body{max-width:55em;margin:2em auto;padding:0 1em;font-family:system-ui,sans-serif;line-height:1.6;color:#333;background:#fff}
+body{max-width:55em;margin:2em auto;padding:0 1em;font-family:system-ui,sans-serif;line-height:1.6;color:#333;background:#f0ece8}
 a{color:#0066cc;text-decoration:none}
 a:hover{text-decoration:underline}
 h1{font-size:2.2em;margin:0 0 .6em;color:#1a1a1a;font-weight:700;line-height:1.2}
@@ -87,9 +87,99 @@ p{margin:.8em 0}
 small{color:#666;display:block;margin:0 0 .4em;font-size:.9em}
 strong{font-weight:600;color:#333}
 em{font-style:italic;color:#444}
-code{background:#f7fafc;color:#e53e3e;padding:.2em .4em;border-radius:3px;font-family:"SF Mono",Monaco,Consolas,"Liberation Mono","Courier New",monospace;font-size:.85em;border:1px solid #e2e8f0}
-pre{background:#f7fafc;padding:1em 1.2em;margin:2em 0;border-radius:8px;overflow-x:auto;border:1px solid #e2e8f0;box-shadow:0 2px 6px rgba(0,0,0,.08);position:relative}
-pre code{background:transparent;padding:0;font-size:.9em;color:#2d3748;display:block;border:0;white-space:pre}
+
+/* 3D code effect for inline code */
+code{
+  background:#e7e3de;
+  color:#e53e3e;
+  padding:.2em .4em;
+  border-radius:3px;
+  font-family:"SF Mono",Monaco,Consolas,"Liberation Mono","Courier New",monospace;
+  font-size:.85em;
+  border:1px solid #d4d0cb;
+  box-shadow:0 1px 0 #fff,0 2px 4px rgba(0,0,0,0.08);
+  text-shadow:0 1px 0 #fff,0 2px 4px rgba(0,0,0,0.1);
+}
+
+/* 3D code block styling */
+pre{
+  background:#e7e3de;
+  padding:1em 1.2em;
+  margin:2em 0;
+  border-radius:10px;
+  overflow-x:auto;
+  border:1px solid #d4d0cb;
+  box-shadow:0 2px 12px rgba(0,0,0,0.08),0 1px 0 #fff;
+  position:relative;
+}
+
+pre::after{
+  content:'';
+  position:absolute;
+  bottom:-1px;
+  left:0;
+  right:0;
+  height:1px;
+  background:linear-gradient(to right,transparent,#fff 20%,#fff 80%,transparent);
+}
+
+pre code{
+  background:transparent;
+  padding:0;
+  font-size:.9em;
+  color:#222;
+  display:block;
+  border:0;
+  white-space:pre;
+  box-shadow:none;
+  font-family:'Fira Mono','Consolas',monospace;
+  line-height:1.7;
+}
+
+/* 3D text effect for all code content */
+pre code span,
+pre code{
+  text-shadow:
+    0 2px 6px #fff,
+    0 1px 0 #fff,
+    0 4px 12px rgba(0,0,0,0.16),
+    1px 2px 2px rgba(0,0,0,0.10),
+    0 0.5px 0 #e5e5e5;
+}
+
+/* Remove 3D effect on selection/highlight for focus */
+pre code::selection,
+pre code span::selection,
+pre code::-moz-selection,
+pre code span::-moz-selection{
+  text-shadow:none;
+  background:#b3d4fc;
+  color:#000;
+}
+
+/* Syntax highlighting colors with 3D effect */
+.language-elixir .token.keyword,
+.language-javascript .token.keyword,
+.language-scheme .token.keyword,
+.kw{color:#2b7bb9;font-weight:bold}
+.language-elixir .token.function,
+.language-javascript .token.function,
+.fn{color:#d72660}
+.language-elixir .token.string,
+.language-javascript .token.string,
+.language-scheme .token.string,
+.str{color:#399f4a}
+.language-elixir .token.comment,
+.language-javascript .token.comment,
+.language-scheme .token.comment,
+.com{color:#8d99ae;font-style:italic}
+.language-elixir .token.variable,
+.language-javascript .token.variable,
+.var{color:#222}
+.language-elixir .token.number,
+.language-javascript .token.number,
+.num{color:#b48ead}
+
 ul,ol{margin:1.5em 0;padding-left:2.2em}
 li{margin:.6em 0;line-height:1.6}
 nav{margin:1.2em 0;padding:.6em 0;border-bottom:1px solid #eee}
@@ -100,7 +190,7 @@ blockquote h1,blockquote h2,blockquote h3,blockquote h4{color:#2d3748;font-style
 hr{border:0;height:1px;background:#e2e8f0;margin:3em 0}
 .post-meta{background:#f7fafc;padding:1.2em 1.5em;border-radius:8px;margin:2em 0;border-left:4px solid #0066cc;box-shadow:0 2px 6px rgba(0,0,0,.08)}
 .post-meta p{margin:.4em 0;font-size:.95em;color:#4a5568}
-.copy-btn{position:absolute;top:.8em;right:.8em;background:#0066cc;color:#fff;border:0;border-radius:4px;padding:.4em .8em;font-size:.8em;cursor:pointer;opacity:.8}
+.copy-btn{position:absolute;top:.8em;right:.8em;background:#0066cc;color:#fff;border:0;border-radius:4px;padding:.4em .8em;font-size:.8em;cursor:pointer;opacity:.8;transition:all 0.2s;z-index:10}
 .copy-btn:hover{opacity:1;background:#0052a3}
 .copy-btn.copied{background:#28a745}
 .mermaid{background:#f7fafc;border:1px solid #e2e8f0;border-radius:8px;padding:1.5em;margin:2em 0;text-align:center;box-shadow:0 2px 6px rgba(0,0,0,.08)}
@@ -1520,7 +1610,7 @@ echo "✅ Enhanced blog build completed successfully!"
 echo ""
 echo "📊 Summary:"
 echo "  ✓ Processed $processed_count markdown files"
-echo "  ✓ Generated individual post pages with enhanced styling"
+echo "  ✓ Generated individual post pages with 3D code block effects"
 echo "  ✓ Created main page with recent posts and search"
 echo "  ✓ Built comprehensive archive with chronological organization"
 echo "  ✓ Character-by-character search with real-time highlighting"
@@ -1528,6 +1618,10 @@ echo "  ✓ Fixed sticky navigation on archive page"
 echo "  ✓ Global search index with $search_index_count posts"
 echo ""
 echo "🚀 Features included:"
+echo "  • 3D glassmorphic code blocks with smooth shadows"
+echo "  • Subtle embossed text effect for code syntax"
+echo "  • White bottom highlight line for glass effect"
+echo "  • Text selection removes 3D effect for focus"
 echo "  • Global character-by-character search (Ctrl+K)"
 echo "  • Real-time search with yellow highlighting"
 echo "  • Search across titles, excerpts, and dates"
@@ -1548,7 +1642,7 @@ echo "📁 Output structure:"
 echo "  public/"
 echo "  ├── index.html (main page with recent posts)"
 echo "  ├── shared.css (shared styles)"
-echo "  ├── post.css (post-specific styles)"
+echo "  ├── post.css (post-specific styles with 3D effects)"
 echo "  ├── search-index.js (global search index with $search_index_count posts)"
 echo "  ├── archive/"
 echo "  │   └── index.html (complete archive)"
@@ -1557,7 +1651,9 @@ echo "      ├── 1.html"
 echo "      ├── 2.html"
 echo "      └── ... (individual post pages)"
 echo ""
-echo "🎯 Search functionality has been fixed!"
-echo "   - Fixed search index generation order"
-echo "   - Enhanced local search to check all fields"
-echo "   - Press Ctrl+K on any page for global search"
+echo "🎨 3D Code Block Effects:"
+echo "   - Beige tinted background (#e7e3de)"
+echo "   - Multi-layered text shadows for depth"
+echo "   - Glass-like bottom highlight"
+echo "   - Selection removes 3D effect for readability"
+echo "   - Smooth visual hierarchy with shadows"
