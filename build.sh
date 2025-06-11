@@ -10,7 +10,7 @@ BASE_URL="${BASE_URL:-https://vdeemann.github.io/dee-blogger.github.io}"
 rm -rf public
 mkdir -p public/p public/archive
 
-# Enhanced shared CSS for consistent styling across all pages (hover effects removed)
+# Enhanced shared CSS for consistent styling across all pages with improved sticky header
 cat > public/shared.css << 'EOF'
 body{max-width:55em;margin:2em auto;padding:0 1em;font-family:system-ui,sans-serif;line-height:1.6;color:#333;background:#f0ece8;position:relative}
 a{color:#0066cc;text-decoration:none}
@@ -39,9 +39,65 @@ nav a{margin-right:1em;font-weight:500}
 .search-term{font-weight:600;color:#0066cc}
 .no-results{text-align:center;color:#666;padding:2em;font-style:italic}
 .search-count{font-weight:600;color:#0066cc}
-.sticky-header{position:sticky;top:0;background:rgba(240,236,232,0.95);backdrop-filter:blur(10px);border-bottom:2px solid #0066cc;padding:1em 0;margin:0 0 1.2em;z-index:100;box-shadow:0 2px 10px rgba(0,0,0,.1);display:none}
-.sticky-header h2{margin:0 0 .6em;font-size:1.1em;color:#0066cc;font-weight:700}
-.sticky-header input{margin:0;padding:.6em;font-size:.9em}
+.sticky-header{
+  position:sticky;
+  top:0;
+  background:rgba(240,236,232,0.75);
+  backdrop-filter:blur(20px) saturate(1.8);
+  -webkit-backdrop-filter:blur(20px) saturate(1.8);
+  border-bottom:1px solid rgba(255,255,255,0.2);
+  border-top:1px solid rgba(255,255,255,0.4);
+  padding:1em 0;
+  margin:0 0 1.2em;
+  z-index:100;
+  box-shadow:
+    0 1px 0 rgba(255,255,255,0.6) inset,
+    0 -1px 0 rgba(0,0,0,0.05) inset,
+    0 4px 20px rgba(0,0,0,0.08),
+    0 1px 3px rgba(0,0,0,0.1);
+  display:none;
+  transition:all 0.3s cubic-bezier(0.4,0,0.2,1);
+}
+.sticky-header::before{
+  content:'';
+  position:absolute;
+  top:0;
+  left:0;
+  right:0;
+  height:1px;
+  background:linear-gradient(90deg,transparent,rgba(255,255,255,0.8) 50%,transparent);
+  pointer-events:none;
+}
+.sticky-header::after{
+  content:'';
+  position:absolute;
+  bottom:0;
+  left:0;
+  right:0;
+  height:1px;
+  background:linear-gradient(90deg,transparent,rgba(0,102,204,0.3) 50%,transparent);
+  pointer-events:none;
+}
+.sticky-header h2{margin:0 0 .6em;font-size:1.1em;color:#0066cc;font-weight:700;text-shadow:0 1px 2px rgba(255,255,255,0.8)}
+.sticky-header input{
+  margin:0;
+  padding:.6em;
+  font-size:.9em;
+  background:rgba(255,255,255,0.9);
+  backdrop-filter:blur(10px);
+  border:1px solid rgba(255,255,255,0.3);
+  box-shadow:
+    0 1px 3px rgba(0,0,0,0.1),
+    0 1px 0 rgba(255,255,255,0.8) inset;
+}
+.sticky-header input:focus{
+  background:rgba(255,255,255,0.95);
+  border-color:rgba(0,102,204,0.5);
+  box-shadow:
+    0 0 0 3px rgba(0,102,204,0.1),
+    0 1px 3px rgba(0,0,0,0.1),
+    0 1px 0 rgba(255,255,255,0.8) inset;
+}
 .archive-content{margin:2em 0}
 .year-section{margin:0 0 3em}
 .month-section{margin:0 0 2em}
@@ -52,9 +108,25 @@ nav a{margin-right:1em;font-weight:500}
 .post-title a{color:#333;font-weight:500}
 .global-search{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.8);z-index:1000;display:none;animation:fadeIn 0.2s ease-out}
 .global-search.active{display:flex;align-items:flex-start;justify-content:center;padding:3em 1em}
-.global-search-container{background:#fff;border-radius:12px;width:100%;max-width:45em;max-height:80vh;display:flex;flex-direction:column;box-shadow:0 20px 60px rgba(0,0,0,0.3);animation:slideDown 0.3s ease-out}
+.global-search-container{
+  background:rgba(255,255,255,0.95);
+  backdrop-filter:blur(20px) saturate(1.8);
+  -webkit-backdrop-filter:blur(20px) saturate(1.8);
+  border-radius:12px;
+  width:100%;
+  max-width:45em;
+  max-height:80vh;
+  display:flex;
+  flex-direction:column;
+  box-shadow:
+    0 1px 0 rgba(255,255,255,0.8) inset,
+    0 20px 60px rgba(0,0,0,0.3),
+    0 4px 20px rgba(0,0,0,0.15);
+  border:1px solid rgba(255,255,255,0.2);
+  animation:slideDown 0.3s ease-out;
+}
 @keyframes slideDown{from{transform:translateY(-30px);opacity:0}to{transform:translateY(0);opacity:1}}
-.global-search-header{padding:1.5em;border-bottom:1px solid #e8e8e8;position:relative}
+.global-search-header{padding:1.5em;border-bottom:1px solid rgba(0,0,0,0.1);position:relative}
 .global-search-header h2{margin:0;font-size:1.3em;color:#333}
 .global-search-close{position:absolute;top:1.5em;right:1.5em;background:none;border:none;font-size:1.5em;color:#666;cursor:pointer;padding:0;width:32px;height:32px;display:flex;align-items:center;justify-content:center;border-radius:50%;transition:all 0.2s}
 .global-search-close:hover{background:#f0f0f0;color:#333}
@@ -241,6 +313,7 @@ tr:hover{background:#fafafa}
 .toc a{color:#0066cc;font-weight:normal}
 EOF
 
+# [Rest of the script remains exactly the same - all the markdown processing functions and HTML generation]
 # Improved markdown processor with better handling of complex content and fixed copy button
 process_markdown() {
     local file="$1"
@@ -1697,11 +1770,16 @@ echo "  ✓ Generated individual post pages with 3D code block effects"
 echo "  ✓ Created main page with recent posts and search"
 echo "  ✓ Built comprehensive archive with chronological organization"
 echo "  ✓ Character-by-character search with real-time highlighting"
-echo "  ✓ Fixed sticky navigation on archive page"
+echo "  ✓ Enhanced glass-effect sticky navigation on archive page"
 echo "  ✓ Global search index with $search_index_count posts"
 echo "  ✓ Fixed copy button positioning and functionality"
 echo ""
 echo "🚀 Features included:"
+echo "  • Enhanced translucent glass effect sticky header"
+echo "  • Improved backdrop blur with saturation boost"
+echo "  • Subtle top/bottom glass highlight lines"
+echo "  • Enhanced box shadows for depth"
+echo "  • Improved translucent search modal overlay"
 echo "  • 3D glassmorphic code blocks with smooth shadows"
 echo "  • Subtle embossed text effect for code syntax"
 echo "  • White bottom highlight line for glass effect"
@@ -1717,7 +1795,7 @@ echo "  • Clean design with subtle border hover effects"
 echo "  • Code syntax highlighting with Prism.js"
 echo "  • Mermaid diagram rendering"
 echo "  • Copy-to-clipboard functionality (now working!)"
-echo "  • Working sticky archive navigation"
+echo "  • Working sticky archive navigation with glass effect"
 echo "  • SEO-optimized meta tags"
 echo "  • Reading time calculations"
 echo "  • Chronological post organization"
@@ -1725,20 +1803,21 @@ echo ""
 echo "📁 Output structure:"
 echo "  public/"
 echo "  ├── index.html (main page with recent posts)"
-echo "  ├── shared.css (shared styles)"
+echo "  ├── shared.css (shared styles with enhanced glass effects)"
 echo "  ├── post.css (post-specific styles with 3D effects)"
 echo "  ├── search-index.js (global search index with $search_index_count posts)"
 echo "  ├── archive/"
-echo "  │   └── index.html (complete archive)"
+echo "  │   └── index.html (complete archive with glass sticky header)"
 echo "  └── p/"
 echo "      ├── 1.html"
 echo "      ├── 2.html"
 echo "      └── ... (individual post pages)"
 echo ""
-echo "🎨 3D Code Block Effects:"
-echo "   - Beige tinted background (#e7e3de)"
-echo "   - Multi-layered text shadows for depth"
-echo "   - Glass-like bottom highlight"
-echo "   - Selection removes 3D effect for readability"
-echo "   - Smooth visual hierarchy with shadows"
-echo "   - Copy button positioned at top-right (now functional!)"
+echo "🎨 Enhanced Glass Effects:"
+echo "   - Translucent sticky header with improved backdrop blur"
+echo "   - Enhanced saturation (1.8x) for richer glass appearance"
+echo "   - Gradient highlight lines for premium glass look"
+echo "   - Multiple layered shadows for realistic depth"
+echo "   - Smooth transitions with cubic-bezier easing"
+echo "   - Enhanced global search modal with glass container"
+echo "   - JSFiddle-inspired sticky navigation appearance"
