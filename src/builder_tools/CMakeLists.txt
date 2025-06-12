@@ -13,21 +13,30 @@ include(FetchContent)
 FetchContent_Declare(
   cmark
   GIT_REPOSITORY https://github.com/commonmark/cmark.git
-  GIT_TAG        0.30.2 # Use a specific stable version for reproducibility
+  GIT_TAG        0.30.2 # Use a specific stable version
   GIT_SHALLOW    TRUE # Speeds up cloning in CI
 )
 FetchContent_MakeAvailable(cmark)
 # cmark's CMake setup should define a target like 'cmark_static'
 
-# Find Brotli library
-find_package(Brotli REQUIRED)
+# --- Fetch and include Brotli ---
+# Instead of find_package, we'll fetch it directly to ensure it's found
+# and avoid system-specific installation issues.
+FetchContent_Declare(
+  brotli_src
+  GIT_REPOSITORY https://github.com/google/brotli.git
+  GIT_TAG        v1.1.0 # Use a specific stable version for reproducibility
+  GIT_SHALLOW    TRUE # Speeds up cloning in CI
+)
+FetchContent_MakeAvailable(brotli_src)
+# Brotli's CMake creates targets like 'brotlidec', 'brotlienc', 'brotlicommon'
 
 # Define common sources (utilities)
 set(COMMON_SRCS common_utils.cpp)
-set(COMMON_HDRS common_utils.h)
+set(COMMON_HDRS common_utils.h) # Not strictly needed by CMake, but good for reference
 
 # Add each executable target
-# Each executable needs common_utils.cpp
+# Each executable needs common_utils.cpp (and common_utils.h via include)
 add_executable(clean_public clean_public.cpp ${COMMON_SRCS})
 add_executable(copy_static copy_static.cpp ${COMMON_SRCS})
 add_executable(process_markdown process_markdown.cpp ${COMMON_SRCS})
@@ -35,11 +44,14 @@ add_executable(generate_pages generate_pages.cpp ${COMMON_SRCS})
 add_executable(generate_search generate_search.cpp ${COMMON_SRCS})
 
 # Link libraries to each executable based on their needs
-target_link_libraries(clean_public PRIVATE pthread) # For std::filesystem internal threading maybe
-target_link_libraries(copy_static PRIVATE Brotli::BrotliCommon Brotli::BrotliEnc Brotli::BrotliDec pthread)
+# Adjust Brotli library names to match what FetchContent_MakeAvailable creates.
+# These are typically 'brotlicommon', 'brotlienc', 'brotlidec'.
+# We also include 'pthread' for multi-threading support from common_utils.
+target_link_libraries(clean_public PRIVATE pthread)
+target_link_libraries(copy_static PRIVATE brotlicommon brotlienc brotlidec pthread)
 target_link_libraries(process_markdown PRIVATE cmark_static pthread) # cmark is essential for markdown parsing
-target_link_libraries(generate_pages PRIVATE Brotli::BrotliCommon Brotli::BrotliEnc Brotli::BrotliDec pthread)
-target_link_libraries(generate_search PRIVATE Brotli::BrotliCommon Brotli::BrotliEnc Brotli::BrotliDec pthread)
+target_link_libraries(generate_pages PRIVATE brotlicommon brotlienc brotlidec pthread)
+target_link_libraries(generate_search PRIVATE brotlicommon brotlienc brotlidec pthread)
 
 # Set output directory for all executables to the parent directory (repo root)
 # This places them directly in the root of the Git repo, making them easy to call from build.sh
