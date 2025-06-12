@@ -21,8 +21,9 @@ h3{font-size:1.1em;margin:1.2em 0 .4em;color:#444;font-weight:600}
 h4{font-size:1em;margin:1em 0 .3em;color:#555;font-weight:600}
 p{margin:.6em 0}
 small{color:#666;display:block;margin:0 0 .3em;font-size:.9em}
-.post{margin:0 0 .8em;padding:.7em .9em;background:#fafafa;border-radius:6px;border:1px solid #e8e8e8;cursor:pointer;transition:all 0.2s ease;transform-origin:top;opacity:1}
-.post:hover{border-color:#0066cc}
+.post{margin:0 0 .8em;padding:.7em .9em;background:#f0ece8;border-radius:6px;border:1px solid rgba(0,0,0,0.06);cursor:pointer;transition:all 0.2s ease;transform-origin:top;opacity:1}
+.post:hover{border-color:rgba(0,0,0,0.06)}
+.post:hover .post-title a{color:#5f9ea0;text-decoration:none}
 input{width:100%;margin:0 0 1.2em;padding:.7em;border:1px solid #ddd;border-radius:6px;font-size:.95em;background:#fff;box-sizing:border-box;transition:all 0.2s ease}
 input:focus{outline:none;border-color:#0066cc;box-shadow:0 0 0 3px rgba(0,102,204,0.1);background:#f8faff}
 input.searching{background:#f0f8ff url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="%230066cc" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>') no-repeat right 10px center;background-size:20px;padding-right:40px}
@@ -76,11 +77,11 @@ nav a{margin-right:1em;font-weight:500}
 .month-header{margin:0 0 1em;font-size:.95em;color:#666;font-weight:600}
 .post-date{font-size:.85em;color:#888;margin-bottom:.3em}
 .post-title{margin:0 0 .3em;font-size:1.05em}
-.post-title a{color:#333;font-weight:500}
+.post-title a{color:#333;font-weight:500;transition:color 0.2s ease}
 .global-search{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.8);z-index:1000;display:none;animation:fadeIn 0.2s ease-out}
 .global-search.active{display:flex;align-items:flex-start;justify-content:center;padding:3em 1em}
 .global-search-container{
-  background:rgba(255,255,255,0.95);
+  background:#f0ece8;
   backdrop-filter:blur(20px) saturate(1.8);
   -webkit-backdrop-filter:blur(20px) saturate(1.8);
   border-radius:12px;
@@ -93,22 +94,23 @@ nav a{margin-right:1em;font-weight:500}
     0 1px 0 rgba(255,255,255,0.8) inset,
     0 20px 60px rgba(0,0,0,0.3),
     0 4px 20px rgba(0,0,0,0.15);
-  border:1px solid rgba(255,255,255,0.2);
+  border:1px solid rgba(0,0,0,0.1);
   animation:slideDown 0.3s ease-out;
 }
 @keyframes slideDown{from{transform:translateY(-30px);opacity:0}to{transform:translateY(0);opacity:1}}
 .global-search-header{padding:1.5em;border-bottom:1px solid rgba(0,0,0,0.1);position:relative}
 .global-search-header h2{margin:0;font-size:1.3em;color:#333}
 .global-search-close{position:absolute;top:1.5em;right:1.5em;background:none;border:none;font-size:1.5em;color:#666;cursor:pointer;padding:0;width:32px;height:32px;display:flex;align-items:center;justify-content:center;border-radius:50%;transition:all 0.2s}
-.global-search-close:hover{background:#f0f0f0;color:#333}
+.global-search-close:hover{background:rgba(0,0,0,0.05);color:#333}
 .global-search-input{width:100%;padding:1em 3em 1em 1.2em;border:2px solid #0066cc;border-radius:8px;font-size:1.1em;margin-top:1em;background:#fff url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="%230066cc" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>') no-repeat right 12px center;background-size:24px}
 .global-search-input:focus{outline:none;box-shadow:0 0 0 4px rgba(0,102,204,0.15)}
 .global-search-results{flex:1;overflow-y:auto;padding:1.5em}
 .global-search-status{padding:1em;text-align:center;color:#666;font-style:italic}
-.search-result-item{margin-bottom:1.5em;padding:1em;background:#fafafa;border-radius:8px;border:1px solid #e8e8e8;cursor:pointer;transition:all 0.2s}
-.search-result-item:hover{border-color:#0066cc;transform:translateY(-2px);box-shadow:0 4px 12px rgba(0,0,0,0.1)}
+.search-result-item{margin-bottom:1.5em;padding:1em;background:#f0ece8;border-radius:8px;border:1px solid rgba(0,0,0,0.06);cursor:pointer;transition:all 0.2s}
+.search-result-item:hover{border-color:rgba(0,0,0,0.06);transform:translateY(-2px);box-shadow:0 4px 12px rgba(0,0,0,0.1)}
+.search-result-item:hover .search-result-title a{color:#5f9ea0}
 .search-result-title{font-size:1.1em;font-weight:600;margin-bottom:0.3em}
-.search-result-title a{color:#333}
+.search-result-title a{color:#333;transition:color 0.2s ease}
 .search-result-date{font-size:0.85em;color:#888;margin-bottom:0.5em}
 .search-result-excerpt{font-size:0.9em;color:#666;line-height:1.5}
 .search-trigger{position:fixed;bottom:2em;right:2em;background:#0066cc;color:#fff;border:none;border-radius:50%;width:60px;height:60px;display:flex;align-items:center;justify-content:center;font-size:1.5em;cursor:pointer;box-shadow:0 4px 12px rgba(0,102,204,0.3);transition:all 0.2s;z-index:999}
@@ -1516,6 +1518,10 @@ echo "  ✓ Global search index with $search_index_count posts"
 echo "  ✓ Fixed copy button positioning and functionality"
 echo ""
 echo "🚀 Features included:"
+echo "  • Harmonious beige theme throughout"
+echo "  • Title-only hover effect (soft teal #5f9ea0)"
+echo "  • Removed box outline on hover"
+echo "  • Consistent background color across all components"
 echo "  • Minimal translucent sticky header (JSFiddle-inspired)"
 echo "  • Removed search bars from main/archive pages"
 echo "  • Floating search button for all search functionality"
@@ -1554,11 +1560,11 @@ echo "      ├── 1.html"
 echo "      ├── 2.html"
 echo "      └── ... (individual post pages)"
 echo ""
-echo "🎨 Minimal Sticky UI Effects:"
-echo "   - Ultra-minimal translucent sticky header"
-echo "   - JSFiddle-inspired clear see-through appearance"
-echo "   - Dynamic year/month display while scrolling"
-echo "   - Compact height for minimal visual interference"
-echo "   - Subtle backdrop blur without color distractions"
-echo "   - Year positioned at top margin, month below"
-echo "   - All search functionality moved to floating button"
+echo "🎨 Visual Improvements:"
+echo "   - Harmonious beige background (#f0ece8) throughout"
+echo "   - Post boxes now blend seamlessly with main background"
+echo "   - Title-only hover effect with soft teal color (#5f9ea0)"
+echo "   - Removed distracting box outlines on hover"
+echo "   - Search popup uses same beige theme"
+echo "   - Minimal visual context switching"
+echo "   - Enhanced reading comfort with consistent color palette"
