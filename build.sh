@@ -641,6 +641,22 @@ html_escape() {
     printf '%s' "$1" | sed 's/&/\&amp;/g; s/</\&lt;/g; s/>/\&gt;/g; s/"/\&quot;/g; s/'"'"'/\&#39;/g'
 }
 
+# Safe data loading function
+load_post_data() {
+    local data_file="$1"
+    if [ -f "$data_file" ]; then
+        title=$(grep "^title§" "$data_file" | cut -d'§' -f2-)
+        date=$(grep "^date§" "$data_file" | cut -d'§' -f2-)
+        excerpt=$(grep "^excerpt§" "$data_file" | cut -d'§' -f2-)
+        file=$(grep "^file§" "$data_file" | cut -d'§' -f2-)
+        year=$(grep "^year§" "$data_file" | cut -d'§' -f2-)
+        month=$(grep "^month§" "$data_file" | cut -d'§' -f2-)
+        day=$(grep "^day§" "$data_file" | cut -d'§' -f2-)
+        sort_date=$(grep "^sort_date§" "$data_file" | cut -d'§' -f2-)
+        slug=$(grep "^slug§" "$data_file" | cut -d'§' -f2-)
+    fi
+}
+
 # Find all markdown files and process them
 echo "📁 Scanning for markdown files..."
 
@@ -747,18 +763,19 @@ for file in $all_files; do
     echo "  ✓ Sort date: $sort_date"
     echo "  ✓ Excerpt: $(printf '%.60s' "$excerpt")..."
     
-    # Store post data in temp files
-    cat > "$TEMP_DIR/post_${num}_data" << POST_DATA
-title=$title
-date=$date_string
-excerpt=$excerpt
-file=$file
-year=$year
-month=$month
-day=$day
-sort_date=$sort_date
-slug=$slug
-POST_DATA
+    # Store post data in temp files with delimiter protection
+    # Use a delimiter that's unlikely to appear in titles/excerpts
+    {
+        printf "title§%s\n" "$title"
+        printf "date§%s\n" "$date_string"
+        printf "excerpt§%s\n" "$excerpt"
+        printf "file§%s\n" "$file"
+        printf "year§%s\n" "$year"
+        printf "month§%s\n" "$month"
+        printf "day§%s\n" "$day"
+        printf "sort_date§%s\n" "$sort_date"
+        printf "slug§%s\n" "$slug"
+    } > "$TEMP_DIR/post_${num}_data"
     
     # Process markdown content
     content=$(process_markdown "$file")
@@ -943,7 +960,7 @@ sort_file="$TEMP_DIR/posts_to_sort"
 i=1
 while [ $i -le $processed_count ]; do
     if [ -f "$TEMP_DIR/post_${i}_data" ]; then
-        sort_date=$(grep "^sort_date=" "$TEMP_DIR/post_${i}_data" | cut -d'=' -f2)
+        sort_date=$(grep "^sort_date§" "$TEMP_DIR/post_${i}_data" | cut -d'§' -f2)
         if [ -n "$sort_date" ]; then
             echo "$sort_date $i" >> "$sort_file"
         else
@@ -968,8 +985,8 @@ SEARCH_INDEX_START
 search_index_count=0
 for num in $sorted_nums; do
     if [ -f "$TEMP_DIR/post_${num}_data" ]; then
-        # Load data using dot sourcing (POSIX compliant)
-        . "$TEMP_DIR/post_${num}_data"
+        # Load data safely
+        load_post_data "$TEMP_DIR/post_${num}_data"
         
         if [ -z "$title" ]; then
             echo "  ⚠️ Skipping post $num in search index - no title"
@@ -1259,8 +1276,8 @@ for num in $sorted_nums; do
     fi
     
     if [ -f "$TEMP_DIR/post_${num}_data" ]; then
-        # Load data
-        . "$TEMP_DIR/post_${num}_data"
+        # Load data safely
+        load_post_data "$TEMP_DIR/post_${num}_data"
         
         if [ -z "$title" ]; then
             echo "  ⚠️ Skipping post $num - no title found"
@@ -1362,7 +1379,7 @@ ym_file="$TEMP_DIR/year_months"
 
 for num in $sorted_nums; do
     if [ -f "$TEMP_DIR/post_${num}_data" ]; then
-        . "$TEMP_DIR/post_${num}_data"
+        load_post_data "$TEMP_DIR/post_${num}_data"
         if [ -n "$year" ] && [ -n "$month" ]; then
             echo "${year}-${month} $num" >> "$ym_file"
         fi
@@ -1414,7 +1431,7 @@ MONTH_SECTION
     
     # Add post to current month
     if [ -f "$TEMP_DIR/post_${num}_data" ]; then
-        . "$TEMP_DIR/post_${num}_data"
+        load_post_data "$TEMP_DIR/post_${num}_data"
         
         if [ -n "$title" ]; then
             # Prepare data safely
