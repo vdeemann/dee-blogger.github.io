@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 set -e
 
 echo "🚀 Building enhanced blog with improved markdown processing and complete post listing..."
@@ -285,7 +285,11 @@ tr:hover{background:#fafafa}
 .toc a{color:#0066cc;font-weight:normal}
 EOF
 
-# [Rest of the script remains exactly the same - all the markdown processing functions and HTML generation]
+# Create temporary directory for post data
+TEMP_DIR="/tmp/dee-blogger-$$"
+mkdir -p "$TEMP_DIR"
+trap "rm -rf $TEMP_DIR" EXIT
+
 # Improved markdown processor with better handling of complex content and fixed copy button
 process_markdown() {
     local file="$1"
@@ -576,15 +580,16 @@ extract_date_from_filename() {
     local basename_file=$(basename "$filename" .md)
     
     # Try to extract date from filename (YYYY-MM-DD format)
-    if [[ "$basename_file" =~ ^([0-9]{4})-([0-9]{2})-([0-9]{2}) ]]; then
-        echo "${BASH_REMATCH[1]}/${BASH_REMATCH[2]}/${BASH_REMATCH[3]}"
+    if echo "$basename_file" | grep -qE '^[0-9]{4}-[0-9]{2}-[0-9]{2}'; then
+        date_part=$(echo "$basename_file" | sed -E 's/^([0-9]{4})-([0-9]{2})-([0-9]{2}).*/\1\/\2\/\3/')
+        echo "$date_part"
         return
     fi
     
     # Try git commit date
     if command -v git >/dev/null 2>&1 && [ -d .git ]; then
         local git_date=$(git log -1 --format="%ai" -- "$filename" 2>/dev/null | cut -d' ' -f1)
-        if [ -n "$git_date" ] && [[ "$git_date" =~ ^[0-9]{4}-[0-9]{2}-[0-9]{2}$ ]]; then
+        if [ -n "$git_date" ] && echo "$git_date" | grep -qE '^[0-9]{4}-[0-9]{2}-[0-9]{2}$'; then
             echo "$git_date" | tr '-' '/'
             return
         fi
@@ -633,47 +638,45 @@ get_month_name() {
 
 # Safe text escaping for HTML
 html_escape() {
-    local text="$1"
-    echo "$text" | sed 's/&/\&amp;/g; s/</\&lt;/g; s/>/\&gt;/g; s/"/\&quot;/g; s/'"'"'/\&#39;/g'
+    printf '%s' "$1" | sed 's/&/\&amp;/g; s/</\&lt;/g; s/>/\&gt;/g; s/"/\&quot;/g; s/'"'"'/\&#39;/g'
 }
 
 # Find all markdown files and process them
 echo "📁 Scanning for markdown files..."
 
 # Look for markdown files in common locations
-files=()
-search_paths=("content" "posts" "articles" "_posts" ".")
+search_paths="content posts articles _posts ."
 
-for location in "${search_paths[@]}"; do
+all_files=""
+for location in $search_paths; do
     if [ -d "$location" ]; then
         echo "  🔍 Searching in: $location/"
-        while IFS= read -r -d '' file; do
-            if [ -f "$file" ] && [ -s "$file" ]; then
-                files+=("$file")
-                echo "    ✓ Found: $file"
-            fi
-        done < <(find "$location" -maxdepth 3 -name "*.md" -type f -print0 2>/dev/null)
+        found_files=$(find "$location" -maxdepth 3 -name "*.md" -type f 2>/dev/null | sort)
+        if [ -n "$found_files" ]; then
+            for file in $found_files; do
+                if [ -f "$file" ] && [ -s "$file" ]; then
+                    echo "    ✓ Found: $file"
+                    all_files="$all_files$file
+"
+                fi
+            done
+        fi
     else
         echo "  ⚠️ Directory not found: $location/"
     fi
 done
 
-# Remove duplicates and sort
-if [ ${#files[@]} -gt 0 ]; then
-    readarray -t files < <(printf '%s\n' "${files[@]}" | sort -u)
-    echo "📋 After deduplication: ${#files[@]} unique files"
+# Remove duplicates
+if [ -n "$all_files" ]; then
+    all_files=$(printf '%s' "$all_files" | sort -u)
+    total=$(printf '%s' "$all_files" | grep -c '^')
+    echo "📋 After deduplication: $total unique files"
 else
     # Also try a simple find in current directory as fallback
     echo "  🔍 Fallback: searching current directory for any .md files..."
-    while IFS= read -r -d '' file; do
-        if [ -f "$file" ] && [ -s "$file" ]; then
-            files+=("$file")
-            echo "    ✓ Found: $file"
-        fi
-    done < <(find . -name "*.md" -type f -print0 2>/dev/null)
+    all_files=$(find . -name "*.md" -type f 2>/dev/null | sort)
+    total=$(printf '%s' "$all_files" | grep -c '^' || echo 0)
 fi
-
-total=${#files[@]}
 
 if [ $total -eq 0 ]; then
     echo "❌ No markdown files found!"
@@ -685,13 +688,15 @@ fi
 echo "📊 Found $total markdown files to process"
 
 # Process each post
-declare -A post_data
 processed_count=0
+i=0
 
-for i in "${!files[@]}"; do
-    file="${files[$i]}"
+IFS='
+'
+for file in $all_files; do
+    i=$((i + 1))
     
-    echo "Processing ($((i+1))/$total): $file"
+    echo "Processing ($i/$total): $file"
     
     if [ ! -f "$file" ]; then
         echo "⚠️  Warning: File not found: $file"
@@ -706,30 +711,29 @@ for i in "${!files[@]}"; do
     # Extract title from first line
     title=$(head -n1 "$file" | sed 's/^#* *//' | sed 's/^\s*//' | sed 's/\s*$//')
     if [ -z "$title" ]; then
-        title="Untitled Post $((i + 1))"
+        title="Untitled Post $i"
     fi
     
     # Generate unique slug/ID
     slug=$(basename "$file" .md)
-    # Use file index as unique ID to avoid conflicts
-    num=$((i + 1))
+    num=$i
     
     # Extract date
     date_string=$(extract_date_from_filename "$file")
     
     # Parse date components
-    if [[ "$date_string" =~ ^([0-9]{4})/([0-9]{2})/([0-9]{2})$ ]]; then
-        year="${BASH_REMATCH[1]}"
-        month="${BASH_REMATCH[2]}"
-        day="${BASH_REMATCH[3]}"
-        sort_date="$year$month$day"
+    if echo "$date_string" | grep -qE '^[0-9]{4}/[0-9]{2}/[0-9]{2}$'; then
+        year=$(echo "$date_string" | cut -d'/' -f1)
+        month=$(echo "$date_string" | cut -d'/' -f2)
+        day=$(echo "$date_string" | cut -d'/' -f3)
+        sort_date="${year}${month}${day}"
     else
         echo "⚠️  Warning: Could not parse date '$date_string' for $file"
-        year="$(date +%Y)"
-        month="$(date +%m)"
-        day="$(date +%d)"
+        year=$(date +%Y)
+        month=$(date +%m)
+        day=$(date +%d)
         date_string="$year/$month/$day"
-        sort_date="$year$month$day"
+        sort_date="${year}${month}${day}"
     fi
     
     # Extract excerpt
@@ -741,18 +745,20 @@ for i in "${!files[@]}"; do
     echo "  ✓ Title: $title"
     echo "  ✓ Date: $date_string"
     echo "  ✓ Sort date: $sort_date"
-    echo "  ✓ Excerpt: ${excerpt:0:60}..."
+    echo "  ✓ Excerpt: $(printf '%.60s' "$excerpt")..."
     
-    # Store post data
-    post_data["$num,title"]="$title"
-    post_data["$num,date"]="$date_string"
-    post_data["$num,excerpt"]="$excerpt"
-    post_data["$num,file"]="$file"
-    post_data["$num,year"]="$year"
-    post_data["$num,month"]="$month"
-    post_data["$num,day"]="$day"
-    post_data["$num,sort_date"]="$sort_date"
-    post_data["$num,slug"]="$slug"
+    # Store post data in temp files
+    cat > "$TEMP_DIR/post_${num}_data" << POST_DATA
+title=$title
+date=$date_string
+excerpt=$excerpt
+file=$file
+year=$year
+month=$month
+day=$day
+sort_date=$sort_date
+slug=$slug
+POST_DATA
     
     # Process markdown content
     content=$(process_markdown "$file")
@@ -762,8 +768,8 @@ for i in "${!files[@]}"; do
     fi
     
     # Calculate reading stats
-    word_count=$(echo "$content" | wc -w)
-    reading_time=$(( (word_count + 199) / 200 ))  # Round up
+    word_count=$(printf '%s' "$content" | wc -w)
+    reading_time=$(( (word_count + 199) / 200 ))
     if [ $reading_time -eq 0 ]; then
         reading_time=1
     fi
@@ -781,10 +787,10 @@ for i in "${!files[@]}"; do
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width,initial-scale=1">
     <title>${title_safe} - ${SITE_TITLE}</title>
-    <meta name="description" content="${excerpt_safe:0:160}">
+    <meta name="description" content="$(printf '%.160s' "$excerpt_safe")">
     <meta name="author" content="${SITE_TITLE}">
     <meta property="og:title" content="${title_safe}">
-    <meta property="og:description" content="${excerpt_safe:0:160}">
+    <meta property="og:description" content="$(printf '%.160s' "$excerpt_safe")">
     <meta property="og:type" content="article">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism.min.css">
     <link rel="stylesheet" href="../post.css">
@@ -927,23 +933,30 @@ done
 
 echo "📄 Successfully processed $processed_count out of $total files"
 
-# Get all posts sorted by date (newest first) - MOVED HERE FROM LATER
+# Get all posts sorted by date (newest first)
 echo "📊 Sorting posts by date..."
-all_nums=()
-for ((i=1; i<=processed_count; i++)); do
-    sort_date="${post_data["$i,sort_date"]}"
-    if [ -n "$sort_date" ]; then
-        all_nums+=("$sort_date $i")
-    else
-        echo "  ⚠️ Warning: No sort date for post $i"
-        all_nums+=("99999999 $i")  # Put at end if no date
+
+# Create a file with sort_date and num for sorting
+sort_file="$TEMP_DIR/posts_to_sort"
+:> "$sort_file"
+
+i=1
+while [ $i -le $processed_count ]; do
+    if [ -f "$TEMP_DIR/post_${i}_data" ]; then
+        sort_date=$(grep "^sort_date=" "$TEMP_DIR/post_${i}_data" | cut -d'=' -f2)
+        if [ -n "$sort_date" ]; then
+            echo "$sort_date $i" >> "$sort_file"
+        else
+            echo "99999999 $i" >> "$sort_file"  # Put at end if no date
+        fi
     fi
+    i=$((i + 1))
 done
 
-# Sort by date (newest first) and extract post numbers
-sorted_nums=($(printf '%s\n' "${all_nums[@]}" | sort -rn | cut -d' ' -f2))
+# Sort by date (newest first) and get post numbers
+sorted_nums=$(sort -rn "$sort_file" | cut -d' ' -f2)
 
-echo "📋 Posts sorted in order: ${sorted_nums[*]:0:10}..." # Show first 10
+echo "📋 Posts sorted in order: $(echo "$sorted_nums" | head -10 | tr '\n' ' ')..." # Show first 10
 
 # Generate search index for global search
 echo "🔍 Generating search index..."
@@ -953,23 +966,22 @@ SEARCH_INDEX_START
 
 # Add all posts to search index
 search_index_count=0
-for num in "${sorted_nums[@]}"; do
-    title="${post_data["$num,title"]}"
-    date="${post_data["$num,date"]}"
-    excerpt="${post_data["$num,excerpt"]}"
-    slug="${post_data["$num,slug"]}"
-    
-    if [ -z "$title" ]; then
-        echo "  ⚠️ Skipping post $num in search index - no title"
-        continue
-    fi
-    
-    # Escape for JavaScript - ensure no line breaks
-    title_js=$(echo "$title" | sed 's/\\/\\\\/g' | sed 's/"/\\"/g' | sed "s/'/\\\\'/g" | tr -d '\n\r')
-    excerpt_js=$(echo "$excerpt" | sed 's/\\/\\\\/g' | sed 's/"/\\"/g' | sed "s/'/\\\\'/g" | tr -d '\n\r')
-    date_js=$(echo "$date" | sed 's/\\/\\\\/g' | sed 's/"/\\"/g' | tr -d '\n\r')
-    
-    cat >> public/search-index.js << SEARCH_ENTRY
+for num in $sorted_nums; do
+    if [ -f "$TEMP_DIR/post_${num}_data" ]; then
+        # Load data using dot sourcing (POSIX compliant)
+        . "$TEMP_DIR/post_${num}_data"
+        
+        if [ -z "$title" ]; then
+            echo "  ⚠️ Skipping post $num in search index - no title"
+            continue
+        fi
+        
+        # Escape for JavaScript - ensure no line breaks
+        title_js=$(printf '%s' "$title" | sed 's/\\/\\\\/g' | sed 's/"/\\"/g' | sed "s/'/\\\\'/g" | tr -d '\n\r')
+        excerpt_js=$(printf '%s' "$excerpt" | sed 's/\\/\\\\/g' | sed 's/"/\\"/g' | sed "s/'/\\\\'/g" | tr -d '\n\r')
+        date_js=$(printf '%s' "$date" | sed 's/\\/\\\\/g' | sed 's/"/\\"/g' | tr -d '\n\r')
+        
+        cat >> public/search-index.js << SEARCH_ENTRY
 {
     id: ${num},
     title: "${title_js}",
@@ -978,8 +990,9 @@ for num in "${sorted_nums[@]}"; do
     url: "p/${num}.html"
 },
 SEARCH_ENTRY
-    
-    search_index_count=$((search_index_count + 1))
+        
+        search_index_count=$((search_index_count + 1))
+    fi
 done
 
 echo "  ✅ Added $search_index_count posts to search index"
@@ -1240,31 +1253,31 @@ recent_count=0
 max_recent=15
 
 echo "🏠 Adding posts to main page..."
-for num in "${sorted_nums[@]}"; do
+for num in $sorted_nums; do
     if [ $recent_count -ge $max_recent ]; then
         break
     fi
     
-    title="${post_data["$num,title"]}"
-    date="${post_data["$num,date"]}"
-    excerpt="${post_data["$num,excerpt"]}"
-    
-    if [ -z "$title" ]; then
-        echo "  ⚠️ Skipping post $num - no title found"
-        continue
-    fi
-    
-    echo "  ✓ Adding post $num: $title"
-    
-    # Prepare data for search and display (properly escaped)
-    title_lower=$(echo "${title}" | tr '[:upper:]' '[:lower:]' | html_escape)
-    excerpt_lower=$(echo "${excerpt}" | tr '[:upper:]' '[:lower:]' | html_escape)
-    date_lower=$(echo "${date}" | tr '[:upper:]' '[:lower:]')
-    searchable_lower=$(echo "${title} ${excerpt} ${date}" | tr '[:upper:]' '[:lower:]' | html_escape)
-    title_display=$(html_escape "$title")
-    excerpt_display=$(html_escape "$excerpt")
-    
-    cat >> public/index.html << POST_ENTRY_END
+    if [ -f "$TEMP_DIR/post_${num}_data" ]; then
+        # Load data
+        . "$TEMP_DIR/post_${num}_data"
+        
+        if [ -z "$title" ]; then
+            echo "  ⚠️ Skipping post $num - no title found"
+            continue
+        fi
+        
+        echo "  ✓ Adding post $num: $title"
+        
+        # Prepare data for search and display (properly escaped)
+        title_lower=$(printf '%s' "$title" | tr '[:upper:]' '[:lower:]' | html_escape)
+        excerpt_lower=$(printf '%s' "$excerpt" | tr '[:upper:]' '[:lower:]' | html_escape)
+        date_lower=$(printf '%s' "$date" | tr '[:upper:]' '[:lower:]')
+        searchable_lower=$(printf '%s' "$title $excerpt $date" | tr '[:upper:]' '[:lower:]' | html_escape)
+        title_display=$(html_escape "$title")
+        excerpt_display=$(html_escape "$excerpt")
+        
+        cat >> public/index.html << POST_ENTRY_END
             <div class="post" data-title="${title_lower}" data-excerpt="${excerpt_lower}" data-date="${date_lower}" data-searchable="${searchable_lower}" onclick="window.location.href='p/${num}.html'">
                 <div class="post-date">${date}</div>
                 <div class="post-title">
@@ -1273,8 +1286,9 @@ for num in "${sorted_nums[@]}"; do
                 <div class="excerpt">${excerpt_display}</div>
             </div>
 POST_ENTRY_END
-    
-    recent_count=$((recent_count + 1))
+        
+        recent_count=$((recent_count + 1))
+    fi
 done
 
 echo "📄 Added $recent_count posts to main page"
@@ -1342,68 +1356,76 @@ cat >> public/archive/index.html << ARCHIVE_META
 ARCHIVE_META
 
 # Group posts by year and month
-declare -A year_months
-for num in "${sorted_nums[@]}"; do
-    year="${post_data["$num,year"]}"
-    month="${post_data["$num,month"]}"
-    if [ -n "$year" ] && [ -n "$month" ]; then
-        ym="$year-$month"
-        year_months["$ym"]+="$num "
+# Create temporary files for year-month grouping
+ym_file="$TEMP_DIR/year_months"
+:> "$ym_file"
+
+for num in $sorted_nums; do
+    if [ -f "$TEMP_DIR/post_${num}_data" ]; then
+        . "$TEMP_DIR/post_${num}_data"
+        if [ -n "$year" ] && [ -n "$month" ]; then
+            echo "${year}-${month} $num" >> "$ym_file"
+        fi
     fi
 done
 
-echo "📅 Grouped posts by year/month: ${!year_months[*]}"
-
-# Generate archive structure
+# Sort year-months and process uniquely
 current_year=""
-for ym in $(printf '%s\n' "${!year_months[@]}" | sort -rn); do
-    year=$(echo "$ym" | cut -d- -f1)
-    month=$(echo "$ym" | cut -d- -f2)
-    month_name=$(get_month_name "$month")
-    
-    # Year section header
-    if [ "$year" != "$current_year" ]; then
-        [ -n "$current_year" ] && echo "        </div>" >> public/archive/index.html
-        cat >> public/archive/index.html << YEAR_SECTION
+prev_ym=""
+
+# Sort by year-month descending
+sort -rn "$ym_file" | while IFS=' ' read -r ym num; do
+    if [ "$ym" != "$prev_ym" ]; then
+        # Process previous month's posts if any
+        if [ -n "$prev_ym" ]; then
+            # End previous month section
+            echo "            </div>" >> public/archive/index.html
+        fi
+        
+        # Start new year/month
+        year=$(echo "$ym" | cut -d'-' -f1)
+        month=$(echo "$ym" | cut -d'-' -f2)
+        month_name=$(get_month_name "$month")
+        
+        # Year section header
+        if [ "$year" != "$current_year" ]; then
+            if [ -n "$current_year" ]; then
+                echo "        </div>" >> public/archive/index.html
+            fi
+            cat >> public/archive/index.html << YEAR_SECTION
         <div class="year-section" data-year="$year">
             <div class="year-header">
                 <h2>$year</h2>
             </div>
 YEAR_SECTION
-        current_year="$year"
-    fi
-    
-    # Month section
-    cat >> public/archive/index.html << MONTH_SECTION
+            current_year="$year"
+        fi
+        
+        # Month section
+        cat >> public/archive/index.html << MONTH_SECTION
             <div class="month-section" data-month="$month" data-year-month="$year $month_name">
                 <div class="month-header">
                     <h3>$month_name $year</h3>
                 </div>
 MONTH_SECTION
+        
+        prev_ym="$ym"
+    fi
     
-    # Posts in this month (sorted by day, newest first)
-    month_nums=($(printf '%s\n' ${year_months[$ym]} | xargs -n1 | while read -r num; do
-        echo "${post_data["$num,sort_date"]} $num"
-    done | sort -rn | cut -d' ' -f2))
-    
-    for num in "${month_nums[@]}"; do
-        title="${post_data["$num,title"]}"
-        date="${post_data["$num,date"]}"
-        excerpt="${post_data["$num,excerpt"]}"
+    # Add post to current month
+    if [ -f "$TEMP_DIR/post_${num}_data" ]; then
+        . "$TEMP_DIR/post_${num}_data"
         
-        if [ -z "$title" ]; then
-            continue
-        fi
-        
-        # Prepare data safely
-        title_lower=$(echo "${title}" | tr '[:upper:]' '[:lower:]' | html_escape)
-        excerpt_lower=$(echo "${excerpt}" | tr '[:upper:]' '[:lower:]' | html_escape)
-        date_lower=$(echo "${date}" | tr '[:upper:]' '[:lower:]')
-        searchable_lower=$(echo "${title} ${excerpt} ${date}" | tr '[:upper:]' '[:lower:]' | html_escape)
-        title_display=$(html_escape "$title")
-        excerpt_display=$(html_escape "$excerpt")
-        
-        cat >> public/archive/index.html << ARCHIVE_POST
+        if [ -n "$title" ]; then
+            # Prepare data safely
+            title_lower=$(printf '%s' "$title" | tr '[:upper:]' '[:lower:]' | html_escape)
+            excerpt_lower=$(printf '%s' "$excerpt" | tr '[:upper:]' '[:lower:]' | html_escape)
+            date_lower=$(printf '%s' "$date" | tr '[:upper:]' '[:lower:]')
+            searchable_lower=$(printf '%s' "$title $excerpt $date" | tr '[:upper:]' '[:lower:]' | html_escape)
+            title_display=$(html_escape "$title")
+            excerpt_display=$(html_escape "$excerpt")
+            
+            cat >> public/archive/index.html << ARCHIVE_POST
                 <div class="post" data-title="${title_lower}" data-excerpt="${excerpt_lower}" data-date="${date_lower}" data-searchable="${searchable_lower}" onclick="window.location.href='../p/${num}.html'">
                     <div class="post-date">${date}</div>
                     <div class="post-title">
@@ -1412,11 +1434,17 @@ MONTH_SECTION
                     <div class="excerpt">${excerpt_display}</div>
                 </div>
 ARCHIVE_POST
-    done
-    echo "            </div>" >> public/archive/index.html
+        fi
+    fi
 done
 
-[ -n "$current_year" ] && echo "        </div>" >> public/archive/index.html
+# Close any open sections
+if [ -n "$prev_ym" ]; then
+    echo "            </div>" >> public/archive/index.html
+fi
+if [ -n "$current_year" ]; then
+    echo "        </div>" >> public/archive/index.html
+fi
 
 # Close the archive content and add complete working scripts
 cat >> public/archive/index.html << 'ARCHIVE_END'
