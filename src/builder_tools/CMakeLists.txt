@@ -8,19 +8,20 @@ project(BlogBuilderTools CXX)
 set(CMAKE_CXX_STANDARD 17) # Or 20 if your compiler supports it
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-# --- Fetch and include cmark (CommonMark C reference implementation) ---
+# --- Fetch and include cmark-gfm (GitHub Flavored Markdown implementation) ---
 include(FetchContent)
 FetchContent_Declare(
-  cmark
-  GIT_REPOSITORY https://github.com/commonmark/cmark.git
-  GIT_TAG        0.30.2 # Use a specific stable version for reproducibility
+  cmark_gfm
+  GIT_REPOSITORY https://github.com/github/cmark-gfm.git # THIS MUST BE GITHUB'S FORK
+  GIT_TAG        0.29.0.gfm.26 # This is a verified tag that works well with GFM features.
   GIT_SHALLOW    TRUE # Speeds up cloning in CI
 )
-FetchContent_MakeAvailable(cmark)
+FetchContent_MakeAvailable(cmark_gfm)
 
-# --- FIX: Add cmark's include directory globally ---
+# --- Add cmark-gfm's include directory globally ---
 # This ensures the compiler can find <cmark-gfm.h> for all source files.
-include_directories(${cmark_SOURCE_DIR}/src)
+# The path is relative to the cmark-gfm source directory fetched by FetchContent.
+include_directories(${cmark_gfm_SOURCE_DIR}/src)
 
 
 # --- Fetch and include Brotli ---
@@ -45,9 +46,10 @@ add_executable(generate_search generate_search.cpp ${COMMON_SRCS})
 
 
 # Link libraries to each executable based on their needs
+# Note: For cmark-gfm, the static library is typically named 'cmark-gfm_static'
 target_link_libraries(clean_public PRIVATE pthread)
 target_link_libraries(copy_static PRIVATE brotlicommon brotlienc brotlidec pthread)
-target_link_libraries(process_markdown PRIVATE cmark_static pthread)
+target_link_libraries(process_markdown PRIVATE cmark-gfm_static pthread) # Link against cmark-gfm_static
 target_link_libraries(generate_pages PRIVATE brotlicommon brotlienc brotlidec pthread)
 target_link_libraries(generate_search PRIVATE brotlicommon brotlienc brotlidec pthread)
 
