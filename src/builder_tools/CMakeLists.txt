@@ -17,20 +17,23 @@ FetchContent_Declare(
   GIT_SHALLOW    TRUE # Speeds up cloning in CI
 )
 FetchContent_MakeAvailable(cmark)
-# cmark's CMake setup should define a target like 'cmark_static'
+
+# --- FIX: Add cmark's include directory globally ---
+# This ensures the compiler can find <cmark-gfm.h> for all source files.
+include_directories(${cmark_SOURCE_DIR}/src)
+
 
 # --- Fetch and include Brotli ---
 FetchContent_Declare(
   brotli_src
   GIT_REPOSITORY https://github.com/google/brotli.git
   GIT_TAG        v1.1.0 # Use a specific stable version for reproducibility
-  GIT_SHALLOW    TRUE # Speeds up cloning in CI
+  GIT_SHALLOW    TRUE
 )
 FetchContent_MakeAvailable(brotli_src)
 # Brotli's CMake creates targets like 'brotlidec', 'brotlienc', 'brotlicommon'
 
 # Define common sources (utilities)
-# common_utils.cpp includes common_utils.h, which includes cmark-gfm.h
 set(COMMON_SRCS common_utils.cpp)
 
 # Add each executable target
@@ -40,15 +43,6 @@ add_executable(process_markdown process_markdown.cpp ${COMMON_SRCS})
 add_executable(generate_pages generate_pages.cpp ${COMMON_SRCS})
 add_executable(generate_search generate_search.cpp ${COMMON_SRCS})
 
-# --- FIX: Add cmark's include directories to ALL targets that need it ---
-# All our executables include common_utils.h, which in turn includes cmark-gfm.h.
-# Therefore, all executables need to know where cmark's headers are.
-# ${cmark_SOURCE_DIR}/src points to the folder containing cmark-gfm.h after FetchContent.
-target_include_directories(clean_public PRIVATE ${cmark_SOURCE_DIR}/src)
-target_include_directories(copy_static PRIVATE ${cmark_SOURCE_DIR}/src)
-target_include_directories(process_markdown PRIVATE ${cmark_SOURCE_DIR}/src)
-target_include_directories(generate_pages PRIVATE ${cmark_SOURCE_DIR}/src)
-target_include_directories(generate_search PRIVATE ${cmark_SOURCE_DIR}/src)
 
 # Link libraries to each executable based on their needs
 target_link_libraries(clean_public PRIVATE pthread)
