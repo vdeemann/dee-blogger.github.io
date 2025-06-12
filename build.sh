@@ -21,8 +21,9 @@ h3{font-size:1.1em;margin:1.2em 0 .4em;color:#444;font-weight:600}
 h4{font-size:1em;margin:1em 0 .3em;color:#555;font-weight:600}
 p{margin:.6em 0}
 small{color:#666;display:block;margin:0 0 .3em;font-size:.9em}
-.post{margin:0 0 .8em;padding:.7em .9em;background:#f0ece8;border-radius:6px;border:1px solid rgba(0,0,0,0.06);cursor:pointer;transition:all 0.2s ease;transform-origin:top;opacity:1}
-.post:hover{border-color:rgba(0,0,0,0.06)}
+.post{margin:0 0 0;padding:1.2em 0;background:transparent;border-radius:0;border:none;border-bottom:1px solid rgba(0,0,0,0.03);cursor:pointer;transition:color 0.15s ease}
+.post:last-child{border-bottom:none}
+.post:hover{border-bottom:1px solid rgba(0,0,0,0.03)}
 .post:hover .post-title a{color:#5f9ea0;text-decoration:none}
 input{width:100%;margin:0 0 1.2em;padding:.7em;border:1px solid #ddd;border-radius:6px;font-size:.95em;background:#fff;box-sizing:border-box;transition:all 0.2s ease}
 input:focus{outline:none;border-color:#0066cc;box-shadow:0 0 0 3px rgba(0,102,204,0.1);background:#f8faff}
@@ -32,7 +33,7 @@ nav a{margin-right:1em;font-weight:500}
 .stats{background:#fff3cd;padding:.8em 1.2em;border-radius:6px;margin:1.2em 0;text-align:center;font-size:.95em;border:1px solid #ffeaa7}
 .search-highlight{background:#ffeb3b;padding:2px 4px;border-radius:3px;font-weight:600;color:#000;box-shadow:0 0 0 2px rgba(255,235,59,0.3);animation:highlight-pulse 0.5s ease-out}
 @keyframes highlight-pulse{0%{transform:scale(1.2);background:#fff59d}100%{transform:scale(1);background:#ffeb3b}}
-.excerpt{color:#666;margin:.4em 0 0;font-size:.9em;line-height:1.4}
+.excerpt{color:#777;margin:.3em 0 0;font-size:.88em;line-height:1.5;opacity:0.9}
 .search-results{background:#e8f4fd;padding:1em;border-radius:6px;margin:1.2em 0;border-left:4px solid #0066cc;animation:slideIn 0.3s ease-out}
 @keyframes slideIn{from{opacity:0;transform:translateY(-10px)}to{opacity:1;transform:translateY(0)}}
 .no-results{text-align:center;color:#666;padding:2em;font-style:italic;animation:fadeIn 0.3s ease-out}
@@ -75,9 +76,9 @@ nav a{margin-right:1em;font-weight:500}
 .month-section{margin:0 0 2em}
 .year-header{margin:0 0 1.2em;border-bottom:2px solid #eee;padding-bottom:.5em}
 .month-header{margin:0 0 1em;font-size:.95em;color:#666;font-weight:600}
-.post-date{font-size:.85em;color:#888;margin-bottom:.3em}
-.post-title{margin:0 0 .3em;font-size:1.05em}
-.post-title a{color:#333;font-weight:500;transition:color 0.2s ease}
+.post-date{font-size:.85em;color:#999;margin-bottom:.2em}
+.post-title{margin:0 0 .4em;font-size:1.1em;line-height:1.3}
+.post-title a{color:#333;font-weight:500;transition:color 0.15s ease}
 .global-search{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.8);z-index:1000;display:none;animation:fadeIn 0.2s ease-out}
 .global-search.active{display:flex;align-items:flex-start;justify-content:center;padding:3em 1em}
 .global-search-container{
@@ -90,11 +91,8 @@ nav a{margin-right:1em;font-weight:500}
   max-height:80vh;
   display:flex;
   flex-direction:column;
-  box-shadow:
-    0 1px 0 rgba(255,255,255,0.8) inset,
-    0 20px 60px rgba(0,0,0,0.3),
-    0 4px 20px rgba(0,0,0,0.15);
-  border:1px solid rgba(0,0,0,0.1);
+  box-shadow:0 20px 60px rgba(0,0,0,0.15);
+  border:none;
   animation:slideDown 0.3s ease-out;
 }
 @keyframes slideDown{from{transform:translateY(-30px);opacity:0}to{transform:translateY(0);opacity:1}}
@@ -106,13 +104,14 @@ nav a{margin-right:1em;font-weight:500}
 .global-search-input:focus{outline:none;box-shadow:0 0 0 4px rgba(0,102,204,0.15)}
 .global-search-results{flex:1;overflow-y:auto;padding:1.5em}
 .global-search-status{padding:1em;text-align:center;color:#666;font-style:italic}
-.search-result-item{margin-bottom:1.5em;padding:1em;background:#f0ece8;border-radius:8px;border:1px solid rgba(0,0,0,0.06);cursor:pointer;transition:all 0.2s}
-.search-result-item:hover{border-color:rgba(0,0,0,0.06);transform:translateY(-2px);box-shadow:0 4px 12px rgba(0,0,0,0.1)}
+.search-result-item{margin-bottom:0;padding:1.2em 0;background:transparent;border-radius:0;border:none;border-bottom:1px solid rgba(0,0,0,0.03);cursor:pointer;transition:color 0.15s ease}
+.search-result-item:last-child{border-bottom:none}
+.search-result-item:hover{border-bottom:1px solid rgba(0,0,0,0.03);transform:none;box-shadow:none}
 .search-result-item:hover .search-result-title a{color:#5f9ea0}
-.search-result-title{font-size:1.1em;font-weight:600;margin-bottom:0.3em}
-.search-result-title a{color:#333;transition:color 0.2s ease}
-.search-result-date{font-size:0.85em;color:#888;margin-bottom:0.5em}
-.search-result-excerpt{font-size:0.9em;color:#666;line-height:1.5}
+.search-result-title{font-size:1.1em;font-weight:500;margin-bottom:0.2em;line-height:1.3}
+.search-result-title a{color:#333;transition:color 0.15s ease}
+.search-result-date{font-size:0.85em;color:#999;margin-bottom:0.3em}
+.search-result-excerpt{font-size:0.88em;color:#777;line-height:1.5;opacity:0.9}
 .search-trigger{position:fixed;bottom:2em;right:2em;background:#0066cc;color:#fff;border:none;border-radius:50%;width:60px;height:60px;display:flex;align-items:center;justify-content:center;font-size:1.5em;cursor:pointer;box-shadow:0 4px 12px rgba(0,102,204,0.3);transition:all 0.2s;z-index:999}
 .search-trigger:hover{transform:scale(1.1);box-shadow:0 6px 20px rgba(0,102,204,0.4)}
 kbd{background:#f0f0f0;border:1px solid #ccc;border-radius:3px;padding:2px 5px;font-family:monospace;font-size:0.9em;box-shadow:0 1px 2px rgba(0,0,0,0.1)}
@@ -1518,10 +1517,10 @@ echo "  ✓ Global search index with $search_index_count posts"
 echo "  ✓ Fixed copy button positioning and functionality"
 echo ""
 echo "🚀 Features included:"
-echo "  • Harmonious beige theme throughout"
+echo "  • Clean, borderless design like Perplexity AI"
+echo "  • Posts seamlessly blend with background"
+echo "  • Subtle separators between posts"
 echo "  • Title-only hover effect (soft teal #5f9ea0)"
-echo "  • Removed box outline on hover"
-echo "  • Consistent background color across all components"
 echo "  • Minimal translucent sticky header (JSFiddle-inspired)"
 echo "  • Removed search bars from main/archive pages"
 echo "  • Floating search button for all search functionality"
@@ -1561,10 +1560,10 @@ echo "      ├── 2.html"
 echo "      └── ... (individual post pages)"
 echo ""
 echo "🎨 Visual Improvements:"
-echo "   - Harmonious beige background (#f0ece8) throughout"
-echo "   - Post boxes now blend seamlessly with main background"
+echo "   - Clean, borderless design inspired by Perplexity AI"
+echo "   - Posts blend seamlessly with beige background (#f0ece8)"
+echo "   - No boxes or borders - just subtle separators"
 echo "   - Title-only hover effect with soft teal color (#5f9ea0)"
-echo "   - Removed distracting box outlines on hover"
-echo "   - Search popup uses same beige theme"
-echo "   - Minimal visual context switching"
-echo "   - Enhanced reading comfort with consistent color palette"
+echo "   - Improved typography and spacing"
+echo "   - Lighter, more subtle text colors"
+echo "   - Minimal visual elements for maximum readability"
