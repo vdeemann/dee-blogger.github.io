@@ -10,7 +10,7 @@ BASE_URL="${BASE_URL:-https://vdeemann.github.io/dee-blogger.github.io}"
 rm -rf public
 mkdir -p public/p public/archive
 
-# Enhanced shared CSS for consistent styling across all pages (hover effects removed)
+# Enhanced shared CSS for consistent styling across all pages with improved sticky header
 cat > public/shared.css << 'EOF'
 body{max-width:55em;margin:2em auto;padding:0 1em;font-family:system-ui,sans-serif;line-height:1.6;color:#333;background:#f0ece8;position:relative}
 a{color:#0066cc;text-decoration:none}
@@ -21,8 +21,10 @@ h3{font-size:1.1em;margin:1.2em 0 .4em;color:#444;font-weight:600}
 h4{font-size:1em;margin:1em 0 .3em;color:#555;font-weight:600}
 p{margin:.6em 0}
 small{color:#666;display:block;margin:0 0 .3em;font-size:.9em}
-.post{margin:0 0 .8em;padding:.7em .9em;background:#fafafa;border-radius:6px;border:1px solid #e8e8e8;cursor:pointer;transition:all 0.2s ease;transform-origin:top;opacity:1}
-.post:hover{border-color:#0066cc}
+.post{margin:0 0 0;padding:1.2em 0;background:transparent;border-radius:0;border:none;border-bottom:1px solid rgba(0,0,0,0.03);cursor:pointer;transition:color 0.15s ease}
+.post:last-child{border-bottom:none}
+.post:hover{border-bottom:1px solid rgba(0,0,0,0.03)}
+.post:hover .post-title a{color:#5f9ea0;text-decoration:none}
 input{width:100%;margin:0 0 1.2em;padding:.7em;border:1px solid #ddd;border-radius:6px;font-size:.95em;background:#fff;box-sizing:border-box;transition:all 0.2s ease}
 input:focus{outline:none;border-color:#0066cc;box-shadow:0 0 0 3px rgba(0,102,204,0.1);background:#f8faff}
 input.searching{background:#f0f8ff url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="%230066cc" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>') no-repeat right 10px center;background-size:20px;padding-right:40px}
@@ -31,7 +33,7 @@ nav a{margin-right:1em;font-weight:500}
 .stats{background:#fff3cd;padding:.8em 1.2em;border-radius:6px;margin:1.2em 0;text-align:center;font-size:.95em;border:1px solid #ffeaa7}
 .search-highlight{background:#ffeb3b;padding:2px 4px;border-radius:3px;font-weight:600;color:#000;box-shadow:0 0 0 2px rgba(255,235,59,0.3);animation:highlight-pulse 0.5s ease-out}
 @keyframes highlight-pulse{0%{transform:scale(1.2);background:#fff59d}100%{transform:scale(1);background:#ffeb3b}}
-.excerpt{color:#666;margin:.4em 0 0;font-size:.9em;line-height:1.4}
+.excerpt{color:#777;margin:.3em 0 0;font-size:.88em;line-height:1.5;opacity:0.9}
 .search-results{background:#e8f4fd;padding:1em;border-radius:6px;margin:1.2em 0;border-left:4px solid #0066cc;animation:slideIn 0.3s ease-out}
 @keyframes slideIn{from{opacity:0;transform:translateY(-10px)}to{opacity:1;transform:translateY(0)}}
 .no-results{text-align:center;color:#666;padding:2em;font-style:italic;animation:fadeIn 0.3s ease-out}
@@ -39,35 +41,77 @@ nav a{margin-right:1em;font-weight:500}
 .search-term{font-weight:600;color:#0066cc}
 .no-results{text-align:center;color:#666;padding:2em;font-style:italic}
 .search-count{font-weight:600;color:#0066cc}
-.sticky-header{position:sticky;top:0;background:rgba(240,236,232,0.95);backdrop-filter:blur(10px);border-bottom:2px solid #0066cc;padding:1em 0;margin:0 0 1.2em;z-index:100;box-shadow:0 2px 10px rgba(0,0,0,.1);display:none}
-.sticky-header h2{margin:0 0 .6em;font-size:1.1em;color:#0066cc;font-weight:700}
-.sticky-header input{margin:0;padding:.6em;font-size:.9em}
+.sticky-header{
+  position:sticky;
+  top:0;
+  background:rgba(255,255,255,0.1);
+  backdrop-filter:blur(15px);
+  -webkit-backdrop-filter:blur(15px);
+  border-bottom:1px solid rgba(255,255,255,0.1);
+  padding:0.4em 0;
+  margin:0;
+  z-index:100;
+  display:none;
+  transition:all 0.2s ease;
+  min-height:auto;
+}
+.sticky-header h2{
+  margin:0;
+  padding:0;
+  font-size:1em;
+  color:rgba(0,0,0,0.7);
+  font-weight:600;
+  line-height:1.2;
+}
+.sticky-header .sticky-month{
+  margin:0;
+  padding:0;
+  font-size:0.8em;
+  color:rgba(0,0,0,0.5);
+  font-weight:400;
+  line-height:1;
+}
 .archive-content{margin:2em 0}
 .year-section{margin:0 0 3em}
 .month-section{margin:0 0 2em}
 .year-header{margin:0 0 1.2em;border-bottom:2px solid #eee;padding-bottom:.5em}
 .month-header{margin:0 0 1em;font-size:.95em;color:#666;font-weight:600}
-.post-date{font-size:.85em;color:#888;margin-bottom:.3em}
-.post-title{margin:0 0 .3em;font-size:1.05em}
-.post-title a{color:#333;font-weight:500}
+.post-date{font-size:.85em;color:#999;margin-bottom:.2em}
+.post-title{margin:0 0 .4em;font-size:1.1em;line-height:1.3}
+.post-title a{color:#333;font-weight:500;transition:color 0.15s ease}
 .global-search{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.8);z-index:1000;display:none;animation:fadeIn 0.2s ease-out}
 .global-search.active{display:flex;align-items:flex-start;justify-content:center;padding:3em 1em}
-.global-search-container{background:#fff;border-radius:12px;width:100%;max-width:45em;max-height:80vh;display:flex;flex-direction:column;box-shadow:0 20px 60px rgba(0,0,0,0.3);animation:slideDown 0.3s ease-out}
+.global-search-container{
+  background:#f0ece8;
+  backdrop-filter:blur(20px) saturate(1.8);
+  -webkit-backdrop-filter:blur(20px) saturate(1.8);
+  border-radius:12px;
+  width:100%;
+  max-width:45em;
+  max-height:80vh;
+  display:flex;
+  flex-direction:column;
+  box-shadow:0 20px 60px rgba(0,0,0,0.15);
+  border:none;
+  animation:slideDown 0.3s ease-out;
+}
 @keyframes slideDown{from{transform:translateY(-30px);opacity:0}to{transform:translateY(0);opacity:1}}
-.global-search-header{padding:1.5em;border-bottom:1px solid #e8e8e8;position:relative}
+.global-search-header{padding:1.5em;border-bottom:1px solid rgba(0,0,0,0.1);position:relative}
 .global-search-header h2{margin:0;font-size:1.3em;color:#333}
 .global-search-close{position:absolute;top:1.5em;right:1.5em;background:none;border:none;font-size:1.5em;color:#666;cursor:pointer;padding:0;width:32px;height:32px;display:flex;align-items:center;justify-content:center;border-radius:50%;transition:all 0.2s}
-.global-search-close:hover{background:#f0f0f0;color:#333}
+.global-search-close:hover{background:rgba(0,0,0,0.05);color:#333}
 .global-search-input{width:100%;padding:1em 3em 1em 1.2em;border:2px solid #0066cc;border-radius:8px;font-size:1.1em;margin-top:1em;background:#fff url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="%230066cc" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>') no-repeat right 12px center;background-size:24px}
 .global-search-input:focus{outline:none;box-shadow:0 0 0 4px rgba(0,102,204,0.15)}
 .global-search-results{flex:1;overflow-y:auto;padding:1.5em}
 .global-search-status{padding:1em;text-align:center;color:#666;font-style:italic}
-.search-result-item{margin-bottom:1.5em;padding:1em;background:#fafafa;border-radius:8px;border:1px solid #e8e8e8;cursor:pointer;transition:all 0.2s}
-.search-result-item:hover{border-color:#0066cc;transform:translateY(-2px);box-shadow:0 4px 12px rgba(0,0,0,0.1)}
-.search-result-title{font-size:1.1em;font-weight:600;margin-bottom:0.3em}
-.search-result-title a{color:#333}
-.search-result-date{font-size:0.85em;color:#888;margin-bottom:0.5em}
-.search-result-excerpt{font-size:0.9em;color:#666;line-height:1.5}
+.search-result-item{margin-bottom:0;padding:1.2em 0;background:transparent;border-radius:0;border:none;border-bottom:1px solid rgba(0,0,0,0.03);cursor:pointer;transition:color 0.15s ease}
+.search-result-item:last-child{border-bottom:none}
+.search-result-item:hover{border-bottom:1px solid rgba(0,0,0,0.03);transform:none;box-shadow:none}
+.search-result-item:hover .search-result-title a{color:#5f9ea0}
+.search-result-title{font-size:1.1em;font-weight:500;margin-bottom:0.2em;line-height:1.3}
+.search-result-title a{color:#333;transition:color 0.15s ease}
+.search-result-date{font-size:0.85em;color:#999;margin-bottom:0.3em}
+.search-result-excerpt{font-size:0.88em;color:#777;line-height:1.5;opacity:0.9}
 .search-trigger{position:fixed;bottom:2em;right:2em;background:#0066cc;color:#fff;border:none;border-radius:50%;width:60px;height:60px;display:flex;align-items:center;justify-content:center;font-size:1.5em;cursor:pointer;box-shadow:0 4px 12px rgba(0,102,204,0.3);transition:all 0.2s;z-index:999}
 .search-trigger:hover{transform:scale(1.1);box-shadow:0 6px 20px rgba(0,102,204,0.4)}
 kbd{background:#f0f0f0;border:1px solid #ccc;border-radius:3px;padding:2px 5px;font-family:monospace;font-size:0.9em;box-shadow:0 1px 2px rgba(0,0,0,0.1)}
@@ -241,6 +285,7 @@ tr:hover{background:#fafafa}
 .toc a{color:#0066cc;font-weight:normal}
 EOF
 
+# [Rest of the script remains exactly the same - all the markdown processing functions and HTML generation]
 # Improved markdown processor with better handling of complex content and fixed copy button
 process_markdown() {
     local file="$1"
@@ -1183,15 +1228,10 @@ cat >> public/index.html << MAIN_META
 <body>
     <header>
         <h1>${SITE_TITLE}</h1>
-        <div class="stats">📊 ${processed_count} posts published | Press <kbd>Ctrl+K</kbd> to search</div>
+        <div class="stats">📊 ${processed_count} posts published | Press <kbd>Ctrl+K</kbd> or use floating search</div>
     </header>
     
     <main>
-        <input id="search" placeholder="🔍 Search posts by title or content..." autocomplete="off">
-        <div id="search-info" class="search-results" style="display:none">
-            Found <span id="search-count">0</span> posts matching "<span id="search-term"></span>"
-        </div>
-        
         <div id="posts">
 MAIN_META
 
@@ -1260,115 +1300,8 @@ cat >> public/index.html << 'MAIN_FOOTER'
     </main>
     
     <script>
-        (function() {
-            let originalPosts = null;
-            const searchInput = document.getElementById('search');
-            const postsContainer = document.getElementById('posts');
-            const searchInfo = document.getElementById('search-info');
-            const searchCount = document.getElementById('search-count');
-            const searchTerm = document.getElementById('search-term');
-            
-            if (!searchInput || !postsContainer || !searchInfo || !searchCount) {
-                console.error('Search elements not found');
-                return;
-            }
-            
-            function escapeRegExp(string) {
-                return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-            }
-            
-            function highlightText(text, query) {
-                if (!query) return text;
-                const escapedQuery = escapeRegExp(query);
-                const regex = new RegExp('(' + escapedQuery + ')', 'gi');
-                return text.replace(regex, '<span class="search-highlight">$1</span>');
-            }
-            
-            function searchPosts() {
-                const query = searchInput.value.toLowerCase().trim();
-                
-                if (originalPosts === null) {
-                    originalPosts = postsContainer.innerHTML;
-                }
-                
-                if (!query) {
-                    postsContainer.innerHTML = originalPosts;
-                    searchInfo.style.display = 'none';
-                    searchInput.classList.remove('searching');
-                    return;
-                }
-                
-                searchInput.classList.add('searching');
-                
-                const tempDiv = document.createElement('div');
-                tempDiv.innerHTML = originalPosts;
-                const posts = Array.from(tempDiv.children);
-                
-                console.log('Searching for:', query, 'in', posts.length, 'posts');
-                
-                const filtered = posts.filter(post => {
-                    const searchable = post.dataset.searchable || '';
-                    const titleData = post.dataset.title || '';
-                    const excerptData = post.dataset.excerpt || '';
-                    const dateData = post.dataset.date || '';
-                    
-                    // Search in all fields
-                    return searchable.includes(query) || 
-                           titleData.includes(query) || 
-                           excerptData.includes(query) ||
-                           dateData.includes(query);
-                });
-                
-                console.log('Found', filtered.length, 'matches');
-                
-                if (filtered.length > 0) {
-                    // Create highlighted posts
-                    const highlightedPosts = filtered.map(post => {
-                        const postClone = post.cloneNode(true);
-                        
-                        // Highlight in title
-                        const titleEl = postClone.querySelector('.post-title a');
-                        if (titleEl) {
-                            titleEl.innerHTML = highlightText(titleEl.textContent, query);
-                        }
-                        
-                        // Highlight in excerpt
-                        const excerptEl = postClone.querySelector('.excerpt');
-                        if (excerptEl) {
-                            excerptEl.innerHTML = highlightText(excerptEl.textContent, query);
-                        }
-                        
-                        // Highlight in date
-                        const dateEl = postClone.querySelector('.post-date');
-                        if (dateEl) {
-                            dateEl.innerHTML = highlightText(dateEl.textContent, query);
-                        }
-                        
-                        return postClone.outerHTML;
-                    }).join('');
-                    
-                    postsContainer.innerHTML = highlightedPosts;
-                } else {
-                    postsContainer.innerHTML = '<div class="no-results">No posts found matching your search. Try different keywords.</div>';
-                }
-                
-                searchCount.textContent = filtered.length;
-                searchTerm.textContent = query;
-                searchInfo.style.display = 'block';
-            }
-            
-            let searchTimeout;
-            searchInput.addEventListener('input', function() {
-                clearTimeout(searchTimeout);
-                if (!searchInput.value.trim()) {
-                    searchPosts();
-                    return;
-                }
-                searchTimeout = setTimeout(searchPosts, 50);
-            });
-            
-            console.log('Main page search initialized');
-        })();
+        // Main page with floating search only
+        console.log('Main page initialized with floating search');
     </script>
 </body>
 </html>
@@ -1392,22 +1325,17 @@ cat >> public/archive/index.html << ARCHIVE_META
     <script src="../search-index.js" defer></script>
 </head>
 <body>
-    <nav><a href="../">← Home</a> | Press <kbd>Ctrl+K</kbd> for global search</nav>
+    <nav><a href="../">← Home</a> | Press <kbd>Ctrl+K</kbd> or use floating search</nav>
     
     <header>
         <h1>Post Archive</h1>
-        <div class="stats">📊 All ${processed_count} posts in chronological order</div>
+        <div class="stats">📊 All ${processed_count} posts in chronological order | Press <kbd>Ctrl+K</kbd> for search</div>
     </header>
     
     <main>
-        <input id="search-main" placeholder="🔍 Search all posts..." autocomplete="off">
-        <div id="search-info" class="search-results" style="display:none">
-            Found <span id="search-count">0</span> of ${processed_count} posts matching "<span id="search-term"></span>"
-        </div>
-        
         <div id="sticky-header" class="sticky-header">
             <h2 id="sticky-title">Archive</h2>
-            <input id="search-sticky" placeholder="🔍 Search all posts..." autocomplete="off">
+            <div class="sticky-month" id="sticky-month"></div>
         </div>
         
         <div class="archive-content" id="archive">
@@ -1497,174 +1425,60 @@ cat >> public/archive/index.html << 'ARCHIVE_END'
     
     <script>
         (function() {
-            let originalArchive = null;
-            let isSearchActive = false;
-            
-            const searchMainInput = document.getElementById('search-main');
-            const searchStickyInput = document.getElementById('search-sticky');
-            const archiveContainer = document.getElementById('archive');
-            const searchInfo = document.getElementById('search-info');
-            const searchCount = document.getElementById('search-count');
-            const searchTerm = document.getElementById('search-term');
             const stickyHeader = document.getElementById('sticky-header');
             const stickyTitle = document.getElementById('sticky-title');
+            const stickyMonth = document.getElementById('sticky-month');
             
-            if (!searchMainInput || !searchStickyInput || !archiveContainer) {
-                console.error('Archive search elements not found');
+            if (!stickyHeader || !stickyTitle) {
+                console.error('Sticky header elements not found');
                 return;
             }
             
-            function escapeRegExp(string) {
-                return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-            }
-            
-            function highlightText(text, query) {
-                if (!query) return text;
-                const escapedQuery = escapeRegExp(query);
-                const regex = new RegExp('(' + escapedQuery + ')', 'gi');
-                return text.replace(regex, '<span class="search-highlight">$1</span>');
-            }
-            
             function updateStickyHeader() {
-                const searchMainRect = searchMainInput.getBoundingClientRect();
+                const scrollY = window.scrollY;
                 
-                if (searchMainRect.bottom < 0) {
+                // Show sticky header when scrolled past the main header
+                if (scrollY > 200) {
                     stickyHeader.style.display = 'block';
-                    if (!isSearchActive) {
-                        // Update title based on visible section
-                        const sections = document.querySelectorAll('.year-section, .month-section');
-                        let currentSection = null;
-                        
-                        for (let section of sections) {
-                            const rect = section.getBoundingClientRect();
-                            if (rect.top <= 150 && rect.bottom > 0) {
-                                currentSection = section;
-                                break;
+                    
+                    // Find the currently visible section
+                    const sections = document.querySelectorAll('.year-section, .month-section');
+                    let currentSection = null;
+                    let currentMonth = '';
+                    
+                    for (let section of sections) {
+                        const rect = section.getBoundingClientRect();
+                        if (rect.top <= 100 && rect.bottom > 0) {
+                            currentSection = section;
+                            
+                            // If it's a month section, extract the month
+                            if (section.classList.contains('month-section')) {
+                                const monthHeader = section.querySelector('.month-header h3');
+                                if (monthHeader) {
+                                    const monthText = monthHeader.textContent.trim();
+                                    // Extract just the month name (e.g., "September" from "September 2029")
+                                    currentMonth = monthText.split(' ')[0];
+                                }
                             }
+                            break;
                         }
-                        
-                        if (currentSection) {
-                            if (currentSection.dataset.yearMonth) {
-                                stickyTitle.textContent = currentSection.dataset.yearMonth;
-                            } else if (currentSection.dataset.year) {
-                                stickyTitle.textContent = currentSection.dataset.year;
-                            }
+                    }
+                    
+                    // Update the sticky header content
+                    if (currentSection) {
+                        if (currentSection.dataset.year) {
+                            stickyTitle.textContent = currentSection.dataset.year;
+                            stickyMonth.textContent = '';
+                        } else if (currentSection.dataset.yearMonth) {
+                            const parts = currentSection.dataset.yearMonth.split(' ');
+                            stickyTitle.textContent = parts[1] || ''; // Year
+                            stickyMonth.textContent = parts[0] || ''; // Month
                         }
                     }
                 } else {
                     stickyHeader.style.display = 'none';
                 }
             }
-            
-            function searchArchive() {
-                const mainQuery = searchMainInput.value.toLowerCase().trim();
-                const stickyQuery = searchStickyInput.value.toLowerCase().trim();
-                const query = mainQuery || stickyQuery;
-                
-                // Sync both inputs
-                if (document.activeElement === searchMainInput) {
-                    searchStickyInput.value = searchMainInput.value;
-                } else if (document.activeElement === searchStickyInput) {
-                    searchMainInput.value = searchStickyInput.value;
-                }
-                
-                // Store original content
-                if (originalArchive === null) {
-                    originalArchive = archiveContainer.innerHTML;
-                }
-                
-                if (!query) {
-                    archiveContainer.innerHTML = originalArchive;
-                    searchInfo.style.display = 'none';
-                    searchMainInput.classList.remove('searching');
-                    searchStickyInput.classList.remove('searching');
-                    isSearchActive = false;
-                    updateStickyHeader();
-                    return;
-                }
-                
-                isSearchActive = true;
-                searchMainInput.classList.add('searching');
-                searchStickyInput.classList.add('searching');
-                
-                // Search through posts
-                const tempDiv = document.createElement('div');
-                tempDiv.innerHTML = originalArchive;
-                const posts = Array.from(tempDiv.querySelectorAll('.post'));
-                
-                const filtered = posts.filter(post => {
-                    const searchable = post.dataset.searchable || '';
-                    const titleData = post.dataset.title || '';
-                    const excerptData = post.dataset.excerpt || '';
-                    const dateData = post.dataset.date || '';
-                    
-                    // Search in all fields
-                    return searchable.includes(query) || 
-                           titleData.includes(query) || 
-                           excerptData.includes(query) ||
-                           dateData.includes(query);
-                });
-                
-                if (filtered.length > 0) {
-                    // Create search results section
-                    let html = '<div class="year-section"><div class="year-header"><h2>Search Results</h2></div><div class="month-section">';
-                    
-                    // Add highlighted posts
-                    filtered.forEach(post => {
-                        const postClone = post.cloneNode(true);
-                        
-                        // Highlight in title
-                        const titleEl = postClone.querySelector('.post-title a');
-                        if (titleEl) {
-                            titleEl.innerHTML = highlightText(titleEl.textContent, query);
-                        }
-                        
-                        // Highlight in excerpt
-                        const excerptEl = postClone.querySelector('.excerpt');
-                        if (excerptEl) {
-                            excerptEl.innerHTML = highlightText(excerptEl.textContent, query);
-                        }
-                        
-                        // Highlight in date
-                        const dateEl = postClone.querySelector('.post-date');
-                        if (dateEl) {
-                            dateEl.innerHTML = highlightText(dateEl.textContent, query);
-                        }
-                        
-                        html += postClone.outerHTML;
-                    });
-                    
-                    html += '</div></div>';
-                    archiveContainer.innerHTML = html;
-                    
-                    if (stickyHeader.style.display === 'block') {
-                        stickyTitle.textContent = 'Search Results (' + filtered.length + ')';
-                    }
-                } else {
-                    archiveContainer.innerHTML = '<div class="no-results">No posts found matching your search. Try different keywords.</div>';
-                    if (stickyHeader.style.display === 'block') {
-                        stickyTitle.textContent = 'Search Results (0)';
-                    }
-                }
-                
-                searchCount.textContent = filtered.length;
-                searchTerm.textContent = query;
-                searchInfo.style.display = 'block';
-            }
-            
-            // Event listeners
-            let searchTimeout;
-            function handleSearch() {
-                clearTimeout(searchTimeout);
-                if (!this.value.trim()) {
-                    searchArchive();
-                    return;
-                }
-                searchTimeout = setTimeout(searchArchive, 50);
-            }
-            
-            searchMainInput.addEventListener('input', handleSearch);
-            searchStickyInput.addEventListener('input', handleSearch);
             
             // Scroll event for sticky header
             let scrollTimeout = null;
@@ -1681,7 +1495,7 @@ cat >> public/archive/index.html << 'ARCHIVE_END'
             
             // Initialize
             updateStickyHeader();
-            console.log('Archive search and sticky header initialized');
+            console.log('Archive with minimal sticky header initialized');
         })();
     </script>
 </body>
@@ -1696,12 +1510,23 @@ echo "  ✓ Processed $processed_count markdown files"
 echo "  ✓ Generated individual post pages with 3D code block effects"
 echo "  ✓ Created main page with recent posts and search"
 echo "  ✓ Built comprehensive archive with chronological organization"
-echo "  ✓ Character-by-character search with real-time highlighting"
-echo "  ✓ Fixed sticky navigation on archive page"
+echo "  ✓ Minimal translucent sticky navigation (JSFiddle-style)"
+echo "  ✓ Removed search bars, kept floating search functionality"
+echo "  ✓ Dynamic year/month display in compact sticky header"
 echo "  ✓ Global search index with $search_index_count posts"
 echo "  ✓ Fixed copy button positioning and functionality"
 echo ""
 echo "🚀 Features included:"
+echo "  • Clean, borderless design like Perplexity AI"
+echo "  • Posts seamlessly blend with background"
+echo "  • Subtle separators between posts"
+echo "  • Title-only hover effect (soft teal #5f9ea0)"
+echo "  • Minimal translucent sticky header (JSFiddle-inspired)"
+echo "  • Removed search bars from main/archive pages"
+echo "  • Floating search button for all search functionality"
+echo "  • Dynamic year/month display in minimal sticky header"
+echo "  • Ultra-compact sticky component with minimal height"
+echo "  • Clear translucent background with subtle blur"
 echo "  • 3D glassmorphic code blocks with smooth shadows"
 echo "  • Subtle embossed text effect for code syntax"
 echo "  • White bottom highlight line for glass effect"
@@ -1717,7 +1542,6 @@ echo "  • Clean design with subtle border hover effects"
 echo "  • Code syntax highlighting with Prism.js"
 echo "  • Mermaid diagram rendering"
 echo "  • Copy-to-clipboard functionality (now working!)"
-echo "  • Working sticky archive navigation"
 echo "  • SEO-optimized meta tags"
 echo "  • Reading time calculations"
 echo "  • Chronological post organization"
@@ -1725,20 +1549,21 @@ echo ""
 echo "📁 Output structure:"
 echo "  public/"
 echo "  ├── index.html (main page with recent posts)"
-echo "  ├── shared.css (shared styles)"
+echo "  ├── shared.css (shared styles with minimal sticky effects)"
 echo "  ├── post.css (post-specific styles with 3D effects)"
 echo "  ├── search-index.js (global search index with $search_index_count posts)"
 echo "  ├── archive/"
-echo "  │   └── index.html (complete archive)"
+echo "  │   └── index.html (complete archive with minimal sticky header)"
 echo "  └── p/"
 echo "      ├── 1.html"
 echo "      ├── 2.html"
 echo "      └── ... (individual post pages)"
 echo ""
-echo "🎨 3D Code Block Effects:"
-echo "   - Beige tinted background (#e7e3de)"
-echo "   - Multi-layered text shadows for depth"
-echo "   - Glass-like bottom highlight"
-echo "   - Selection removes 3D effect for readability"
-echo "   - Smooth visual hierarchy with shadows"
-echo "   - Copy button positioned at top-right (now functional!)"
+echo "🎨 Visual Improvements:"
+echo "   - Clean, borderless design inspired by Perplexity AI"
+echo "   - Posts blend seamlessly with beige background (#f0ece8)"
+echo "   - No boxes or borders - just subtle separators"
+echo "   - Title-only hover effect with soft teal color (#5f9ea0)"
+echo "   - Improved typography and spacing"
+echo "   - Lighter, more subtle text colors"
+echo "   - Minimal visual elements for maximum readability"
