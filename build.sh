@@ -645,15 +645,15 @@ html_escape() {
 load_post_data() {
     local data_file="$1"
     if [ -f "$data_file" ]; then
-        title=$(grep "^title§" "$data_file" | cut -d'§' -f2-)
-        date=$(grep "^date§" "$data_file" | cut -d'§' -f2-)
-        excerpt=$(grep "^excerpt§" "$data_file" | cut -d'§' -f2-)
-        file=$(grep "^file§" "$data_file" | cut -d'§' -f2-)
-        year=$(grep "^year§" "$data_file" | cut -d'§' -f2-)
-        month=$(grep "^month§" "$data_file" | cut -d'§' -f2-)
-        day=$(grep "^day§" "$data_file" | cut -d'§' -f2-)
-        sort_date=$(grep "^sort_date§" "$data_file" | cut -d'§' -f2-)
-        slug=$(grep "^slug§" "$data_file" | cut -d'§' -f2-)
+        title=$(grep "^title	" "$data_file" 2>/dev/null | cut -f2- 2>/dev/null || echo "")
+        date=$(grep "^date	" "$data_file" 2>/dev/null | cut -f2- 2>/dev/null || echo "")
+        excerpt=$(grep "^excerpt	" "$data_file" 2>/dev/null | cut -f2- 2>/dev/null || echo "")
+        file=$(grep "^file	" "$data_file" 2>/dev/null | cut -f2- 2>/dev/null || echo "")
+        year=$(grep "^year	" "$data_file" 2>/dev/null | cut -f2- 2>/dev/null || echo "")
+        month=$(grep "^month	" "$data_file" 2>/dev/null | cut -f2- 2>/dev/null || echo "")
+        day=$(grep "^day	" "$data_file" 2>/dev/null | cut -f2- 2>/dev/null || echo "")
+        sort_date=$(grep "^sort_date	" "$data_file" 2>/dev/null | cut -f2- 2>/dev/null || echo "")
+        slug=$(grep "^slug	" "$data_file" 2>/dev/null | cut -f2- 2>/dev/null || echo "")
     fi
 }
 
@@ -763,18 +763,17 @@ for file in $all_files; do
     echo "  ✓ Sort date: $sort_date"
     echo "  ✓ Excerpt: $(printf '%.60s' "$excerpt")..."
     
-    # Store post data in temp files with delimiter protection
-    # Use a delimiter that's unlikely to appear in titles/excerpts
+    # Store post data in temp files with tab delimiter (safe single character)
     {
-        printf "title§%s\n" "$title"
-        printf "date§%s\n" "$date_string"
-        printf "excerpt§%s\n" "$excerpt"
-        printf "file§%s\n" "$file"
-        printf "year§%s\n" "$year"
-        printf "month§%s\n" "$month"
-        printf "day§%s\n" "$day"
-        printf "sort_date§%s\n" "$sort_date"
-        printf "slug§%s\n" "$slug"
+        printf "title\t%s\n" "$title"
+        printf "date\t%s\n" "$date_string"
+        printf "excerpt\t%s\n" "$excerpt"
+        printf "file\t%s\n" "$file"
+        printf "year\t%s\n" "$year"
+        printf "month\t%s\n" "$month"
+        printf "day\t%s\n" "$day"
+        printf "sort_date\t%s\n" "$sort_date"
+        printf "slug\t%s\n" "$slug"
     } > "$TEMP_DIR/post_${num}_data"
     
     # Process markdown content
@@ -952,6 +951,7 @@ echo "📄 Successfully processed $processed_count out of $total files"
 
 # Get all posts sorted by date (newest first)
 echo "📊 Sorting posts by date..."
+echo "   Processing $processed_count posts for sorting..."
 
 # Create a file with sort_date and num for sorting
 sort_file="$TEMP_DIR/posts_to_sort"
@@ -960,7 +960,7 @@ sort_file="$TEMP_DIR/posts_to_sort"
 i=1
 while [ $i -le $processed_count ]; do
     if [ -f "$TEMP_DIR/post_${i}_data" ]; then
-        sort_date=$(grep "^sort_date§" "$TEMP_DIR/post_${i}_data" | cut -d'§' -f2)
+        sort_date=$(grep "^sort_date	" "$TEMP_DIR/post_${i}_data" 2>/dev/null | cut -f2 2>/dev/null || echo "")
         if [ -n "$sort_date" ]; then
             echo "$sort_date $i" >> "$sort_file"
         else
