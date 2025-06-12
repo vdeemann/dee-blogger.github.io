@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{POST_TITLE}} - {{SITE_TITLE}}</title>
+    <link rel="stylesheet" href="../shared.css">
+    <link rel="stylesheet" href="../post.css">
+    <meta property="og:title" content="{{POST_TITLE}} - {{SITE_TITLE}}">
+    <meta property="og:url" content="{{BASE_URL}}/{{PERMALINK}}">
+    <meta name="description" content="{{POST_TITLE}} on {{SITE_TITLE}} - published on {{POST_DATE}}">
+    <meta name="keywords" content="{{POST_TITLE}}, blog, static site, C++, markdown">
+    <!-- External libraries for syntax highlighting and diagrams -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism.min.css">
+</head>
+<body>
+    <header class="sticky-header">
+        <h1><a href="../index.html">{{SITE_TITLE}}</a></h1>
+    </header>
+    <main>
+        <article>
+            <div class="post-header">
+                 <h1>{{POST_TITLE}}</h1>
+            </div>
+            <p><small>{{POST_DATE}}</small></p>
+            {{POST_BODY_HTML}}
+            <hr>
+            <p><a href="../index.html">← Home</a></p>
+        </article>
+    </main>
+    <!-- Common search functionality (loaded on all pages) -->
+    <script src="../search-index.js"></script>
+    <script src="../search-logic.js"></script>
+    <!-- Post-specific JavaScript for copy button and Mermaid -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mermaid/10.6.1/mermaid.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-core.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/autoloader/prism-autoloader.min.js"></script>
+    <script src="../post-page-logic.js"></script> <!-- NEW SCRIPT LINK -->
+</body>
+</html>

@@ -1,0 +1,75 @@
+name: C++ Blog Build and Deploy (Unix Philosophy)
+
+on:
+  push:
+    branches:
+      - main # Trigger this workflow on pushes to the main branch
+
+jobs:
+  build:
+    runs-on: ubuntu-latest # Use a Linux runner for broad C++ and Brotli support
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v3
+
+    - name: Install system dependencies for C++ builder
+      # Install libbrotli-dev, build-essential (for g++, make), and cmake
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y libbrotli-dev build-essential cmake
+
+    - name: Configure CMake
+      # Configure the C++ project (all tools) with CMake.
+      # -S specifies the source directory (src/builder_tools)
+      # -B specifies the build directory (src/builder_tools/build)
+      run: cmake -S src/builder_tools -B src/builder_tools/build
+
+    - name: Compile C++ build tools
+      # Build all executables defined in src/builder_tools/CMakeLists.txt
+      run: cmake --build src/builder_tools/build
+
+    - name: Set executable permissions for tools
+      # Ensure all compiled C++ executables are executable
+      run: chmod +x src/builder_tools/build/*
+
+    - name: Create dummy markdown posts (for testing)
+      # This step ensures the build script has content to process even if 'src/blog_content/posts' is empty
+      run: |
+        mkdir -p src/blog_content/posts
+        # Check if the directory is empty before creating dummy files
+        if [ -z "$(ls -A src/blog_content/posts)" ]; then
+          echo '# Test Post 1 from GH Actions\nDate: 2024-01-01\nThis is test post one from GitHub Actions. Lorem ipsum dolor sit amet.' > src/blog_content/posts/test-post-1.md
+          echo '# Test Post 2 from GH Actions\nDate: 2024-01-02\nThis is test post two from GitHub Actions. Consectetur adipiscing elit.' > src/blog_content/posts/test-post-2.md
+          echo '# Another Post\nDate: 2024-01-03\nThis is another post to test sorting and various markdown features:\n\n- item A\n- item B\n\n```javascript\nconsole.log("Hello, C++ blog!");\n```\n' > src/blog_content/posts/another-post.md
+          echo "Dummy posts created as src/blog_content/posts was empty."
+        else
+          echo "src/blog_content/posts already contains files. Skipping dummy creation."
+        fi
+
+    - name: Run blog build pipeline
+      # Execute the main orchestrator script
+      run: ./build.sh
+
+    - name: List generated files (for verification)
+      # List the contents of the generated public directory for debugging/confirmation
+      run: |
+        echo "Contents of public/ directory:"
+        ls -lh public/
+        echo "Contents of public/p/ directory:"
+        ls -lh public/p/
+        echo "Size of public directory:"
+        du -sh public/
+
+    - name: Deploy to GitHub Pages
+      uses: peaceiris/actions-gh-pages@v3
+      if: github.ref == 'refs/heads/main' # Only deploy if the build is on the main branch
+      with:
+        github_token: ${{ secrets.GITHUB_TOKEN }} # Automatically provided by GitHub Actions
+        publish_dir: ./public # The directory containing your static files to publish
+        # IMPORTANT: Configure your GitHub Pages settings in your repository:
+        # Go to your repo -> Settings -> Pages.
+        # Set 'Source' to 'Deploy from a branch'.
+        # For 'Branch', choose 'gh-pages' and '/' folder, OR 'main' and '/docs' folder.
+        # If using 'gh-pages' branch for deployment, uncomment the line below:
+        # publish_branch: gh-pages

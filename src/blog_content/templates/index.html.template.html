@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{SITE_TITLE}}</title>
+    <link rel="stylesheet" href="shared.css">
+    <meta property="og:title" content="{{SITE_TITLE}}">
+    <meta property="og:url" content="{{BASE_URL}}">
+    <meta name="description" content="A blog about various topics powered by a custom C++ static site generator.">
+    <meta name="keywords" content="blog, static site, C++, markdown, dee-blogger">
+</head>
+<body>
+    <header>
+        <h1><a href="index.html">{{SITE_TITLE}}</a></h1>
+    </header>
+    <main>
+        <div class="search-container">
+            <input type="text" id="searchInput" class="search-input" placeholder="Search posts...">
+            <ul id="searchResults" class="search-results"></ul>
+        </div>
+        <ul class="post-list">
+            {{RECENT_POSTS_LIST}}
+        </ul>
+        <p><a href="archive/index.html">View all {{TOTAL_POSTS_COUNT}} posts →</a></p>
+    </main>
+    <script src="search-index.js"></script>
+    <script src="search-logic.js"></script>
+</body>
+</html>

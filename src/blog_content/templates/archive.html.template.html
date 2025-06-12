@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Archive - {{SITE_TITLE}}</title>
+    <link rel="stylesheet" href="../shared.css">
+    <meta property="og:title" content="Archive - {{SITE_TITLE}}">
+    <meta property="og:url" content="{{BASE_URL}}/archive/">
+    <meta name="description" content="Complete archive of all posts on {{SITE_TITLE}}.">
+    <meta name="keywords" content="archive, blog, static site, C++, markdown">
+</head>
+<body>
+    <header class="sticky-header">
+        <h1><a href="../index.html">{{SITE_TITLE}}</a></h1>
+    </header>
+    <main>
+        <h2>All Posts</h2>
+        <!-- BEGIN Sticky Header for Archive -->
+        <div id="sticky-header" class="sticky-header">
+            <h2 id="sticky-title">Archive</h2>
+            <div class="sticky-month" id="sticky-month"></div>
+        </div>
+        <!-- END Sticky Header for Archive -->
+        <ul class="post-list">
+            {{ALL_POSTS_LIST}}
+        </ul>
+    </main>
+    <!-- Common search functionality (loaded on all pages) -->
+    <script src="../search-index.js"></script>
+    <script src="../search-logic.js"></script>
+    <!-- Archive-specific JavaScript for sticky header -->
+    <script src="../archive-page-logic.js"></script> <!-- NEW SCRIPT LINK -->
+</body>
+</html>

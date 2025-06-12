@@ -1,0 +1,87 @@
+// Client-side search logic - Raw Source
+// Assumes searchIndex and postMetadata are globally available (loaded from search-index.js)
+
+const searchInput = document.getElementById("searchInput");
+const searchResults = document.getElementById("searchResults");
+
+// Function to highlight search terms in text
+function highlightText(text, searchTerm) {
+    // Split search term into individual words, filtering out empty strings
+    let searchWords = searchTerm.toLowerCase().split(' ').filter(word => word.length > 0);
+    if (searchWords.length === 0) return text;
+
+    // Create a regex to match any of the search words globally, case-insensitively
+    // Use word boundaries (\b) to match whole words if desired, or simpler regex
+    let regexPattern = '(' + searchWords.map(word => word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|') + ')';
+    let regex = new RegExp(regexPattern, 'gi');
+
+    // Replace matched words with highlighted version
+    return text.split(regex).map(part => {
+        // Check if the part (after splitting) is one of the search words (case-insensitive)
+        if (searchWords.includes(part.toLowerCase())) {
+            return `<span class="search-highlight">${part}</span>`;
+        }
+        return part;
+    }).join('');
+}
+
+// Function to display search results
+function displayResults(results) {
+    searchResults.innerHTML = ""; // Clear previous results
+
+    if (results.length === 0) {
+        searchResults.innerHTML = "<li class=\"no-results\">No results found.</li>";
+        searchResults.style.display = "block";
+        return;
+    }
+
+    results.forEach(post => {
+        const li = document.createElement("li");
+        const a = document.createElement("a");
+        a.href = post.permalink;
+        // Highlight title and date
+        a.innerHTML = `<h2>${highlightText(post.title, searchInput.value)}</h2><p class="light-text">${highlightText(post.date, searchInput.value)}</p>`;
+        li.appendChild(a);
+        searchResults.appendChild(li);
+    });
+
+    searchResults.style.display = "block";
+}
+
+// Event listener for search input
+if (searchInput) { // Ensure the searchInput element exists on the page
+    searchInput.addEventListener("input", (event) => {
+        const searchTerm = event.target.value.trim().toLowerCase();
+
+        if (searchTerm.length > 1) { // Only search if more than one character
+            const matchingPostIds = new Set(); // Use a Set to store unique post IDs
+
+            // Iterate through the inverted index (global `searchIndex` from generated JS)
+            // A more sophisticated search would involve fuzzy matching or ranking
+            for (const wordToken in searchIndex) {
+                // Simple substring match in the token itself (e.g., searching "test" matches "testing")
+                if (wordToken.includes(searchTerm)) {
+                    searchIndex[wordToken].forEach(postId => matchingPostIds.add(postId));
+                }
+            }
+
+            // Collect full metadata for matching posts (from global `postMetadata`)
+            const relevantPosts = [];
+            matchingPostIds.forEach(postId => {
+                const post = postMetadata[postId];
+                if (post) { // Ensure post exists in metadata
+                    relevantPosts.push(post);
+                }
+            });
+
+            // Sort results by date (newest first)
+            relevantPosts.sort((a, b) => b.date.localeCompare(a.date));
+
+            displayResults(relevantPosts);
+        } else {
+            // Clear results if search term is too short or empty
+            searchResults.innerHTML = "";
+            searchResults.style.display = "none";
+        }
+    });
+}
